@@ -6,13 +6,21 @@ test("clicking Bat's List tab changes the visible card set vs. All tab", async (
   // Wait for skeleton to clear and cards to appear
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 5000 });
 
-  // Collect the first N lot numbers IN ORDER as rendered on the All tab
-  // (virtualized grid — only viewport cards are in DOM; order reflects sort order)
+  // Scroll past the ~349 bat lots that sort to the top of the All tab, so
+  // visible cards include non-bat lots (which will be filtered out on the Bat
+  // tab). With ~4 cards per row × ~340px row height, 349 lots ≈ 87 rows ≈
+  // 29700px. Scroll comfortably past that.
+  await page.evaluate(() => window.scrollTo(0, 32000));
+  await page.waitForTimeout(400);
   const allTabLotNumbers = await page.locator('[data-testid="lot-card"]').evaluateAll(
     (cards) => cards.map((c) => c.getAttribute('data-lot-number') ?? '')
   );
   const allTabOrdered = allTabLotNumbers.filter(Boolean);
   expect(allTabOrdered.length).toBeGreaterThan(0);
+
+  // Scroll back to top before switching tab
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
 
   // Click the Bat's List tab — use the visible instance (desktop header shown at 1280px)
   await page.locator('[data-testid="tab-bat"]').filter({ visible: true }).click();

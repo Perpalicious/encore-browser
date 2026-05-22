@@ -21,6 +21,7 @@ export function useColumns(density: Density): number {
   const [cols, setCols] = useState(() => getColumns(density));
 
   useEffect(() => {
+    setCols(getColumns(density));
     const onResize = () => setCols(getColumns(density));
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);

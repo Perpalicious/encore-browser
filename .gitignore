@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Node / Viewer
+node_modules/
+dist/
+.vite/
+*.log
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Data
+data/raw/
+# Keep categorized README and provided sample; ignore future categorized uploads
+data/categorized/*
+!data/categorized/README.md
+!data/categorized/auction_703264_categorized.json
+
+# Built bundle (regenerate via `python -m build`)
+viewer/src/data/auction_bundle.json
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/

@@ -27,16 +27,22 @@ _CONDITION_MAP: dict[str, str] = {
     "BRAND NEW": "New",
     "NEW IN BOX": "New",
     "NEW": "New",
+    "BEST BEFORE (GROCERY)": "New",
+    "NEW (ADJUSTED QUANTITY)": "New",
+    "NEW ADJUSTED QTY": "New",
     "LIKE NEW": "Like New",
     "OPEN BOX": "Like New",
+    "BRAND NEW - OPEN BOX": "Like New",
     "EXCELLENT": "Like New",
     "GOOD": "Good",
     "VERY GOOD": "Good",
     "FAIR": "Fair",
     "USED": "Fair",
+    "NEW WITH DEFECTS": "Fair",
     "HEAVILY USED": "Heavily Used",
     "POOR": "Heavily Used",
     "DAMAGED": "Heavily Used",
+    "FOR PARTS ONLY": "Heavily Used",
 }
 
 # Normalised lookup (upper-cased keys already, but normalise at call site too)
@@ -81,6 +87,10 @@ def parse_condition(raw: Optional[str]) -> tuple[Optional[str], Optional[float],
     """
     if not raw:
         return None, None, ""
+
+    # HiBid descriptions use \r (lone carriage return) as the line separator.
+    # Normalize to \n so the MULTILINE regexes anchor on every line.
+    raw = raw.replace("\r\n", "\n").replace("\r", "\n")
 
     # --- Extract condition --------------------------------------------------
     condition: Optional[str] = None

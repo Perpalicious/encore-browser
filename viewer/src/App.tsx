@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { ChevronUp, FilterX } from 'lucide-react';
 import type { Tab, DayFilter, Density, Lot } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
@@ -70,8 +71,14 @@ export function App() {
     setDayFilter('Both');
     setCategory('All');
     setBatBucket('All');
-    if (tab !== 'watched') setTab('all');
+    // Tab and density are intentionally preserved.
   };
+
+  const collapseAll = () => setExpandedIds(new Set());
+
+  const anyFilterActive =
+    query !== '' || dayFilter !== 'Both' || category !== 'All' || batBucket !== 'All';
+  const anyExpanded = expandedIds.size > 0;
 
   // When tab changes, reset bucket
   const handleTabChange = (t: Tab) => {
@@ -108,6 +115,40 @@ export function App() {
       />
 
       <main className="mx-auto max-w-[1480px] px-4 md:px-6 pt-4 md:pt-6 pb-24">
+        {!loading && (anyExpanded || anyFilterActive) && (
+          <div
+            data-testid="grid-toolbar"
+            className="mb-3 md:mb-4 flex items-center justify-between gap-3"
+          >
+            <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70">
+              Showing {filtered.length} of {allLots.length} lots
+            </span>
+            <div className="flex items-center gap-1.5">
+              {anyExpanded && (
+                <button
+                  type="button"
+                  data-testid="collapse-all-btn"
+                  onClick={collapseAll}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
+                >
+                  <ChevronUp size={14} strokeWidth={2} />
+                  <span>Collapse all</span>
+                </button>
+              )}
+              {anyFilterActive && (
+                <button
+                  type="button"
+                  data-testid="clear-filters-btn"
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
+                >
+                  <FilterX size={14} strokeWidth={2} />
+                  <span>Clear filters</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <LotGrid
           lots={filtered}
           loading={loading}

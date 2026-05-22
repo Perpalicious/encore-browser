@@ -1,11 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Ensure bundled NSS/NSPR/ALSA libraries are found on systems where they
-// are not globally installed (e.g. minimal CI / WSL environments).
-process.env.LD_LIBRARY_PATH = [
-  '/home/bat/lib',
-  process.env.LD_LIBRARY_PATH,
-].filter(Boolean).join(':');
+// On minimal Linux environments (e.g. some WSL installs) Playwright's browser
+// binaries need NSS/NSPR/ALSA system libraries. If they're missing, install
+// via your distro (e.g. `sudo apt install libnss3 libnspr4 libasound2t64`)
+// or `npx playwright install-deps chromium`. If you have a non-standard path,
+// set EXTRA_LIB_PATH in the environment.
+if (process.env.EXTRA_LIB_PATH) {
+  process.env.LD_LIBRARY_PATH = [
+    process.env.EXTRA_LIB_PATH,
+    process.env.LD_LIBRARY_PATH,
+  ].filter(Boolean).join(':');
+}
 
 export default defineConfig({
   testDir: './e2e',

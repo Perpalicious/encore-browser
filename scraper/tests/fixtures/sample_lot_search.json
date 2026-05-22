@@ -1,0 +1,144 @@
+{
+  "data": {
+    "lotSearch": {
+      "totalCount": 5,
+      "auctionName": "Encore Auctions Test Auction",
+      "results": [
+        {
+          "id": 100001,
+          "lotNumber": "1",
+          "lead": "Apple AirPods Pro 2nd Generation",
+          "description": "Est. Retail Price: 249.00\nCondition: BRAND NEW - SEALED\nIn packaging? Yes\nRequires Assembly? No\nIs Item Functional? Yes\nMissing Major Parts? No\nIs Item Damaged? No\n\nApple AirPods Pro (2nd generation) with MagSafe Charging Case.",
+          "featuredPicture": {
+            "thumbnailLocation": "https://cdn.hibid.com/thumb/100001_1.jpg",
+            "fullSizeLocation": "https://cdn.hibid.com/full/100001_1.jpg"
+          },
+          "pictures": [
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100001_1.jpg"
+            },
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100001_2.jpg"
+            }
+          ],
+          "lotState": {
+            "highBid": 45.00,
+            "status": "OPEN",
+            "timeLeftTitle": "5/24/2026 12:00:00 PM EST"
+          },
+          "category": [
+            {
+              "categoryName": "Headphones",
+              "fullCategory": "Electronics > Audio > Headphones"
+            }
+          ]
+        },
+        {
+          "id": 100002,
+          "lotNumber": "2",
+          "lead": "KitchenAid Stand Mixer",
+          "description": "Est. Retail Price: 499.99\nCondition: LIKE NEW\nIn packaging? No\nRequires Assembly? No\nIs Item Functional? Yes\nMissing Major Parts? No\nIs Item Damaged? No\n\nKitchenAid Artisan 5-Quart Stand Mixer in Empire Red. Includes all attachments.",
+          "featuredPicture": {
+            "thumbnailLocation": "https://cdn.hibid.com/thumb/100002_1.jpg",
+            "fullSizeLocation": "https://cdn.hibid.com/full/100002_1.jpg"
+          },
+          "pictures": [
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100002_1.jpg"
+            }
+          ],
+          "lotState": {
+            "highBid": 120.00,
+            "status": "OPEN",
+            "timeLeftTitle": "5/24/2026 12:00:00 PM EST"
+          },
+          "category": [
+            {
+              "categoryName": "Stand Mixers",
+              "fullCategory": "Home & Kitchen > Appliances > Stand Mixers"
+            }
+          ]
+        },
+        {
+          "id": 100003,
+          "lotNumber": "3",
+          "lead": "Vintage Leather Briefcase",
+          "description": "Condition: GOOD\nIs Item Functional? Yes\nMissing Major Parts? No\nIs Item Damaged? No\n\nBrown leather briefcase with brass hardware. Minor wear on corners.",
+          "featuredPicture": {
+            "thumbnailLocation": "https://cdn.hibid.com/thumb/100003_1.jpg",
+            "fullSizeLocation": "https://cdn.hibid.com/full/100003_1.jpg"
+          },
+          "pictures": [
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100003_1.jpg"
+            },
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100003_2.jpg"
+            },
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100003_3.jpg"
+            }
+          ],
+          "lotState": {
+            "highBid": 15.00,
+            "status": "OPEN",
+            "timeLeftTitle": "5/25/2026 12:00:00 PM EDT"
+          },
+          "category": [
+            {
+              "categoryName": "Bags & Luggage",
+              "fullCategory": "Fashion > Bags & Luggage"
+            }
+          ]
+        },
+        {
+          "id": 100004,
+          "lotNumber": "4a",
+          "lead": "Broken Blender Parts Lot",
+          "description": "Condition: HEAVILY USED\nIs Item Functional? No\nMissing Major Parts? Yes\nIs Item Damaged? Yes\n\nLot of blender parts for repair or parts use only.",
+          "featuredPicture": {
+            "thumbnailLocation": "https://cdn.hibid.com/thumb/100004_1.jpg",
+            "fullSizeLocation": "https://cdn.hibid.com/full/100004_1.jpg"
+          },
+          "pictures": [
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100004_1.jpg"
+            }
+          ],
+          "lotState": {
+            "highBid": 1.00,
+            "status": "OPEN",
+            "timeLeftTitle": "5/25/2026 12:00:00 PM EDT"
+          },
+          "category": [
+            {
+              "categoryName": "Blenders",
+              "fullCategory": "Home & Kitchen > Appliances > Blenders"
+            }
+          ]
+        },
+        {
+          "id": 100005,
+          "lotNumber": "5",
+          "lead": "Mystery Box — Unknown Contents",
+          "description": "Box of assorted items. Contents unknown. Sold as-is.",
+          "featuredPicture": {
+            "thumbnailLocation": "https://cdn.hibid.com/thumb/100005_1.jpg",
+            "fullSizeLocation": "https://cdn.hibid.com/full/100005_1.jpg"
+          },
+          "pictures": [
+            {
+              "fullSizeLocation": "https://cdn.hibid.com/full/100005_1.jpg"
+            }
+          ],
+          "lotState": {
+            "highBid": null,
+            "status": "OPEN",
+            "timeLeftTitle": "5/25/2026 12:00:00 PM EDT"
+          },
+          "category": []
+        }
+      ]
+    }
+  }
+}

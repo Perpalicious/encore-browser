@@ -1,0 +1,164 @@
+"""
+Maps a single HiBid `lotSearch.results` item to the output JSON record.
+
+The field map is:
+  id                              -> id (int)
+  lotNumber                       -> lot_number (str)
+  lead                            -> title (str)
+  description (raw)               -> description_raw (str)
+  (parsed)                        -> description (str)
+  (parsed)                        -> condition (str | null)
+  (parsed)                        -> est_retail_price (float | null)
+  featuredPicture.thumbnailLocation -> thumb_url (str)
+  featuredPicture.fullSizeLocation  -> image_url (str)
+  pictures[].fullSizeLocation     -> additional_images (str[])
+  lotState.highBid                -> current_bid (float)
+  lotState.status                 -> status (str)
+  category[0].categoryName        -> hibid_category_leaf (str)
+  category[0].fullCategory        -> hibid_category_path (str)
+  lotState.timeLeftTitle (parsed) -> close_at (ISO 8601 str)
+  (derived)                       -> lot_url (str)
+"""
+
+from __future__ import annotations
+
+import re
+from datetime import datetime, timezone, timedelta
+from typing import Any, Optional
+
+from .condition import parse_condition
+
+# ---------------------------------------------------------------------------
+# Timezone helpers
+# ---------------------------------------------------------------------------
+
+# Assumption: HiBid sends "EST" or "EDT" in timeLeftTitle.
+# We treat months March–October as EDT (UTC-4) and November–February as EST (UTC-5).
+# (Real US DST boundary is 2nd Sunday in March / 1st Sunday in November, but
+# month-based approximation is sufficient for display-only close_at field.)
+_TZ_EDT = timezone(timedelta(hours=-4))
+_TZ_EST = timezone(timedelta(hours=-5))
+
+# Pattern: "5/24/2026 12:00:00 PM EST" or "5/24/2026 12:00:00 PM EDT"
+_CLOSE_TIME_RE = re.compile(
+    r"(?P<dt>\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}:\d{2}\s+(?:AM|PM))\s+(?P<tz>E[SD]T)",
+    re.IGNORECASE,
+)
+
+_DT_FORMAT = "%m/%d/%Y %I:%M:%S %p"
+
+
+def _parse_close_at(time_left_title: Optional[str]) -> Optional[str]:
+    """
+    Parse a timeLeftTitle like "5/24/2026 12:00:00 PM EST" into an ISO 8601
+    string with explicit UTC offset.
+
+    Returns None if the input is missing or unparseable.
+    """
+    if not time_left_title:
+        return None
+    m = _CLOSE_TIME_RE.search(time_left_title)
+    if not m:
+        return None
+    dt_str = m.group("dt").strip()
+    tz_label = m.group("tz").upper()
+    try:
+        naive_dt = datetime.strptime(dt_str, _DT_FORMAT)
+    except ValueError:
+        return None
+
+    # Month-based DST heuristic (Mar–Oct = EDT = -04:00; else EST = -05:00)
+    if tz_label == "EDT":
+        tz = _TZ_EDT
+    elif tz_label == "EST":
+        tz = _TZ_EST
+    else:
+        # Fall back: use month
+        tz = _TZ_EDT if 3 <= naive_dt.month <= 10 else _TZ_EST
+
+    aware_dt = naive_dt.replace(tzinfo=tz)
+    return aware_dt.isoformat()
+
+
+# ---------------------------------------------------------------------------
+# Main mapping function
+# ---------------------------------------------------------------------------
+
+LOT_URL_TEMPLATE = "https://encoreauctions.hibid.com/lot/{id}/?ref=catalog"
+
+
+def map_lot(item: dict[str, Any]) -> dict[str, Any]:
+    """
+    Map a single lotSearch result item to the output record shape.
+
+    Missing optional fields are treated as null / empty gracefully.
+    """
+    lot_id = item.get("id")
+    lot_number = item.get("lotNumber") or ""
+    title = item.get("lead") or ""
+    description_raw = item.get("description") or ""
+
+    # Parse description
+    condition, est_retail_price, description_clean = parse_condition(description_raw)
+
+    # Featured picture
+    featured = item.get("featuredPicture") or {}
+    thumb_url = featured.get("thumbnailLocation") or ""
+    image_url = featured.get("fullSizeLocation") or ""
+
+    # Additional pictures (exclude featured to avoid duplication)
+    pictures_raw = item.get("pictures") or []
+    additional_images = [
+        p.get("fullSizeLocation", "")
+        for p in pictures_raw
+        if p.get("fullSizeLocation") and p.get("fullSizeLocation") != image_url
+    ]
+
+    # Lot state
+    lot_state = item.get("lotState") or {}
+    current_bid = lot_state.get("highBid")
+    if current_bid is not None:
+        try:
+            current_bid = float(current_bid)
+        except (ValueError, TypeError):
+            current_bid = None
+    status = lot_state.get("status") or ""
+    time_left_title = lot_state.get("timeLeftTitle")
+    close_at = _parse_close_at(time_left_title)
+
+    # Category — may be a list or a single object; handle both defensively
+    category_raw = item.get("category")
+    category_list: list[dict] = []
+    if isinstance(category_raw, list):
+        category_list = category_raw
+    elif isinstance(category_raw, dict):
+        category_list = [category_raw]
+
+    hibid_category_leaf = ""
+    hibid_category_path = ""
+    if category_list:
+        first_cat = category_list[0] or {}
+        hibid_category_leaf = first_cat.get("categoryName") or ""
+        hibid_category_path = first_cat.get("fullCategory") or ""
+
+    # Derived lot URL
+    lot_url = LOT_URL_TEMPLATE.format(id=lot_id) if lot_id is not None else ""
+
+    return {
+        "id": lot_id,
+        "lot_number": lot_number,
+        "title": title,
+        "description_raw": description_raw,
+        "description": description_clean,
+        "condition": condition,
+        "est_retail_price": est_retail_price,
+        "thumb_url": thumb_url,
+        "image_url": image_url,
+        "additional_images": additional_images,
+        "current_bid": current_bid,
+        "status": status,
+        "hibid_category_leaf": hibid_category_leaf,
+        "hibid_category_path": hibid_category_path,
+        "close_at": close_at,
+        "lot_url": lot_url,
+    }

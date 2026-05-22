@@ -58,7 +58,7 @@ REQUEST_TIMEOUT = 30.0
 LOT_SEARCH_QUERY = """
 query LotSearchLotOnly($auctionId: Int!, $pageNumber: Int!, $pageLength: Int!) {
   lotSearch(
-    input: {auctionId: $auctionId, status: OPEN, sortOrder: SALE_ORDER, isArchive: false}
+    input: {auctionId: $auctionId, status: ALL, sortOrder: SALE_ORDER}
     pageLength: $pageLength
     pageNumber: $pageNumber
   ) {

@@ -85,11 +85,18 @@ This pulls all lots from HiBid and saves them as a JSON file. If you get a Cloud
 
 ```bash
 python -m build \
-  --input data/categorized/auction_<AUCTION_ID>_categorized.json \
-  --output viewer/src/data/auction_bundle.json
+  --raw         data/raw/auction_<AUCTION_ID>.json \
+  --categorized data/categorized/auction_<AUCTION_ID>_categorized.json \
+  --output      viewer/src/data/auction_bundle.json
 ```
 
-This transforms the Agent's output into the format the viewer needs. If any lots are missing required fields, the script will tell you which ones and exit without writing a broken file.
+This **joins** the two files on lot number and produces the bundle the viewer reads. The raw scrape supplies titles, images, lot URLs, descriptions and conditions; the categorized file supplies categories, Bat's List flags, Nice Picks and confidence scores.
+
+Both files must describe the same auction. If any categorized lot can't be matched to a raw lot, the script lists the unmatched ones and exits without writing a partial bundle — re-run the scraper for that auction and re-upload to the Agent so the two files line up.
+
+You'll see a one-line fidelity report like
+`Fidelity: title 100% (9880/9880), image_url 99.9% (9870/9880).` —
+if `image_url` drops below 95%, viewer cards will mostly show a "NO IMAGE" placeholder; that's a signal the scrape itself was incomplete.
 
 ### Step 4 — Build the viewer
 

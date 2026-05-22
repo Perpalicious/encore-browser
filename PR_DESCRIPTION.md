@@ -23,11 +23,15 @@ Work through these steps in order. Each one builds on the last.
 1. **Run the build script against the included sample data.**
    ```bash
    source .venv/bin/activate
+   # First, scrape the matching auction so we have raw fields to join with:
+   python -m scraper --auction-id 703264 --output data/raw/auction_703264.json
+   # Then join the raw scrape to the categorized JSON to produce the bundle:
    python -m build \
-     --input data/categorized/auction_703264_categorized.json \
-     --output viewer/src/data/auction_bundle.json
+     --raw         data/raw/auction_703264.json \
+     --categorized data/categorized/auction_703264_categorized.json \
+     --output      viewer/src/data/auction_bundle.json
    ```
-   You should see a success message with no errors. This produces the data file the viewer needs.
+   You should see a one-line fidelity report (title 100%, image_url 99.9%) and no errors. The viewer reads the bundle file written in the last step.
 
 2. **Build the viewer.**
    ```bash

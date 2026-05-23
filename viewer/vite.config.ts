@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  // Deployed at https://<user>.github.io/encore-browser/ — assets must
+  // resolve from that subpath, not the domain root.
+  base: '/encore-browser/',
   plugins: [react()],
   resolve: {
     alias: {

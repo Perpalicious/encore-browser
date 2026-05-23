@@ -24,8 +24,9 @@ data/categorized/*
 !data/categorized/README.md
 !data/categorized/auction_703264_categorized.json
 
-# Built bundle (regenerate via `python -m build`)
-viewer/src/data/auction_bundle.json
+# Note: viewer/src/data/auction_bundle.json IS committed — GitHub Pages
+# deploys static bundles, so the data file ships in the repo. Regenerate
+# it weekly via `python -m build` and commit the result.
 
 # Playwright
 test-results/

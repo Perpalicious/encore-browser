@@ -98,30 +98,32 @@ You'll see a one-line fidelity report like
 `Fidelity: title 100% (9880/9880), image_url 99.9% (9870/9880).` —
 if `image_url` drops below 95%, viewer cards will mostly show a "NO IMAGE" placeholder; that's a signal the scrape itself was incomplete.
 
-### Step 4 — Build the viewer
+### Step 4 — Commit and push (auto-deploys)
 
 ```bash
-cd viewer && npm run build && cd ..
+git add viewer/src/data/auction_bundle.json
+git commit -m "Update bundle for <DATE>"
+git push
 ```
 
-This compiles the app. You only need to rebuild when either the data changes (i.e., after Step 3) or you update the code.
+A GitHub Actions workflow ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)) watches `main`. On every push it rebuilds the viewer and publishes it to GitHub Pages — usually live within ~60 seconds. You can also trigger a deploy by hand from the Actions tab → **Deploy viewer to GitHub Pages** → **Run workflow**.
+
+The committed bundle (`viewer/src/data/auction_bundle.json`) is what GitHub Pages serves — there is no agent-side data fetching at runtime. Every weekly refresh is one commit of this one file.
 
 ### Step 5 — Open the viewer
 
-**Preview locally:**
+**Live site (after the deploy workflow finishes):**
+```
+https://<your-github-user>.github.io/encore-browser/
+```
+
+**Preview locally before pushing:**
 ```bash
 cd viewer && npm run preview
 ```
-Then open `http://localhost:4173` in your browser. You should see all lots across four tabs: All, Bat's List, Nice Picks, and Watched.
+Then open `http://localhost:4173/encore-browser/` in your browser. You should see all lots across four tabs: All, Bat's List, Nice Picks, and Watched.
 
-**Deploy to GitHub Pages (when ready):**
-```bash
-cd viewer && npm run build
-git add viewer/dist
-git commit -m "Update lots for auction <AUCTION_ID>"
-git push
-```
-Configure GitHub Pages in your repo settings to serve from the `dist` folder (or set up the deployment path that matches your setup).
+> **One-time GitHub Pages setup.** In your repo settings → Pages → **Source: GitHub Actions** (not "Deploy from a branch"). This needs to be done once; after that, every push to `main` redeploys automatically.
 
 ---
 
@@ -145,7 +147,11 @@ The categorized JSON file has empty image URLs. This can happen if the scraper r
 
 **"Viewer build complains that `auction_bundle.json` is not found"**
 
-You need to run Step 3 (the build script) before building the viewer. The viewer data file is not committed to git — it is generated fresh each week.
+You need to run Step 3 (the build script) before building the viewer. The viewer data file is regenerated weekly and committed to git so GitHub Pages can serve it.
+
+**"The GitHub Actions deploy failed with a missing-bundle error"**
+
+The workflow's first check is whether `viewer/src/data/auction_bundle.json` exists. If you committed without running Step 3, that file is stale or missing. Run Step 3, `git add` the bundle, commit, push again.
 
 **"Playwright smoke tests fail to launch the browser"**
 
@@ -168,7 +174,6 @@ The following items were reviewed and deliberately left out of scope for this ve
 - **Automated categorization** — categorization is handled entirely by your external ChatGPT Auction Agent, not by code here.
 - **Programmatic HiBid login** — the scraper uses token-paste mode only. You copy a token from your browser once per session.
 - **Two-day (Sunday + Monday) auction merging** — if an auction spans two days, run the scraper for each day and process them separately for now.
-- **GitHub Actions auto-deploy** — deployment to GitHub Pages is a manual `git push` step.
 - **Conflict detection between auctions** — no cross-auction deduplication.
 - **Accessibility audit** — basic keyboard navigation is present; a full WCAG audit has not been done.
 - **Mobile gestures** — tap to expand works; swipe gestures are not implemented.

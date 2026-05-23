@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["scraper/tests", "build/tests"]
+testpaths = ["scraper/tests", "build/tests", "tools/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -28,4 +28,4 @@ addopts = "-v"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["scraper*", "build*"]
+include = ["scraper*", "build*", "diff_categorized*", "merge_categorized*"]

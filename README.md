@@ -60,7 +60,9 @@ The `.env` file is where you put your HiBid token when needed (see Troubleshooti
 
 ## The weekly workflow
 
-### Step 1 — Scrape the auction
+Auctions grow as items are added throughout the week. The scraper is cheap to re-run (~80 s for 20k items), but the Auction Agent is the expensive step (~30 min for a full pass). So the **default** weekly flow is **incremental**: re-scrape everything, but only send the *new* lots to the Agent and merge them into the existing categorized file. A full re-categorize is the fallback.
+
+### Step 1 — Re-scrape the auction (always)
 
 Find the auction ID in the URL on encoreauctions.hibid.com. For example, if the catalog page URL is `https://encoreauctions.hibid.com/catalog/741675`, the ID is `741675`.
 
@@ -69,17 +71,41 @@ source .venv/bin/activate   # if not already active
 python -m scraper --auction-id <AUCTION_ID> --output data/raw/auction_<AUCTION_ID>.json
 ```
 
-This pulls all lots from HiBid and saves them as a JSON file. If you get a Cloudflare 403 error, see the Troubleshooting section below.
+This pulls all lots from HiBid and overwrites the raw JSON. If you get a Cloudflare 403 error, see the Troubleshooting section below.
 
-### Step 2 — Run the Auction Agent
+### Step 2 — Categorize just the new lots
 
-1. Open ChatGPT Enterprise and go to your Auction Agent.
-2. Drag the file `data/raw/auction_<AUCTION_ID>.json` into the chat.
-3. Wait for the Agent to return a categorized JSON file. This is where Bat's List flagging, Nice Picks, and confidence scoring happen.
-4. Save the returned file as:
-   ```
-   data/categorized/auction_<AUCTION_ID>_categorized.json
-   ```
+**On the first run for a given auction** (no existing categorized file yet), skip to "Full categorize" below.
+
+**On subsequent runs**, extract only the lots that are not yet categorized:
+
+```bash
+python -m diff_categorized \
+  --raw      data/raw/auction_<AUCTION_ID>.json \
+  --existing data/categorized/auction_<AUCTION_ID>_categorized.json \
+  --output   data/categorized/auction_<AUCTION_ID>_to_categorize.json
+```
+
+You'll see `Found N new lots out of M total raw, K existing categorized.` If `N` is 0, the script exits non-zero and tells you there's nothing to do — skip straight to Step 3.
+
+Otherwise, open ChatGPT Enterprise, go to your Auction Agent, drag in `data/categorized/auction_<AUCTION_ID>_to_categorize.json`, wait for it to return a categorized JSON, save it (any path is fine — e.g. `data/categorized/auction_<AUCTION_ID>_just_new.json`), then merge it back in:
+
+```bash
+python -m merge_categorized \
+  --existing data/categorized/auction_<AUCTION_ID>_categorized.json \
+  --new      data/categorized/auction_<AUCTION_ID>_just_new.json \
+  --output   data/categorized/auction_<AUCTION_ID>_categorized.json
+```
+
+The merge is in-place (output path matches existing) with an atomic tmp-file rename, so an interrupted run can't corrupt the existing file. New entries override existing ones on a `lot_number` collision — so if you ever need to fix a miscategorization, just re-categorize that one lot and re-run merge.
+
+**Full categorize (fallback / first run).** When you want every lot re-evaluated — e.g. you've updated the Agent's Bat's List rules and want them applied retroactively — drag the **raw** JSON into the Agent and save its full response, overwriting:
+
+```
+data/categorized/auction_<AUCTION_ID>_categorized.json
+```
+
+Then continue to Step 3.
 
 ### Step 3 — Build the viewer data
 

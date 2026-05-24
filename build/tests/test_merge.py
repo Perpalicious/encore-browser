@@ -109,6 +109,69 @@ class TestUnmatchedItems:
         with pytest.raises(MergeError):
             merge([], [_cat_item()])
 
+    def test_error_message_suggests_drop_orphans(self):
+        raw = [_raw_item(id=100001)]
+        cat = [_cat_item(lot_number="999999")]
+        with pytest.raises(MergeError) as exc:
+            merge(raw, cat)
+        assert "--drop-orphans" in str(exc.value)
+
+
+class TestDropOrphans:
+    def test_drop_orphans_keeps_matched_drops_unmatched(self, caplog):
+        import logging
+        caplog.set_level(logging.WARNING, logger="build.merge")
+        raw = [_raw_item(id=100001, title="real one")]
+        cat = [
+            _cat_item(lot_number="100001"),                  # matches
+            _cat_item(lot_number="ORPHAN_A", category="X"),
+            _cat_item(lot_number="ORPHAN_B"),
+        ]
+        merged = merge(raw, cat, drop_orphans=True)
+        assert len(merged) == 1
+        assert merged[0]["title"] == "real one"
+        # Each orphan logged with its lot_number
+        warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+        assert any("ORPHAN_A" in m for m in warnings)
+        assert any("ORPHAN_B" in m for m in warnings)
+        # Summary line present
+        assert any("Dropped 2 orphan items" in m for m in warnings)
+
+    def test_drop_orphans_no_orphans_no_warnings(self, caplog):
+        import logging
+        caplog.set_level(logging.WARNING, logger="build.merge")
+        raw = [_raw_item(id=100001)]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat, drop_orphans=True)
+        assert len(merged) == 1
+        assert caplog.records == []
+
+    def test_drop_orphans_all_orphan_returns_empty(self, caplog):
+        import logging
+        caplog.set_level(logging.WARNING, logger="build.merge")
+        raw = []
+        cat = [_cat_item(lot_number="X")]
+        merged = merge(raw, cat, drop_orphans=True)
+        assert merged == []
+        assert any("Dropped 1 orphan items" in r.getMessage() for r in caplog.records)
+
+    def test_drop_orphans_logs_enrichment_fields(self, caplog):
+        import logging
+        caplog.set_level(logging.WARNING, logger="build.merge")
+        raw = []
+        cat = [_cat_item(
+            lot_number="X",
+            category="Electronics",
+            bats_category="Smart Home",
+            is_bats_list=True,
+        )]
+        merge(raw, cat, drop_orphans=True)
+        record_msg = next(
+            r.getMessage() for r in caplog.records if "lot_number='X'" in r.getMessage()
+        )
+        assert "Electronics" in record_msg
+        assert "Smart Home" in record_msg
+
 
 class TestFieldPrecedence:
     def test_raw_fields_win_over_blank_agent_fields(self):

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -67,7 +68,23 @@ def main() -> None:
         metavar="PATH",
         help="Output bundle path (e.g. viewer/src/data/auction_bundle.json).",
     )
+    parser.add_argument(
+        "--drop-orphans",
+        action="store_true",
+        help=(
+            "If some categorized items have no matching raw lot (e.g. removed "
+            "from the auction between scrapes), log each as a warning and "
+            "exclude them from the bundle instead of failing. Recommended for "
+            "the routine weekly build; omit it for first-time / debugging runs "
+            "where you want a hard error on any mismatch."
+        ),
+    )
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s  %(message)s",
+    )
 
     raw_path = Path(args.raw)
     cat_path = Path(args.categorized)
@@ -85,11 +102,19 @@ def main() -> None:
     print(report_overlap(raw_items, categorized_items))
 
     try:
-        merged = merge(raw_items, categorized_items)
+        merged = merge(
+            raw_items, categorized_items, drop_orphans=args.drop_orphans
+        )
     except MergeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
+    dropped = len(categorized_items) - len(merged)
+    if args.drop_orphans and dropped:
+        print(
+            f"Dropped {dropped} orphan items from bundle "
+            f"(categorized items with no raw match)."
+        )
     print(f"Joined {len(merged)} items. Validating…")
 
     from build.transform import transform_all

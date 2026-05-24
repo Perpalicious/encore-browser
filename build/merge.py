@@ -32,8 +32,11 @@ silently drop.
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class MergeError(RuntimeError):
@@ -119,39 +122,73 @@ def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
 
 
 def merge(
-    raw_items: list[dict[str, Any]], categorized_items: list[dict[str, Any]]
+    raw_items: list[dict[str, Any]],
+    categorized_items: list[dict[str, Any]],
+    *,
+    drop_orphans: bool = False,
 ) -> list[dict[str, Any]]:
     """
-    Join categorized items to their raw counterparts. Returns one merged
-    item per categorized item. Raises ``MergeError`` if any categorized
-    item is unmatched.
+    Join categorized items to their raw counterparts.
+
+    Default behaviour: raise ``MergeError`` if any categorized item is
+    unmatched (e.g. a lot was removed from the auction between scrapes).
+
+    With ``drop_orphans=True``: log each orphan via ``logging.warning`` with
+    its lot_number and any available enrichment fields (category / subcategory
+    / bats_*), exclude it from the result, and continue. Useful as the
+    routine weekly setting where occasional dropped lots are expected.
     """
     by_id, by_lot_number = _build_raw_index(raw_items)
     merged: list[dict[str, Any]] = []
-    unmatched: list[tuple[int, str]] = []
+    unmatched: list[tuple[int, str, dict[str, Any]]] = []
 
     for idx, cat in enumerate(categorized_items):
         key = str(cat.get("lot_number") or "")
         raw = by_id.get(key) or by_lot_number.get(key)
         if raw is None:
-            unmatched.append((idx, key))
+            unmatched.append((idx, key, cat))
             continue
         merged.append(_merge_one(raw, cat))
 
-    if unmatched:
-        # Show up to 5 examples so the user can diagnose without dumping
-        # thousands of lines on a major schema drift.
-        examples = ", ".join(f"#{i}={k!r}" for i, k in unmatched[:5])
-        suffix = "" if len(unmatched) <= 5 else f" (+{len(unmatched) - 5} more)"
-        raise MergeError(
-            f"Join failed: {len(unmatched)} of {len(categorized_items)} categorized "
-            f"items could not be matched to any raw item by id or lot_number. "
-            f"Examples: {examples}{suffix}. Re-run the scraper for this auction "
-            f"and re-upload to the Auction Agent so the two files describe the "
-            f"same lots."
-        )
+    if not unmatched:
+        return merged
 
-    return merged
+    if drop_orphans:
+        for idx, key, cat in unmatched:
+            enrichment = {
+                k: cat.get(k)
+                for k in (
+                    "category",
+                    "subcategory",
+                    "bats_category",
+                    "bats_subcategory",
+                    "is_bats_list",
+                    "is_nice_pick",
+                )
+                if cat.get(k)
+            }
+            logger.warning(
+                "Dropping orphan categorized item #%d (lot_number=%r): %s",
+                idx,
+                key,
+                enrichment or "no enrichment fields",
+            )
+        logger.warning(
+            "Dropped %d orphan items from bundle "
+            "(categorized items with no raw match)",
+            len(unmatched),
+        )
+        return merged
+
+    examples = ", ".join(f"#{i}={k!r}" for i, k, _ in unmatched[:5])
+    suffix = "" if len(unmatched) <= 5 else f" (+{len(unmatched) - 5} more)"
+    raise MergeError(
+        f"Join failed: {len(unmatched)} of {len(categorized_items)} categorized "
+        f"items could not be matched to any raw item by id or lot_number. "
+        f"Examples: {examples}{suffix}. Re-run the scraper for this auction "
+        f"and re-upload to the Auction Agent so the two files describe the "
+        f"same lots — or pass --drop-orphans to skip them and continue."
+    )
 
 
 def report_overlap(

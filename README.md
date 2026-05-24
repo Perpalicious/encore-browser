@@ -113,12 +113,15 @@ Then continue to Step 3.
 python -m build \
   --raw         data/raw/auction_<AUCTION_ID>.json \
   --categorized data/categorized/auction_<AUCTION_ID>_categorized.json \
-  --output      viewer/src/data/auction_bundle.json
+  --output      viewer/src/data/auction_bundle.json \
+  --drop-orphans
 ```
 
 This **joins** the two files on lot number and produces the bundle the viewer reads. The raw scrape supplies titles, images, lot URLs, descriptions and conditions; the categorized file supplies categories, Bat's List flags, Nice Picks and confidence scores.
 
-Both files must describe the same auction. If any categorized lot can't be matched to a raw lot, the script lists the unmatched ones and exits without writing a partial bundle — re-run the scraper for that auction and re-upload to the Agent so the two files line up.
+`--drop-orphans` is the recommended default for routine weekly builds. It tolerates the common case where lots have been removed from the auction between scrapes — each orphan categorized item is logged as a `WARNING` with its lot_number and enrichment fields, then excluded from the bundle. A `Dropped N orphan items` summary line confirms how many were skipped.
+
+**Omit `--drop-orphans`** for first-time / debugging runs where you want the build to fail loudly on any mismatch. Without the flag, the script lists the unmatched lots and exits non-zero without writing a partial bundle, which is useful when investigating an unexpected schema drift in the Agent's output.
 
 You'll see a one-line fidelity report like
 `Fidelity: title 100% (9880/9880), image_url 99.9% (9870/9880).` —

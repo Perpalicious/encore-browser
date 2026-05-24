@@ -110,6 +110,131 @@ def _redact_cookies(cookies: dict, text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Retry policy
+# ---------------------------------------------------------------------------
+
+# Exponential backoff for transient errors (5xx / connection / timeout).
+# Five attempts after the initial: 2s, 4s, 8s, 16s, 32s.
+_RETRY_BACKOFF_5XX: tuple[float, ...] = (2.0, 4.0, 8.0, 16.0, 32.0)
+
+# 429 backoff: respect Retry-After when present, else 60s. Max 3 retries.
+_RETRY_429_MAX = 3
+_RETRY_429_DEFAULT_WAIT = 60.0
+
+
+def _parse_retry_after(header_value: str | None) -> float | None:
+    """Parse an HTTP Retry-After header (seconds form only)."""
+    if not header_value:
+        return None
+    try:
+        return float(header_value.strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _post_with_retry(session, url: str, *, label: str, **kwargs):
+    """
+    Wrap ``session.post`` with a retry policy:
+
+    - HTTP 5xx, connection errors, timeouts: exponential backoff
+      ``_RETRY_BACKOFF_5XX`` (5 retries: 2 → 4 → 8 → 16 → 32 seconds).
+    - HTTP 429: respect ``Retry-After`` header (seconds form) if present,
+      otherwise wait ``_RETRY_429_DEFAULT_WAIT`` (60s). Max 3 retries.
+    - HTTP 4xx other than 429: return immediately, no retry — client errors
+      don't fix themselves.
+    - HTTP 2xx (and any 3xx the client follows): return immediately.
+
+    Returns the final ``Response`` (which may itself carry a 5xx if every
+    retry exhausted). Raises the underlying exception only if the *last*
+    attempt itself raised.
+
+    ``label`` is a short identifier used in retry log lines so the user can
+    see which page failed.
+    """
+    last_exc: Exception | None = None
+    attempt_429 = 0
+    attempt_5xx = 0
+    # Total attempt budget: 1 initial + max(5xx-retries, 429-retries).
+    # We loop with explicit per-class accounting so the two budgets compose.
+    while True:
+        try:
+            resp = session.post(url, **kwargs)
+            last_exc = None
+        except Exception as exc:
+            # Connection error / timeout / unexpected client failure — treat
+            # as transient. Reuse the 5xx backoff schedule.
+            last_exc = exc
+            if attempt_5xx >= len(_RETRY_BACKOFF_5XX):
+                # Out of budget — re-raise so the caller sees the real error.
+                raise
+            wait = _RETRY_BACKOFF_5XX[attempt_5xx]
+            attempt_5xx += 1
+            logger.warning(
+                "%s attempt %d/%d raised %s: %s; retrying in %ss…",
+                label,
+                attempt_5xx,
+                len(_RETRY_BACKOFF_5XX),
+                type(exc).__name__,
+                exc,
+                wait,
+            )
+            time.sleep(wait)
+            continue
+
+        status = getattr(resp, "status_code", 0)
+        if 500 <= status <= 599:
+            if attempt_5xx >= len(_RETRY_BACKOFF_5XX):
+                logger.error(
+                    "%s exhausted %d retries on HTTP %s; giving up.",
+                    label,
+                    len(_RETRY_BACKOFF_5XX),
+                    status,
+                )
+                return resp
+            wait = _RETRY_BACKOFF_5XX[attempt_5xx]
+            attempt_5xx += 1
+            logger.warning(
+                "%s attempt %d/%d failed (status: %d), retrying in %ss…",
+                label,
+                attempt_5xx,
+                len(_RETRY_BACKOFF_5XX),
+                status,
+                wait,
+            )
+            time.sleep(wait)
+            continue
+
+        if status == 429:
+            if attempt_429 >= _RETRY_429_MAX:
+                logger.error(
+                    "%s exhausted %d retries on HTTP 429; giving up.",
+                    label,
+                    _RETRY_429_MAX,
+                )
+                return resp
+            wait = (
+                _parse_retry_after(resp.headers.get("Retry-After"))
+                if hasattr(resp, "headers")
+                else None
+            )
+            if wait is None:
+                wait = _RETRY_429_DEFAULT_WAIT
+            attempt_429 += 1
+            logger.warning(
+                "%s attempt %d/%d hit HTTP 429, waiting %ss (Retry-After)…",
+                label,
+                attempt_429,
+                _RETRY_429_MAX,
+                wait,
+            )
+            time.sleep(wait)
+            continue
+
+        # Any other status (2xx, 3xx, 4xx other than 429) — return now.
+        return resp
+
+
+# ---------------------------------------------------------------------------
 # Response validation
 # ---------------------------------------------------------------------------
 
@@ -135,16 +260,20 @@ def _is_valid_graphql(resp) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _try_anon(session, payload: dict[str, Any]):
+def _try_anon(session, payload: dict[str, Any], *, label: str = "anon POST"):
     """Anonymous POST — no Authorization, no cookies."""
     try:
-        return session.post(GRAPHQL_URL, json=payload, timeout=REQUEST_TIMEOUT)
+        return _post_with_retry(
+            session, GRAPHQL_URL, label=label, json=payload, timeout=REQUEST_TIMEOUT
+        )
     except Exception as exc:
         logger.debug("Anonymous request error: %s", exc)
         return None
 
 
-def _try_cookie_seeded(session, auction_id: int, payload: dict[str, Any]):
+def _try_cookie_seeded(
+    session, auction_id: int, payload: dict[str, Any], *, label: str = "cookie-seeded POST"
+):
     """GET catalog page first to acquire cookies, then POST."""
     catalog_url = CATALOG_URL_TEMPLATE.format(auction_id=auction_id)
     try:
@@ -161,8 +290,10 @@ def _try_cookie_seeded(session, auction_id: int, payload: dict[str, Any]):
         "Referer": catalog_url,
     }
     try:
-        return session.post(
+        return _post_with_retry(
+            session,
             GRAPHQL_URL,
+            label=label,
             json=payload,
             headers=post_headers,
             timeout=REQUEST_TIMEOUT,
@@ -172,12 +303,19 @@ def _try_cookie_seeded(session, auction_id: int, payload: dict[str, Any]):
         return None
 
 
-def _try_bearer(session, token: str, payload: dict[str, Any]):
+def _try_bearer(
+    session, token: str, payload: dict[str, Any], *, label: str = "bearer POST"
+):
     """POST with Authorization: Bearer {token}."""
     headers = {"Authorization": f"Bearer {token}"}
     try:
-        return session.post(
-            GRAPHQL_URL, json=payload, headers=headers, timeout=REQUEST_TIMEOUT
+        return _post_with_retry(
+            session,
+            GRAPHQL_URL,
+            label=label,
+            json=payload,
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
         )
     except Exception as exc:
         safe_msg = _redact_token(token, str(exc))
@@ -238,8 +376,10 @@ def _negotiate_page_length(
 def _fetch_auction_name(session, auction_id: int) -> str:
     """Best-effort lookup of the human-readable auction name."""
     try:
-        resp = session.post(
+        resp = _post_with_retry(
+            session,
             GRAPHQL_URL,
+            label=f"auction-info {auction_id}",
             json={
                 "operationName": "AuctionInfo",
                 "variables": {"id": auction_id},
@@ -279,17 +419,18 @@ def fetch_all_lots(auction_id: int) -> tuple[str, list[dict[str, Any]]]:
     token: Optional[str] = os.environ.get("HIBID_TOKEN") or None
 
     with _make_session() as session:
-        # Probe auth strategies in priority order
-        def anon_fn(s, payload):
-            return _try_anon(s, payload)
+        # Probe auth strategies in priority order; each auth fn accepts a
+        # `label` so retry logs identify which page is being fetched.
+        def anon_fn(s, payload, *, label="anon POST"):
+            return _try_anon(s, payload, label=label)
 
-        def cookie_fn(s, payload):
-            return _try_cookie_seeded(s, auction_id, payload)
+        def cookie_fn(s, payload, *, label="cookie-seeded POST"):
+            return _try_cookie_seeded(s, auction_id, payload, label=label)
 
-        def bearer_fn(s, payload):
+        def bearer_fn(s, payload, *, label="bearer POST"):
             if not token:
                 return None
-            return _try_bearer(s, token, payload)
+            return _try_bearer(s, token, payload, label=label)
 
         chosen_fn: Optional[Callable] = None
         chosen_name: Optional[str] = None
@@ -336,23 +477,39 @@ def fetch_all_lots(auction_id: int) -> tuple[str, list[dict[str, Any]]]:
 
         all_items: list[dict[str, Any]] = list(results)
         page_number = 2
+        total_pages = -(-total_count // page_length) if page_length else 1
         while (page_number - 1) * page_length < total_count:
             time.sleep(RATE_LIMIT_SLEEP)
             payload = _build_payload(auction_id, page_number, page_length)
-            resp = chosen_fn(session, payload)
+            page_label = f"page {page_number}/{total_pages}"
+            resp = chosen_fn(session, payload, label=page_label)
             if not _is_valid_graphql(resp):
-                status = getattr(resp, "status_code", "no response") if resp is not None else "no response"
-                raise RuntimeError(f"Page {page_number} fetch failed (status: {status}).")
+                status = (
+                    getattr(resp, "status_code", "no response")
+                    if resp is not None
+                    else "no response"
+                )
+                raise RuntimeError(
+                    f"Page {page_number}/{total_pages} fetch failed after all "
+                    f"retries (status: {status}). {len(all_items)} of "
+                    f"{total_count} items had been fetched successfully before "
+                    f"the failure. Re-run the scraper; previously-fetched pages "
+                    f"will be refetched."
+                )
             paged = _paged_results(resp)
             if paged is None:
-                raise RuntimeError(f"Page {page_number} returned no pagedResults.")
+                raise RuntimeError(
+                    f"Page {page_number}/{total_pages} returned no pagedResults. "
+                    f"{len(all_items)} of {total_count} items had been fetched "
+                    f"successfully before the failure."
+                )
             page_results = paged.get("results") or []
             all_items.extend(page_results)
 
             logger.info(
                 "Fetched page %d/%d (%d items so far)",
                 page_number,
-                -(-total_count // page_length),
+                total_pages,
                 len(all_items),
             )
             page_number += 1

@@ -165,6 +165,144 @@ class TestAllAuthFails:
             client.fetch_all_lots(741675)
 
 
+class TestPostWithRetry:
+    """Direct tests for the _post_with_retry helper."""
+
+    def _patch_no_sleep(self, monkeypatch):
+        slept: list[float] = []
+        monkeypatch.setattr(client.time, "sleep", lambda s: slept.append(s))
+        return slept
+
+    def test_5xx_recovers_on_second_attempt(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        session.post.side_effect = [
+            FakeResponse(502, content_type="text/html"),
+            FakeResponse(200, {"data": {"x": 1}}),
+        ]
+        resp = client._post_with_retry(session, "http://x", label="test")
+        assert resp.status_code == 200
+        assert session.post.call_count == 2
+        # First retry uses 2s
+        assert slept == [2.0]
+
+    def test_5xx_exhausts_all_retries(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        # 6 total responses needed (1 initial + 5 retries), all 502
+        session.post.side_effect = [FakeResponse(502, content_type="text/html")] * 6
+        resp = client._post_with_retry(session, "http://x", label="test")
+        # Returns the final 5xx so the caller can decide what to do
+        assert resp.status_code == 502
+        assert session.post.call_count == 6
+        # Backoffs: 2, 4, 8, 16, 32
+        assert slept == [2.0, 4.0, 8.0, 16.0, 32.0]
+
+    def test_4xx_immediate_no_retry(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        session.post.return_value = FakeResponse(401, {"errors": [{"message": "auth"}]})
+        resp = client._post_with_retry(session, "http://x", label="test")
+        assert resp.status_code == 401
+        assert session.post.call_count == 1
+        assert slept == []
+
+    def test_403_no_retry(self, monkeypatch):
+        """Cloudflare-style 403 must not retry — it's a client/credential issue."""
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        session.post.return_value = FakeResponse(403, content_type="text/html")
+        resp = client._post_with_retry(session, "http://x", label="test")
+        assert resp.status_code == 403
+        assert session.post.call_count == 1
+        assert slept == []
+
+    def test_429_respects_retry_after_header(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        # 429 with Retry-After: 5, then 200
+        throttled = FakeResponse(429, content_type="text/plain")
+        throttled.headers = {"content-type": "text/plain", "Retry-After": "5"}
+        session.post.side_effect = [throttled, FakeResponse(200, {"data": {}})]
+        resp = client._post_with_retry(session, "http://x", label="test")
+        assert resp.status_code == 200
+        assert slept == [5.0]
+
+    def test_429_without_header_uses_60s_default(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        throttled = FakeResponse(429, content_type="text/plain")
+        throttled.headers = {"content-type": "text/plain"}  # no Retry-After
+        session.post.side_effect = [throttled, FakeResponse(200, {"data": {}})]
+        client._post_with_retry(session, "http://x", label="test")
+        assert slept == [60.0]
+
+    def test_429_exhausts_after_three_retries(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        throttled = FakeResponse(429, content_type="text/plain")
+        throttled.headers = {"content-type": "text/plain", "Retry-After": "1"}
+        session.post.side_effect = [throttled] * 4  # 1 initial + 3 retries
+        resp = client._post_with_retry(session, "http://x", label="test")
+        assert resp.status_code == 429
+        assert session.post.call_count == 4
+        assert slept == [1.0, 1.0, 1.0]
+
+    def test_connection_error_retried_as_transient(self, monkeypatch):
+        slept = self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        session.post.side_effect = [
+            ConnectionError("kaput"),
+            FakeResponse(200, {"data": {}}),
+        ]
+        resp = client._post_with_retry(session, "http://x", label="test")
+        assert resp.status_code == 200
+        assert slept == [2.0]
+
+    def test_connection_error_propagates_after_exhaustion(self, monkeypatch):
+        self._patch_no_sleep(monkeypatch)
+        session = MagicMock()
+        session.post.side_effect = ConnectionError("permanent")
+        with pytest.raises(ConnectionError, match="permanent"):
+            client._post_with_retry(session, "http://x", label="test")
+        # 1 initial + 5 retries = 6 attempts before exhaustion
+        assert session.post.call_count == 6
+
+
+class TestPaginationFailureMessage:
+    """The pagination error message must call out lost progress."""
+
+    def test_page_failure_includes_progress(self, monkeypatch):
+        monkeypatch.delenv("HIBID_TOKEN", raising=False)
+        monkeypatch.setattr(client, "_PAGE_LENGTHS", [2])
+        # All retries on the 502 must run (5 backoffs); skip sleeps.
+        monkeypatch.setattr(client.time, "sleep", lambda _s: None)
+
+        page1 = _paged([{"id": 1, "lotNumber": "1"}, {"id": 2, "lotNumber": "2"}],
+                       total=4, page_number=1, page_length=2)
+        page2_502 = FakeResponse(502, content_type="text/html")
+        auction = _auction("TEST")
+
+        fake_session = MagicMock()
+        fake_session.__enter__.return_value = fake_session
+        fake_session.__exit__.return_value = False
+        fake_session.post.side_effect = [
+            FakeResponse(200, page1),    # probe
+            FakeResponse(200, page1),    # negotiate
+            FakeResponse(200, auction),  # auction-info
+            # page 2: 6 attempts all 502 (1 initial + 5 retries)
+            page2_502, page2_502, page2_502, page2_502, page2_502, page2_502,
+        ]
+        monkeypatch.setattr(client, "_make_session", lambda: fake_session)
+
+        with pytest.raises(RuntimeError) as exc:
+            client.fetch_all_lots(741675)
+        msg = str(exc.value)
+        assert "Page 2/2" in msg or "Page 2" in msg
+        assert "502" in msg
+        assert "2 of 4 items had been fetched" in msg
+
+
 class TestRedactionStillWorks:
     """The redaction helpers are still exported and effective after the rewrite."""
 

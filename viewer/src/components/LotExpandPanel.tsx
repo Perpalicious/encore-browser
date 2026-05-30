@@ -109,14 +109,6 @@ export function LotExpandPanel({ lot, onCollapse, fullRow = false }: Props) {
                 </dd>
               </>
             )}
-            {lot.is_nice_pick && lot.nice_pick_reason && (
-              <>
-                <dt className="uppercase tracking-[0.14em] font-mono text-ink2/70 dark:text-bone2/70">
-                  Pick Reason
-                </dt>
-                <dd className="text-ink dark:text-bone">{lot.nice_pick_reason}</dd>
-              </>
-            )}
           </dl>
 
           <div className="mt-6 flex items-center gap-2 flex-wrap">

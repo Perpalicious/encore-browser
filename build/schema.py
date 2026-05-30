@@ -22,12 +22,10 @@ class Lot(BaseModel):
     category_path: list[str]
     is_bat: bool
     bat_buckets: list[str]
-    is_nice_pick: bool
-    nice_pick_reason: str
     confidence: Literal["low", "medium", "high"]
 
     @field_validator("lot_number", "title", "description", "lot_url", "category",
-                     "subcategory", "nice_pick_reason", "thumb_url", "image_url",
+                     "subcategory", "thumb_url", "image_url",
                      mode="before")
     @classmethod
     def must_be_str(cls, v: object) -> str:

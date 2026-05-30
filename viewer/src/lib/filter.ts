@@ -32,8 +32,6 @@ export function filterLots(
       if (batBucket !== 'All') {
         rows = rows.filter((l) => l.bat_buckets.includes(batBucket));
       }
-    } else if (tab === 'nice') {
-      rows = rows.filter((l) => l.is_nice_pick);
     }
     if (dayFilter !== 'Both') rows = rows.filter((l) => l.day === dayFilter);
     if (categoryPath.length > 0) {

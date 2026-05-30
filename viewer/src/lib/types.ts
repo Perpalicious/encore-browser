@@ -2,7 +2,7 @@ export type Condition = 'New' | 'Like New' | 'Good' | 'Fair' | 'Heavily Used';
 export type Confidence = 'low' | 'medium' | 'high';
 export type DayFilter = 'Sunday' | 'Monday' | 'Both';
 export type Density = 'standard' | 'compact';
-export type Tab = 'all' | 'bat' | 'nice' | 'watched';
+export type Tab = 'all' | 'bat' | 'watched';
 
 export interface Lot {
   day: string;
@@ -18,7 +18,5 @@ export interface Lot {
   category_path: string[];
   is_bat: boolean;
   bat_buckets: string[];
-  is_nice_pick: boolean;
-  nice_pick_reason: string;
   confidence: Confidence;
 }

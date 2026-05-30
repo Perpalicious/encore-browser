@@ -15,8 +15,6 @@ function lot(partial: Partial<Lot> & { lot_number: string; title: string }): Lot
     category_path: [],
     is_bat: false,
     bat_buckets: [],
-    is_nice_pick: false,
-    nice_pick_reason: '',
     confidence: 'low',
     ...partial,
   };

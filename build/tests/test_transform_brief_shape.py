@@ -73,8 +73,10 @@ def test_shape_a_basic_transform():
     assert lot.condition == "Good"
     assert lot.is_bat is True
     assert lot.bat_buckets == ["Home Decor", "Lighting"]
-    assert lot.is_nice_pick is True
-    assert lot.nice_pick_reason == "Great vintage find"
+    # Nice Picks removed: those fields must not exist on the Lot model even
+    # though the input fixture still carries them (they're ignored).
+    assert not hasattr(lot, "is_nice_pick")
+    assert not hasattr(lot, "nice_pick_reason")
     assert lot.confidence == "medium"
     assert lot.subcategory == "Lighting"
     assert lot.category == "Home & Garden"
@@ -93,7 +95,6 @@ def test_shape_a_minimal_no_optional():
     lot = Lot(**raw)
     assert lot.is_bat is False
     assert lot.bat_buckets == []
-    assert lot.is_nice_pick is False
     assert lot.condition is None
     assert lot.thumb_url == ""
     assert lot.image_url == ""

@@ -15,10 +15,6 @@ const COPY: Record<Tab, { title: string; body: string }> = {
     title: "No matches in Bat's List",
     body: 'Try a different bucket — or clear the filters to see everything.',
   },
-  nice: {
-    title: 'No Nice Picks found',
-    body: "Nice Picks are highlighted by the Auction Agent. Try clearing filters or switching to 'All' to browse everything.",
-  },
   all: {
     title: 'Nothing matches those filters',
     body: 'Loosen the search, switch days, or pick a different category.',

@@ -124,9 +124,8 @@ def test_bat_buckets_invalid_type_exits_1():
             lot_url="https://encoreauctions.hibid.com/lot/1/x",
             category="",
             subcategory="",
+            category_path=[],
             is_bat=False,
             bat_buckets="not-a-list",  # type: ignore
-            is_nice_pick=False,
-            nice_pick_reason="",
             confidence="low",
         )

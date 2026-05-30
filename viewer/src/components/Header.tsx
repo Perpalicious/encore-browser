@@ -131,12 +131,6 @@ export function Header({
                 testId="tab-bat"
               />
               <TabButton
-                active={tab === 'nice'}
-                onClick={() => onTabChange('nice')}
-                label="Nice Picks"
-                testId="tab-nice"
-              />
-              <TabButton
                 active={tab === 'watched'}
                 onClick={() => onTabChange('watched')}
                 label="Watched"
@@ -296,12 +290,6 @@ export function Header({
                 label="Bat's List"
                 sparkle
                 testId="tab-bat"
-              />
-              <TabButton
-                active={tab === 'nice'}
-                onClick={() => onTabChange('nice')}
-                label="Nice Picks"
-                testId="tab-nice"
               />
               <TabButton
                 active={tab === 'watched'}

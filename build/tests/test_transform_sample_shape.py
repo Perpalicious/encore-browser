@@ -76,7 +76,6 @@ def test_no_nulls_in_required_str_fields(bundle):
         assert lot.subcategory is not None
         assert lot.thumb_url is not None
         assert lot.image_url is not None
-        assert lot.nice_pick_reason is not None
         assert lot.day is not None
 
 
@@ -87,17 +86,11 @@ def test_subcategory_from_bats_subcategory(sample_items, bundle):
             assert lot.subcategory == inp["bats_subcategory"]
 
 
-def test_nice_pick_reason_from_nice_pick_subcategory(sample_items, bundle):
-    """If nice_pick_subcategory is set, nice_pick_reason should use it."""
-    for inp, lot in zip(sample_items, bundle):
-        if inp.get("nice_pick_subcategory"):
-            assert lot.nice_pick_reason == inp["nice_pick_subcategory"]
-
-
-def test_is_nice_pick_count(sample_items, bundle):
-    input_nice = sum(1 for i in sample_items if i["is_nice_pick"])
-    output_nice = sum(1 for lot in bundle if lot.is_nice_pick)
-    assert input_nice == output_nice
+def test_nice_pick_fields_not_emitted(bundle):
+    """Nice Picks were removed — the Lot model must not carry those fields."""
+    for lot in bundle:
+        assert not hasattr(lot, "is_nice_pick")
+        assert not hasattr(lot, "nice_pick_reason")
 
 
 def test_all_days_populated(bundle):

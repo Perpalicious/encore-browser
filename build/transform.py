@@ -102,12 +102,10 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
     # Categories come from HiBid's native tree (via the raw scrape's
     # category_path), NOT from the agent. Fallback to bats_subcategory only
     # when no native path is present (standalone categorized input).
+    # Nice Picks were removed; any nice_pick_* fields in the input are ignored.
     category_path, category, subcategory = _resolve_categories(
-        item, fallback_subcategory=bats_sub or (item.get("nice_pick_subcategory") or "")
+        item, fallback_subcategory=bats_sub
     )
-
-    # nice_pick_reason: prefer nice_pick_subcategory, then nice_pick_category
-    nice_pick_reason = (item.get("nice_pick_subcategory") or "") or (item.get("nice_pick_category") or "")
 
     # day: from input field; derive from close_at if missing
     day = item.get("day") or _derive_day_from_close_at(item.get("close_at"))
@@ -126,8 +124,6 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         "category_path": category_path,
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
-        "is_nice_pick": bool(item.get("is_nice_pick", False)),
-        "nice_pick_reason": nice_pick_reason,
         "confidence": _bucket_confidence(item.get("predicted_confidence")),
     }
 
@@ -168,8 +164,6 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "category_path": category_path,
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
-        "is_nice_pick": bool(item.get("is_nice_pick", False)),
-        "nice_pick_reason": item.get("nice_pick_reason") or "",
         "confidence": confidence,
     }
 

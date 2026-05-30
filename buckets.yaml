@@ -1,0 +1,347 @@
+# Bat's List — curated item types to flag at auction.
+# The Agent matches SEMANTICALLY against these descriptions.
+# `examples` are illustrative hints, NOT an exhaustive whitelist —
+# generic/off-brand items still match if they fit the description.
+#
+# `group` assigns each bucket to a top-level group for two-level
+# Bat's List navigation in the viewer. The Agent IGNORES `group`
+# (it only matters to the build script / viewer).
+
+buckets:
+  - name: "Smart home"
+    group: "Electronics & gaming"
+    description: >
+      Smart lighting and home-automation devices — smart bulbs, LED light
+      strips, smart switches and plugs, smart thermostats, smart hubs,
+      sensors, video doorbells, and anything app- or voice-controlled for
+      the home. Branded or off-brand both qualify.
+    examples: ["Hue", "Lifx", "Govee", "Lepro", "Ecobee", "Nest", "Wyze", "Kasa", "Sengled"]
+
+  - name: "Smart locks"
+    group: "Electronics & gaming"
+    description: >
+      Smart door locks, smart deadbolts, keyless/keypad entry locks, and
+      connected lock hardware. Branded or generic.
+    examples: ["August", "Schlage Encode", "Yale Assure", "Level", "Wyze Lock"]
+
+  - name: "Electronics"
+    group: "Electronics & gaming"
+    description: >
+      Notable consumer electronics and gadgets with resale value — audio
+      gear, headphones/earbuds, computer accessories, tablets, streaming
+      devices, cameras, and similar. Favor recognizable or higher-value
+      items over generic cables and no-name accessories.
+      (Video games, consoles, and VR go under "Video games & VR".)
+    examples: ["Sony", "Bose", "Anker", "Logitech", "JBL", "Apple"]
+
+  - name: "Mechanical keyboards"
+    group: "Electronics & gaming"
+    description: >
+      Mechanical keyboards, keycaps, key switches, and keyboard
+      accessories or parts — prebuilt or custom, branded or generic.
+    examples: ["Keychron", "Ducky", "GMMK", "Akko"]
+
+  - name: "Video games & VR"
+    group: "Electronics & gaming"
+    description: >
+      Video game consoles, controllers, games, and accessories, plus VR
+      headsets and accessories — current and recent-gen. Resells well;
+      VR headsets especially hold value.
+    examples: ["Nintendo Switch", "PlayStation", "Xbox", "Meta Quest", "Steam Deck"]
+
+  - name: "Power tools"
+    group: "Tools & garage"
+    description: >
+      Power tools and accessories — drills, drivers, saws, sanders,
+      grinders, impact drivers, rotary/multi-tools, and tool
+      batteries/chargers. Branded or generic, corded or cordless.
+    examples: ["DeWalt", "Milwaukee", "Makita", "Bosch", "Ryobi", "Ridgid", "Metabo"]
+
+  - name: "Tie-downs"
+    group: "Tools & garage"
+    description: >
+      Ratchet straps, tie-down straps, bungee cords, cargo straps, and
+      securing/hauling straps.
+
+  - name: "Garage & tool organization"
+    group: "Tools & garage"
+    description: >
+      Garage, workshop, and tool organization — tool chests and cabinets,
+      pegboards and hooks, tool racks and holders, wall-mount systems,
+      workshop shelving, and tool storage solutions. (Workshop/tool
+      focused; general bins go under "Storage bins & totes", food
+      containers under "Kitchen storage & organization".)
+    examples: ["Husky", "Gladiator", "Craftsman", "Wera"]
+
+  - name: "3D printing supplies"
+    group: "Tools & garage"
+    description: >
+      3D printing materials, parts, and machines — filament (PLA, PETG,
+      ABS, etc.), resin, hotends, nozzles, build plates and sheets,
+      printer parts and upgrades, and 3D printers themselves. Branded or
+      generic. These run expensive retail, so auction wins are valuable.
+    examples: ["Bambu", "Prusa", "Polymaker", "Sunlu", "Elegoo", "Creality"]
+
+  - name: "Adhesives & tape"
+    group: "Tools & garage"
+    description: >
+      Tapes, glues, and bonding products — duct tape, heavy-duty/Gorilla
+      tape, masking and painter's tape, super glue, epoxy, mounting
+      strips/tape, and similar adhesives.
+    examples: ["Gorilla", "3M", "Scotch", "Loctite"]
+
+  - name: "Batteries & chargers"
+    group: "Tools & garage"
+    description: >
+      Batteries, chargers, and power packs — household batteries
+      (AA/AAA/C/D/9V), rechargeables, power-tool batteries and chargers,
+      power banks, and battery packs.
+    examples: ["Duracell", "Energizer", "Anker", "EBL"]
+
+  - name: "Extension cords & power strips"
+    group: "Tools & garage"
+    description: >
+      Extension cords, power strips, surge protectors, and power
+      adapters/multi-outlets. Indoor or outdoor rated.
+    examples: ["Belkin", "APC", "Cordinate"]
+
+  - name: "Lawn equipment"
+    group: "Outdoor & garden"
+    description: >
+      Powered and large lawn/yard equipment — mowers, string trimmers,
+      leaf blowers, hedge trimmers, edgers, chainsaws, pressure washers,
+      and similar outdoor power equipment. Branded or generic, corded,
+      cordless, or gas.
+    examples: ["EGO", "Greenworks", "Ryobi", "Toro", "Husqvarna", "DeWalt"]
+
+  - name: "Tarps"
+    group: "Outdoor & garden"
+    description: >
+      Tarps of any size and heavy-duty covers — poly tarps, canvas tarps,
+      and utility covers.
+
+  - name: "BBQ accessories"
+    group: "Outdoor & garden"
+    description: >
+      BBQ, grill, and smoker accessories — grates, smoke tubes/boxes,
+      pellet hoppers, grill tools, covers, and related parts. Branded or
+      generic.
+    examples: ["Napoleon", "Traeger", "Pit Boss", "Weber", "Char-Broil"]
+
+  - name: "Garden hose"
+    group: "Outdoor & garden"
+    description: >
+      Garden hoses, hose nozzles, sprayers, shutoffs, hose reels, and
+      hose connectors/fittings.
+
+  - name: "Gardening tools"
+    group: "Outdoor & garden"
+    description: >
+      Hand tools and implements for gardening and yard work — trowels,
+      pruners, secateurs, loppers, shears, spades, shovels, rakes, hoes,
+      hand cultivators, weeders, garden forks, watering cans, and garden
+      kneelers. Branded or generic, if clearly gardening hand tools.
+    examples: ["Fiskars", "Felco", "Corona", "Wolf-Garten"]
+
+  - name: "Garden & lawncare misc"
+    group: "Outdoor & garden"
+    description: >
+      Gardening and lawncare consumables, materials, and accessories that
+      aren't tools or power equipment — garden/landscape edging, grass
+      seed, flower and vegetable seeds, fertilizer, soil, potting mix,
+      compost, mulch, plant supports and stakes, garden netting, weed
+      barrier/landscape fabric, planters and plant pots, and similar
+      yard/garden supplies.
+    examples: ["Scotts", "Miracle-Gro", "Vigoro"]
+
+  - name: "Bath towels"
+    group: "Home & bedroom"
+    description: >
+      Bath towels, towel sets, hand towels, washcloths, and bath sheets.
+
+  - name: "Bed linens"
+    group: "Home & bedroom"
+    description: >
+      Bed sheets, sheet sets, pillowcases, duvet covers, comforters, and
+      bedding sets.
+
+  - name: "Bedding & pillows"
+    group: "Home & bedroom"
+    description: >
+      Soft bedding goods beyond sheets — pillows, mattress toppers and
+      pads, mattress protectors, mattresses, blankets, throws, and quilts.
+    examples: ["Casper", "Tempur-Pedic", "MyPillow", "Coop"]
+
+  - name: "Nightstands"
+    group: "Home & bedroom"
+    description: >
+      Nightstands, bedside tables, and bedroom side tables.
+
+  - name: "King bed frames"
+    group: "Home & bedroom"
+    description: >
+      King-size bed frames, headboards, and complete king beds.
+      King size specifically (not queen/full/twin).
+
+  - name: "Cleaning supplies & tools"
+    group: "Cleaning & storage"
+    description: >
+      Cleaning supplies and tools — sponges, scrub brushes, microfiber
+      cloths, mops, brooms, dusters, squeegees, spray bottles, buckets,
+      cleaning solutions and concentrates, and similar cleaning gear.
+      Branded or generic.
+    examples: ["OXO", "Scotch-Brite", "Libman", "Rubbermaid"]
+
+  - name: "Storage bins & totes"
+    group: "Cleaning & storage"
+    description: >
+      General-purpose storage containers and totes — plastic storage
+      bins, lidded totes, stackable containers, and organizing bins NOT
+      specific to kitchen or garage/workshop.
+    examples: ["Sterilite", "Rubbermaid", "IRIS"]
+
+  - name: "Laundry baskets"
+    group: "Cleaning & storage"
+    description: >
+      Laundry baskets, hampers, laundry bags, and laundry sorters.
+
+  - name: "Barbies"
+    group: "Toys & games"
+    description: >
+      Barbie dolls, playsets, vehicles, dreamhouses, and Barbie accessories.
+
+  - name: "Surprise toys"
+    group: "Toys & games"
+    description: >
+      LOL Surprise and Na Na Na Surprise toys — dolls, blind packs/balls,
+      playsets, and accessories.
+
+  - name: "Lego"
+    group: "Toys & games"
+    description: >
+      Lego sets, Lego pieces and parts, Lego building tables, and
+      Lego-compatible building-brick sets. Includes Duplo.
+    examples: ["Lego", "Duplo", "KidKraft Lego table"]
+
+  - name: "Hatchimals"
+    group: "Toys & games"
+    description: >
+      Hatchimals toys — eggs, CollEGGtibles, playsets, and accessories.
+
+  - name: "Board games"
+    group: "Toys & games"
+    description: >
+      Board games, card games, party games, tabletop games, and puzzles.
+
+  - name: "Sports & recreation gear"
+    group: "Sports & fitness"
+    description: >
+      Sporting goods and recreation equipment — basketball, soccer,
+      hockey, baseball, football, tennis, volleyball, and general sports
+      gear: balls, nets, goals, sticks, bats, racquets, gloves, pads and
+      protective gear. Includes kids'/youth sizes and equipment.
+    examples: ["Spalding", "Wilson", "Bauer", "Franklin", "Nike"]
+
+  - name: "Home gym & weightlifting"
+    group: "Sports & fitness"
+    description: >
+      Strength and fitness equipment — barbells and olympic bars, weight
+      plates (bumper AND iron), dumbbells and adjustable dumbbells,
+      kettlebells, power racks and squat stands, benches, treadmills and
+      cardio machines, and gym accessories. Resells well; bumper plates
+      especially worth flagging.
+    examples: ["Rogue", "REP", "Bowflex", "NordicTrack", "Eleiko"]
+
+  - name: "Brand boots & shoes"
+    group: "Footwear"
+    description: >
+      Boots and shoes that are recognizable brands or clearly quality
+      footwear — winter boots, rain boots, work boots, and notable
+      sneaker/shoe brands.
+    examples: ["Ugg", "Hunter", "Blundstone", "Doc Martens", "Sorel", "Timberland", "Bogs"]
+
+  - name: "Brand chef knives"
+    group: "Kitchen & dining"
+    description: >
+      Quality chef knives and kitchen cutlery — chef knives, santoku,
+      paring, utility and bread knives, knife sets, and knife blocks.
+      Recognizable knife brands OR clearly quality kitchen knives even if
+      the title doesn't say "knife" (e.g. "cutlery set", a brand name alone).
+    examples: ["Shun", "Wüsthof", "Henckels", "Global", "Mac", "Miyabi", "Victorinox", "Dalstrong"]
+
+  - name: "Brand cookware"
+    group: "Kitchen & dining"
+    description: >
+      Quality pots, pans, and cookware — skillets, fry pans, saucepans,
+      dutch ovens, cookware sets, and bakeware. Premium brands OR clearly
+      quality cookware even when the type word is abbreviated.
+    examples: ["De Buyer", "All-Clad", "Made In", "Le Creuset", "Staub", "Lodge", "Calphalon"]
+
+  - name: "Starbucks coffee"
+    group: "Kitchen & dining"
+    description: >
+      Starbucks-branded coffee products — whole bean, ground coffee,
+      K-cups/pods, and instant coffee.
+
+  - name: "Kitchen storage & organization"
+    group: "Kitchen & dining"
+    description: >
+      Food storage and pantry organization — airtight food storage
+      containers (e.g. OXO Pop / "pop" containers), canisters, dry-goods
+      containers and sets, pantry bins, and spice/jar organizers.
+    examples: ["OXO Pop", "Rubbermaid Brilliance", "Snapware", "Pyrex"]
+
+  - name: "Dinnerware"
+    group: "Kitchen & dining"
+    description: >
+      QUALITY or BRANDED dinnerware and serving pieces — notable-brand
+      plates, bowls, mugs, dinnerware sets, and serving platters. Favor
+      recognizable brands, complete sets, and quality stoneware/porcelain.
+      Do NOT flag generic single no-brand pieces (browse those by category
+      instead).
+    examples: ["Corelle", "Mikasa", "Fiestaware", "Denby"]
+
+  - name: "Glassware & drinkware"
+    group: "Kitchen & dining"
+    description: >
+      QUALITY or BRANDED drinkware and glassware — notable-brand tumblers,
+      glass sets, stemware, and insulated drinkware. Favor recognizable
+      brands and complete sets. Do NOT flag generic single no-brand
+      glasses (browse those by category instead).
+    examples: ["Libbey", "Stanley", "Yeti", "Tervis"]
+
+  - name: "Shatterproof / outdoor dishware"
+    group: "Kitchen & dining"
+    description: >
+      Shatterproof, unbreakable, and outdoor/pool-safe dishware and
+      drinkware — melamine, acrylic, and Tritan plates, bowls, cups, and
+      tumblers that won't shatter (safe for poolside and outdoor use, no
+      glass).
+    examples: ["Tervis", "melamine dinnerware", "Tritan tumblers"]
+
+  - name: "Specialty cooking & baking ingredients"
+    group: "Kitchen & dining"
+    description: >
+      Premium and specialty cooking/baking ingredients — quality baking
+      chocolate, specialty flours, vanilla, premium oils and vinegars,
+      and notable-brand pantry ingredients. Auction grocery lots may show
+      "best before" dates — flag regardless; Bat will assess.
+    examples: ["Callebaut", "Valrhona", "King Arthur", "Nielsen-Massey"]
+
+  - name: "Kitchen appliances"
+    group: "Kitchen & dining"
+    description: >
+      Countertop and small kitchen appliances — stand mixers, blenders,
+      food processors, air fryers, toasters, coffee makers, electric
+      kettles, multi-cookers/Instant Pots. Favor recognizable brands and
+      quality/working units over generic or non-working items.
+    examples: ["KitchenAid", "Vitamix", "Breville", "Cuisinart", "Ninja"]
+
+  - name: "Kitchen utensils & gadgets"
+    group: "Kitchen & dining"
+    description: >
+      QUALITY or BRANDED kitchen utensils and gadgets — notable-brand
+      spatulas, tongs, whisks, peelers, graters, and tool sets. Favor
+      recognizable brands and complete sets. Do NOT flag generic single
+      no-brand utensils (browse those by category instead).
+    examples: ["OXO", "KitchenAid", "Joseph Joseph", "Zwilling"]

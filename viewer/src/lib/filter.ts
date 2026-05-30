@@ -18,7 +18,7 @@ export function filterLots(
     tab: Tab;
     dayFilter: DayFilter;
     categoryPath: string[];
-    batBucket: string;
+    batBucket: string | null;
     watched: Set<string>;
   }
 ): Lot[] {
@@ -26,13 +26,13 @@ export function filterLots(
 
   if (tab === 'watched') {
     rows = rows.filter((l) => watched.has(l.lot_number));
+  } else if (tab === 'bat') {
+    // Bat's List is two-level: until a bucket is chosen, the group selector
+    // drives the view and no items are shown (no thousands-of-items flood).
+    if (batBucket === null) return [];
+    rows = rows.filter((l) => l.is_bat && l.bat_buckets.includes(batBucket));
+    if (dayFilter !== 'Both') rows = rows.filter((l) => l.day === dayFilter);
   } else {
-    if (tab === 'bat') {
-      rows = rows.filter((l) => l.is_bat);
-      if (batBucket !== 'All') {
-        rows = rows.filter((l) => l.bat_buckets.includes(batBucket));
-      }
-    }
     if (dayFilter !== 'Both') rows = rows.filter((l) => l.day === dayFilter);
     if (categoryPath.length > 0) {
       rows = rows.filter((l) => pathHasPrefix(l.category_path, categoryPath));

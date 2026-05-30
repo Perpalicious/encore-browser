@@ -3,7 +3,6 @@ import type { Tab, DayFilter, Density } from '../lib/types';
 import type { CatNode } from '../lib/categoryTree';
 import { TabButton } from './TabButton';
 import { FilterFieldRow } from './FilterFieldRow';
-import { BucketChipRow } from './BucketChipRow';
 import { CategoryFilter } from './CategoryFilter';
 
 interface Props {
@@ -24,9 +23,6 @@ interface Props {
   filteredCount: number;
   totalCount: number;
   loading: boolean;
-  batBuckets: string[];
-  batBucket: string;
-  onBatBucketChange: (b: string) => void;
   mobileFiltersOpen: boolean;
   onToggleMobileFilters: () => void;
   activeFilterCount: number;
@@ -50,9 +46,6 @@ export function Header({
   filteredCount,
   totalCount,
   loading,
-  batBuckets,
-  batBucket,
-  onBatBucketChange,
   mobileFiltersOpen,
   onToggleMobileFilters,
   activeFilterCount,
@@ -304,15 +297,6 @@ export function Header({
             </p>
           </div>
         </div>
-
-        {/* Bat-bucket chip row (only when Bat's List tab active) */}
-        {tab === 'bat' && !loading && (
-          <BucketChipRow
-            buckets={batBuckets}
-            selected={batBucket}
-            onSelect={onBatBucketChange}
-          />
-        )}
       </div>
     </header>
   );

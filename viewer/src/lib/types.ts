@@ -20,3 +20,15 @@ export interface Lot {
   bat_buckets: string[];
   confidence: Confidence;
 }
+
+/**
+ * The viewer bundle, produced by `python -m build`. `bucket_groups` maps each
+ * Bat's List bucket present in the data to its group (from buckets.yaml;
+ * unknown buckets map to "Other"). `groups` lists the groups that contain
+ * items, in buckets.yaml order ("Other" last).
+ */
+export interface Bundle {
+  lots: Lot[];
+  bucket_groups: Record<string, string>;
+  groups: string[];
+}

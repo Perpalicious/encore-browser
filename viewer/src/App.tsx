@@ -1,23 +1,23 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ChevronUp, FilterX } from 'lucide-react';
-import type { Tab, DayFilter, Density, Lot } from './lib/types';
+import { ChevronUp, FilterX, ChevronLeft } from 'lucide-react';
+import type { Tab, DayFilter, Density, Bundle } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
 import { buildCategoryTree } from './lib/categoryTree';
 import { buildSearchIndex, fuzzyMatchLotNumbers } from './lib/search';
+import { buildBatNav } from './lib/batNav';
 import { useTheme } from './hooks/useTheme';
 import { usePersistedSet } from './hooks/usePersistedSet';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { Header } from './components/Header';
 import { LotGrid } from './components/LotGrid';
+import { BatGroupNav } from './components/BatGroupNav';
 import bundleRaw from './data/auction_bundle.json';
 
-// Cast the JSON import to Lot[]
-const allLots = bundleRaw as Lot[];
-
-function uniqueSorted(arr: string[]): string[] {
-  return Array.from(new Set(arr)).sort();
-}
+const bundle = bundleRaw as Bundle;
+const allLots = bundle.lots;
+const bucketGroups = bundle.bucket_groups;
+const groupOrder = bundle.groups;
 
 export function App() {
   const [dark, toggleTheme] = useTheme();
@@ -28,7 +28,10 @@ export function App() {
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [density, setDensity] = useState<Density>('standard');
   const [tab, setTab] = useState<Tab>('all');
-  const [batBucket, setBatBucket] = useState('All');
+  // Bat's List two-level navigation: pick a group, then a bucket. Until a
+  // bucket is chosen, the grid shows nothing — the group selector drives.
+  const [batGroup, setBatGroup] = useState<string | null>(null);
+  const [batBucket, setBatBucket] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -39,20 +42,17 @@ export function App() {
     return () => clearTimeout(t);
   }, []);
 
-  // Build the HiBid category hierarchy + fuzzy search index once on load.
+  // Build the HiBid category hierarchy, fuzzy search index, and Bat's List
+  // group→bucket tree once on load.
   const categoryTree = useMemo(() => buildCategoryTree(allLots), []);
   const searchIndex = useMemo(() => buildSearchIndex(allLots), []);
+  const batNav = useMemo(
+    () => buildBatNav(allLots, bucketGroups, groupOrder),
+    []
+  );
 
   // Debounce the query so the fuzzy pass over ~20k lots doesn't run per keystroke.
   const debouncedQuery = useDebouncedValue(query, 150);
-
-  const batBuckets = useMemo(() => {
-    const buckets: string[] = [];
-    allLots.forEach((l) => {
-      if (l.is_bat) l.bat_buckets.forEach((b) => buckets.push(b));
-    });
-    return ['All', ...uniqueSorted(buckets)];
-  }, []);
 
   const activeFilterCount =
     (dayFilter !== 'Both' ? 1 : 0) +
@@ -83,21 +83,25 @@ export function App() {
     setQuery('');
     setDayFilter('Both');
     setCategoryPath([]);
-    setBatBucket('All');
     // Tab and density are intentionally preserved.
   };
 
   const collapseAll = () => setExpandedIds(new Set());
 
   const anyFilterActive =
-    query !== '' || dayFilter !== 'Both' || categoryPath.length > 0 || batBucket !== 'All';
+    query !== '' || dayFilter !== 'Both' || categoryPath.length > 0;
   const anyExpanded = expandedIds.size > 0;
 
-  // When tab changes, reset bucket
+  // Switching tabs resets the Bat's List drill-down to the group selector.
   const handleTabChange = (t: Tab) => {
     setTab(t);
-    setBatBucket('All');
+    setBatGroup(null);
+    setBatBucket(null);
   };
+
+  // In the Bat's List tab, the group/bucket selector is shown until a bucket
+  // is chosen. Everywhere else (and once a bucket is chosen) we show the grid.
+  const showBatSelector = tab === 'bat' && batBucket === null;
 
   return (
     <div className="min-h-screen bg-paper dark:bg-night text-ink dark:text-bone">
@@ -119,60 +123,92 @@ export function App() {
         filteredCount={filtered.length}
         totalCount={allLots.length}
         loading={loading}
-        batBuckets={batBuckets}
-        batBucket={batBucket}
-        onBatBucketChange={setBatBucket}
         mobileFiltersOpen={mobileFiltersOpen}
         onToggleMobileFilters={() => setMobileFiltersOpen((v) => !v)}
         activeFilterCount={activeFilterCount}
       />
 
       <main className="mx-auto max-w-[1480px] px-4 md:px-6 pt-4 md:pt-6 pb-24">
-        {!loading && (anyExpanded || anyFilterActive) && (
-          <div
-            data-testid="grid-toolbar"
-            className="mb-3 md:mb-4 flex items-center justify-between gap-3"
-          >
-            <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70">
-              Showing {filtered.length} of {allLots.length} lots
-            </span>
-            <div className="flex items-center gap-1.5">
-              {anyExpanded && (
+        {showBatSelector ? (
+          <BatGroupNav
+            groups={batNav}
+            selectedGroup={batGroup}
+            onSelectGroup={setBatGroup}
+            onSelectBucket={setBatBucket}
+            onBack={() => setBatGroup(null)}
+          />
+        ) : (
+          <>
+            {tab === 'bat' && batBucket !== null && (
+              <div
+                data-testid="bat-breadcrumb"
+                className="mb-3 md:mb-4 flex items-center gap-2 flex-wrap"
+              >
                 <button
                   type="button"
-                  data-testid="collapse-all-btn"
-                  onClick={collapseAll}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
+                  data-testid="bat-back-to-buckets"
+                  onClick={() => setBatBucket(null)}
+                  className="inline-flex items-center gap-1 h-8 pl-2 pr-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
                 >
-                  <ChevronUp size={14} strokeWidth={2} />
-                  <span>Collapse all</span>
+                  <ChevronLeft size={15} />
+                  {batGroup}
                 </button>
-              )}
-              {anyFilterActive && (
-                <button
-                  type="button"
-                  data-testid="clear-filters-btn"
-                  onClick={clearFilters}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
-                >
-                  <FilterX size={14} strokeWidth={2} />
-                  <span>Clear filters</span>
-                </button>
-              )}
-            </div>
-          </div>
+                <span className="text-[13px] font-medium text-ink dark:text-bone">
+                  {batBucket}
+                </span>
+                <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70">
+                  {filtered.length} {filtered.length === 1 ? 'lot' : 'lots'}
+                </span>
+              </div>
+            )}
+
+            {!loading && (anyExpanded || anyFilterActive) && (
+              <div
+                data-testid="grid-toolbar"
+                className="mb-3 md:mb-4 flex items-center justify-between gap-3"
+              >
+                <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70">
+                  Showing {filtered.length} of {allLots.length} lots
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {anyExpanded && (
+                    <button
+                      type="button"
+                      data-testid="collapse-all-btn"
+                      onClick={collapseAll}
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
+                    >
+                      <ChevronUp size={14} strokeWidth={2} />
+                      <span>Collapse all</span>
+                    </button>
+                  )}
+                  {anyFilterActive && (
+                    <button
+                      type="button"
+                      data-testid="clear-filters-btn"
+                      onClick={clearFilters}
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
+                    >
+                      <FilterX size={14} strokeWidth={2} />
+                      <span>Clear filters</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            <LotGrid
+              lots={filtered}
+              loading={loading}
+              density={density}
+              tab={tab}
+              expandedIds={expandedIds}
+              watched={watched}
+              onToggleExpand={toggleExpand}
+              onToggleWatch={toggleWatch}
+              onClearFilters={clearFilters}
+            />
+          </>
         )}
-        <LotGrid
-          lots={filtered}
-          loading={loading}
-          density={density}
-          tab={tab}
-          expandedIds={expandedIds}
-          watched={watched}
-          onToggleExpand={toggleExpand}
-          onToggleWatch={toggleWatch}
-          onClearFilters={clearFilters}
-        />
       </main>
     </div>
   );

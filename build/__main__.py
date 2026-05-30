@@ -69,6 +69,16 @@ def main() -> None:
         help="Output bundle path (e.g. viewer/src/data/auction_bundle.json).",
     )
     parser.add_argument(
+        "--buckets",
+        metavar="PATH",
+        default=str(Path(__file__).resolve().parents[1] / "buckets.yaml"),
+        help=(
+            "Path to buckets.yaml (the curated Bat's List with per-bucket "
+            "`group` fields). Defaults to the repo-root buckets.yaml. The "
+            "build joins each lot's bat buckets to their group by name."
+        ),
+    )
+    parser.add_argument(
         "--drop-orphans",
         action="store_true",
         help=(
@@ -150,10 +160,46 @@ def main() -> None:
             file=sys.stderr,
         )
 
+    # --- Bat's List group mapping (from buckets.yaml) -----------------------
+    from build.groups import load_bucket_groups, resolve_bucket_groups, UNGROUPED
+
+    bucket_to_group, group_order = load_bucket_groups(Path(args.buckets))
+
+    present_buckets: set[str] = set()
+    for lot in lots:
+        present_buckets.update(lot.bat_buckets)
+
+    present_bucket_groups, groups_present, ungrouped = resolve_bucket_groups(
+        present_buckets, bucket_to_group, group_order
+    )
+
+    if ungrouped:
+        # Resilient, not fatal: evolving taxonomies will surface buckets that
+        # aren't in buckets.yaml yet. Report them clearly and group as "Other".
+        print(
+            f"Warning: {len(ungrouped)} bat bucket(s) in the data have no group "
+            f"in buckets.yaml and were placed under '{UNGROUPED}': "
+            f"{', '.join(ungrouped)}. "
+            "Add a `group:` for these in buckets.yaml (or re-categorize with "
+            "canonical bucket names) to file them correctly.",
+            file=sys.stderr,
+        )
+    grouped = len(present_buckets) - len(ungrouped)
+    print(
+        f"Bat groups: {grouped}/{len(present_buckets)} buckets mapped to a "
+        f"buckets.yaml group across {len(groups_present)} group(s)."
+    )
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    bundle = [lot.model_dump() for lot in lots]
+    envelope = {
+        "lots": [lot.model_dump() for lot in lots],
+        # bucket -> group for every bat bucket present in this bundle
+        "bucket_groups": present_bucket_groups,
+        # groups that actually contain items, in buckets.yaml order ("Other" last)
+        "groups": groups_present,
+    }
     with output_path.open("w", encoding="utf-8") as fh:
-        json.dump(bundle, fh, ensure_ascii=False, indent=2)
+        json.dump(envelope, fh, ensure_ascii=False, indent=2)
 
     print(f"Done. Bundle written to {output_path} ({n} lots).")
 

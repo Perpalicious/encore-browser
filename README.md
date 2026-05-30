@@ -152,6 +152,8 @@ cd viewer && npm run preview
 ```
 Then open `http://localhost:4173/encore-browser/` in your browser. You should see all lots across three tabs: All, Bat's List, and Watched. Use the category drop-downs to drill through HiBid's tree, and the search box for fuzzy, typo-tolerant search.
 
+**Bat's List is two-level.** Instead of one long row of bucket chips, the tab opens on a set of **groups** (Kitchen & dining, Tools & garage, Toys & games, …). Pick a group to see its buckets, pick a bucket to see its items, and use the "← All groups" / "← {group}" buttons to step back up. Group and bucket buttons wrap to multiple rows — no sideways scrolling. The grouping comes from the `group:` field on each bucket in `buckets.yaml`, joined in at build time.
+
 > **One-time GitHub Pages setup.** In your repo settings → Pages → **Source: GitHub Actions** (not "Deploy from a branch"). This needs to be done once; after that, every push to `main` redeploys automatically.
 
 ---
@@ -159,6 +161,8 @@ Then open `http://localhost:4173/encore-browser/` in your browser. You should se
 ## Updating Bat's List
 
 Bat's List rules live inside your ChatGPT Auction Agent's instructions and files panel — not in this codebase. To change which categories or keywords get flagged, open the Agent in ChatGPT Enterprise and edit its instructions there. No code changes are needed here.
+
+**Bucket groups** (how flagged buckets are organized into the two-level Bat's List menu) live in `buckets.yaml` — each bucket has a `group:` field. The build joins these to the bundle by bucket name. If a categorized file contains a bucket name that isn't in `buckets.yaml` (e.g. an older auction categorized before a bucket was renamed), the build doesn't fail: it prints a `Warning: … bat bucket(s) … have no group …` line and files those items under an **"Other"** group in the viewer so nothing is lost. To file them properly, add the bucket (with its `group:`) to `buckets.yaml`, or re-categorize the auction with the current Agent.
 
 ---
 

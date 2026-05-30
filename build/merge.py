@@ -63,6 +63,34 @@ def _build_raw_index(raw_items: list[dict[str, Any]]) -> tuple[dict[str, dict], 
     return by_id, by_lot_number
 
 
+def _category_path_from_raw(raw: dict[str, Any]) -> list[str]:
+    """
+    Derive the root→leaf category path from a raw scrape item.
+
+    HiBid's category tree reaches the build in one of two scraper-output
+    shapes, so we handle both:
+
+    1. A discrete ``category_path`` array (newer scrapes), e.g.
+       ``["Antiques & Collectibles", "Collectibles", "Advertising"]``.
+    2. A ``hibid_category_path`` STRING (older scrapes), " - " delimited,
+       root→leaf, e.g. ``"Antiques & Collectibles - Collectibles - Advertising"``.
+
+    The string is split on the exact " - " delimiter (space-hyphen-space) so
+    multi-word names containing ``&``, ``/``, or a bare ``-`` are not
+    over-split. Missing/empty input yields an empty path (no crash).
+    """
+    arr = raw.get("category_path")
+    if isinstance(arr, list) and any(arr):
+        return [str(c).strip() for c in arr if str(c).strip()]
+
+    breadcrumb = raw.get("hibid_category_path")
+    if isinstance(breadcrumb, str) and breadcrumb.strip():
+        parts = [p.strip() for p in breadcrumb.split(" - ")]
+        return [p for p in parts if p]
+
+    return []
+
+
 def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
     """
     Combine one raw scrape item with one categorized item. Raw fields always
@@ -93,10 +121,7 @@ def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
 
     # Categories come from HiBid's native tree in the raw scrape — NOT the
     # agent. The agent's category/subcategory output is ignored entirely.
-    raw_category_path = raw.get("category_path") or []
-    if not isinstance(raw_category_path, list):
-        raw_category_path = []
-    merged["category_path"] = [str(c) for c in raw_category_path if c]
+    merged["category_path"] = _category_path_from_raw(raw)
 
     # --- Enrichment-provided fields (authoritative from categorized) --------
     # Pass through categorized fields so transform's shape detection works,

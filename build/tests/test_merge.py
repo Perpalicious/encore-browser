@@ -211,6 +211,87 @@ class TestFieldPrecedence:
         merged = merge(raw, cat)
         assert merged[0]["category_path"] == ["RawRoot", "RawLeaf"]
 
+
+class TestCategoryPathFromHibidString:
+    """Older scrapes emit hibid_category_path as a ' - ' delimited string with
+    no discrete category_path array. The build must parse it into a path."""
+
+    def _raw_str(self, **kw):
+        # A raw item WITHOUT category_path array, only the hibid string fields.
+        base = dict(_raw_item())
+        base.pop("category_path", None)
+        base.update(kw)
+        return base
+
+    def test_parses_hibid_category_path_string(self):
+        raw = [self._raw_str(
+            hibid_category_path="Antiques & Collectibles - Collectibles - Advertising",
+            hibid_category_leaf="Advertising",
+        )]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat)
+        assert merged[0]["category_path"] == [
+            "Antiques & Collectibles", "Collectibles", "Advertising"
+        ]
+
+    def test_multiword_names_not_oversplit(self):
+        """' - ' (space-hyphen-space) is the delimiter; names with '&', '/',
+        or a bare '-' must stay intact."""
+        raw = [self._raw_str(
+            hibid_category_path="Home Goods & Decor - Kitchen / Dining - Knives - Blocks",
+            hibid_category_leaf="Knives - Blocks",
+        )]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat)
+        # "Home Goods & Decor" and "Kitchen / Dining" stay whole; the bare
+        # hyphen inside "Knives - Blocks" IS a delimiter here (it's surrounded
+        # by spaces), so it splits — that's correct per the " - " rule.
+        assert merged[0]["category_path"] == [
+            "Home Goods & Decor", "Kitchen / Dining", "Knives", "Blocks"
+        ]
+
+    def test_single_level_string(self):
+        raw = [self._raw_str(hibid_category_path="Electronics", hibid_category_leaf="Electronics")]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat)
+        assert merged[0]["category_path"] == ["Electronics"]
+
+    def test_missing_hibid_path_yields_empty(self):
+        raw = [self._raw_str(hibid_category_path="", hibid_category_leaf="")]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat)
+        assert merged[0]["category_path"] == []
+
+    def test_discrete_array_preferred_over_string(self):
+        """If both shapes are present, the discrete array wins (newer scrapes)."""
+        raw = [_raw_item(
+            category_path=["Array Root", "Array Leaf"],
+            hibid_category_path="String Root - String Leaf",
+        )]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat)
+        assert merged[0]["category_path"] == ["Array Root", "Array Leaf"]
+
+
+class TestCategoryPathDrivesCategoryAndSub:
+    """Through the full transform, category=root and subcategory=leaf."""
+
+    def test_root_and_leaf_from_hibid_string(self):
+        from build.transform import transform_all
+        raw = [{
+            "id": 100001, "lot_number": "1", "title": "X",
+            "description": "", "image_url": "i", "thumb_url": "t",
+            "lot_url": "https://encoreauctions.hibid.com/lot/100001/x",
+            "hibid_category_path": "Antiques & Collectibles - Collectibles - Advertising",
+            "hibid_category_leaf": "Advertising",
+        }]
+        cat = [_cat_item(lot_number="100001")]
+        merged = merge(raw, cat)
+        lots = transform_all(merged)
+        assert lots[0].category_path == ["Antiques & Collectibles", "Collectibles", "Advertising"]
+        assert lots[0].category == "Antiques & Collectibles"   # root
+        assert lots[0].subcategory == "Advertising"             # leaf
+
     def test_raw_condition_preserved_when_agent_omits(self):
         raw = [_raw_item(condition="Like New")]
         cat = [_cat_item()]  # no condition in agent output

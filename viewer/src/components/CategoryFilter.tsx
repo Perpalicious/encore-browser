@@ -33,6 +33,11 @@ export function CategoryFilter({ tree, selected, onChange, size = 'sm' }: Props)
     if (selected[i] === undefined) break; // trailing (not-yet-chosen) level
   }
 
+  // Graceful degradation: if the bundle has no category tree (no lot carries a
+  // category_path), there is nothing to drill — render nothing rather than an
+  // empty control. With data, the cascading selects below render normally.
+  if (levels.length === 0) return null;
+
   const height = size === 'sm' ? 'h-10' : 'h-10';
   const text = size === 'sm' ? 'text-[13px]' : 'text-[14px]';
 

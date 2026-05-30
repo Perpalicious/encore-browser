@@ -29,7 +29,15 @@
           "category": [
             {
               "categoryName": "Headphones",
-              "fullCategory": "Electronics > Audio > Headphones"
+              "fullCategory": "Electronics - Audio - Headphones"
+            },
+            {
+              "categoryName": "Audio",
+              "fullCategory": "Electronics - Audio"
+            },
+            {
+              "categoryName": "Electronics",
+              "fullCategory": "Electronics"
             }
           ]
         },

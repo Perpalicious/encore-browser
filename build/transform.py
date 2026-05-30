@@ -54,6 +54,34 @@ def _dedup_ordered(values: list[str]) -> list[str]:
     return result
 
 
+def _resolve_categories(
+    item: dict[str, Any], fallback_subcategory: str
+) -> tuple[list[str], str, str]:
+    """
+    Determine (category_path, category, subcategory) for a lot.
+
+    HiBid's native category tree is the source of truth. In the real build
+    flow the merge step copies the raw scrape's ``category_path`` (root → leaf)
+    onto the item, so we use it directly: ``category`` is the root, and
+    ``subcategory`` is the leaf.
+
+    For standalone categorized inputs that lack ``category_path`` (e.g. unit
+    test fixtures, or a categorized file processed without a raw join), we fall
+    back to the flat ``category`` field plus a caller-supplied subcategory, and
+    synthesise a best-effort path from them.
+    """
+    raw_path = item.get("category_path")
+    if isinstance(raw_path, list) and any(raw_path):
+        path = [str(c) for c in raw_path if c]
+        return path, path[0], path[-1]
+
+    # Fallback: no native path available.
+    category = item.get("category") or ""
+    subcategory = fallback_subcategory or ""
+    path = _dedup_ordered([category, subcategory])
+    return path, category, subcategory
+
+
 def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
     """Normalise a Shape B item (real agent output) to the Lot shape."""
     # lot_url: prefer `url` field if it looks like a lot URL, else fall back to lot_url
@@ -71,8 +99,12 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
     bats_sub = item.get("bats_subcategory", "") or ""
     bat_buckets = _dedup_ordered([bats_cat, bats_sub])
 
-    # subcategory: prefer bats_subcategory, then nice_pick_subcategory
-    subcategory = bats_sub or (item.get("nice_pick_subcategory") or "")
+    # Categories come from HiBid's native tree (via the raw scrape's
+    # category_path), NOT from the agent. Fallback to bats_subcategory only
+    # when no native path is present (standalone categorized input).
+    category_path, category, subcategory = _resolve_categories(
+        item, fallback_subcategory=bats_sub or (item.get("nice_pick_subcategory") or "")
+    )
 
     # nice_pick_reason: prefer nice_pick_subcategory, then nice_pick_category
     nice_pick_reason = (item.get("nice_pick_subcategory") or "") or (item.get("nice_pick_category") or "")
@@ -89,8 +121,9 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         "thumb_url": item.get("thumb_url") or "",
         "image_url": item.get("image_url") or "",
         "lot_url": lot_url,
-        "category": item.get("category") or "",
+        "category": category,
         "subcategory": subcategory,
+        "category_path": category_path,
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
         "is_nice_pick": bool(item.get("is_nice_pick", False)),
@@ -117,6 +150,10 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
     bats_buckets_raw = item.get("bats_buckets") or []
     bat_buckets = _dedup_ordered([str(b) for b in bats_buckets_raw])
 
+    category_path, category, subcategory = _resolve_categories(
+        item, fallback_subcategory=item.get("subcategory") or ""
+    )
+
     return {
         "day": day or "",
         "lot_number": str(item.get("lot_number", "")),
@@ -126,8 +163,9 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "thumb_url": item.get("thumb_url") or "",
         "image_url": item.get("image_url") or "",
         "lot_url": item.get("lot_url") or "",
-        "category": item.get("category") or "",
-        "subcategory": item.get("subcategory") or "",
+        "category": category,
+        "subcategory": subcategory,
+        "category_path": category_path,
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
         "is_nice_pick": bool(item.get("is_nice_pick", False)),

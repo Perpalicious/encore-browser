@@ -42,6 +42,29 @@ SHAPE_A_MINIMAL_NO_OPTIONAL = {
 }
 
 
+def test_native_category_path_preferred_over_flat_category():
+    """When a native category_path is present (merged-item flow), it wins and
+    drives category(root)/subcategory(leaf)."""
+    item = {
+        **SHAPE_A_MINIMAL,
+        "category_path": ["Home Goods & Decor", "Home Goods", "Bed / Bath Items"],
+    }
+    raw = transform_item(item)
+    lot = Lot(**raw)
+    assert lot.category_path == ["Home Goods & Decor", "Home Goods", "Bed / Bath Items"]
+    assert lot.category == "Home Goods & Decor"        # root
+    assert lot.subcategory == "Bed / Bath Items"        # leaf
+
+
+def test_category_path_fallback_when_absent():
+    """Without a native path, category_path is synthesised from category + subcategory."""
+    raw = transform_item(SHAPE_A_MINIMAL)  # no category_path key
+    lot = Lot(**raw)
+    assert lot.category_path == ["Home & Garden", "Lighting"]
+    assert lot.category == "Home & Garden"
+    assert lot.subcategory == "Lighting"
+
+
 def test_shape_a_basic_transform():
     raw = transform_item(SHAPE_A_MINIMAL)
     lot = Lot(**raw)

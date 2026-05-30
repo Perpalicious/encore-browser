@@ -137,7 +137,12 @@ def main() -> None:
         )
         sys.exit(1)
     img_pct = 100.0 * imaged / n
-    print(f"Fidelity: title 100% ({n}/{n}), image_url {img_pct:.1f}% ({imaged}/{n}).")
+    categorized = sum(1 for lot in lots if lot.category_path)
+    cat_pct = 100.0 * categorized / n
+    print(
+        f"Fidelity: title 100% ({n}/{n}), image_url {img_pct:.1f}% ({imaged}/{n}), "
+        f"category_path {cat_pct:.1f}% ({categorized}/{n})."
+    )
     if img_pct < 95.0:
         print(
             f"Warning: image_url coverage {img_pct:.1f}% is below the 95% gate. "

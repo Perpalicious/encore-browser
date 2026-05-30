@@ -91,16 +91,26 @@ def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
     merged["current_bid"] = raw.get("current_bid")
     merged["status"] = raw.get("status")
 
+    # Categories come from HiBid's native tree in the raw scrape — NOT the
+    # agent. The agent's category/subcategory output is ignored entirely.
+    raw_category_path = raw.get("category_path") or []
+    if not isinstance(raw_category_path, list):
+        raw_category_path = []
+    merged["category_path"] = [str(c) for c in raw_category_path if c]
+
     # --- Enrichment-provided fields (authoritative from categorized) --------
-    # Pass through every categorized field so the existing shape detection
-    # (Shape A vs Shape B) in transform.py continues to work without changes.
-    # For scraper-authoritative fields, raw wins whenever raw has a value;
-    # the agent only fills in if raw is empty.
+    # Pass through categorized fields so transform's shape detection works,
+    # EXCEPT category fields, which come from the raw scrape only.
     _SCRAPER_AUTHORITATIVE = {
         "title", "description", "thumb_url", "image_url",
         "lot_url", "url", "condition", "close_at",
     }
+    # Agent category fields are intentionally dropped — HiBid's native tree
+    # (raw category_path) is the single source of truth for categorization.
+    _AGENT_CATEGORY_FIELDS = {"category", "subcategory", "category_path"}
     for key, value in cat.items():
+        if key in _AGENT_CATEGORY_FIELDS:
+            continue
         if key in _SCRAPER_AUTHORITATIVE:
             if merged.get(key):
                 # Raw already has a value; never let agent overwrite.

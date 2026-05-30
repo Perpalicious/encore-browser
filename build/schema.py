@@ -19,6 +19,7 @@ class Lot(BaseModel):
     lot_url: str
     category: str
     subcategory: str
+    category_path: list[str]
     is_bat: bool
     bat_buckets: list[str]
     is_nice_pick: bool
@@ -34,12 +35,12 @@ class Lot(BaseModel):
             raise ValueError(f"expected str, got {type(v).__name__}: {v!r}")
         return v
 
-    @field_validator("bat_buckets", mode="before")
+    @field_validator("bat_buckets", "category_path", mode="before")
     @classmethod
     def must_be_list_of_str(cls, v: object) -> list:
         if not isinstance(v, list):
             raise ValueError(f"expected list, got {type(v).__name__}: {v!r}")
         for item in v:
             if not isinstance(item, str):
-                raise ValueError(f"bat_buckets items must be str, got {type(item).__name__}: {item!r}")
+                raise ValueError(f"list items must be str, got {type(item).__name__}: {item!r}")
         return v

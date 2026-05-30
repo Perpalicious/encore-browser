@@ -15,6 +15,7 @@ export interface Lot {
   lot_url: string;
   category: string;
   subcategory: string;
+  category_path: string[];
   is_bat: boolean;
   bat_buckets: string[];
   is_nice_pick: boolean;

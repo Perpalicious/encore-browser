@@ -31,6 +31,8 @@ def _raw_item(**overrides):
         "close_at": "2026-05-24T12:00:00-04:00",
         "current_bid": 5.0,
         "status": "OPEN",
+        # HiBid native category tree, root → leaf
+        "category_path": ["Home Goods & Decor", "Home Goods", "Bed / Bath Items"],
     }
     base.update(overrides)
     return base
@@ -68,7 +70,10 @@ class TestHappyPathJoinById:
         assert len(merged) == 1
         assert merged[0]["title"] == "REAL TITLE FROM SCRAPER"
         assert merged[0]["image_url"] == "https://cdn.hibid.com/full/100001"
-        assert merged[0]["category"] == "Electronics"   # enrichment came through
+        # Categories come from the raw scrape's native tree, NOT the agent.
+        assert merged[0]["category_path"] == [
+            "Home Goods & Decor", "Home Goods", "Bed / Bath Items"
+        ]
         assert merged[0]["is_bats_list"] is True
 
     def test_three_items_all_match(self):
@@ -181,15 +186,30 @@ class TestFieldPrecedence:
         assert merged[0]["title"] == "REAL TITLE"
         assert merged[0]["image_url"] == "https://cdn.real"
 
-    def test_enrichment_fields_layered_on(self):
+    def test_bat_enrichment_layered_on_but_agent_category_dropped(self):
         raw = [_raw_item()]
-        cat = [_cat_item(category="Toys & Kids", is_bats_list=True,
+        cat = [_cat_item(category="Toys & Kids", subcategory="Action Figures",
+                         is_bats_list=True,
                          bats_category="Bucket A", bats_subcategory="Bucket B")]
         merged = merge(raw, cat)
-        assert merged[0]["category"] == "Toys & Kids"
+        # Bat flags survive from the agent...
         assert merged[0]["bats_category"] == "Bucket A"
         assert merged[0]["bats_subcategory"] == "Bucket B"
         assert merged[0]["is_bats_list"] is True
+        # ...but the agent's category/subcategory are dropped entirely.
+        assert "category" not in merged[0] or merged[0].get("category") != "Toys & Kids"
+        assert merged[0].get("subcategory") != "Action Figures"
+        # category_path is the raw scrape's native tree.
+        assert merged[0]["category_path"] == [
+            "Home Goods & Decor", "Home Goods", "Bed / Bath Items"
+        ]
+
+    def test_agent_category_path_ignored_raw_wins(self):
+        """Even if the agent (wrongly) supplies a category_path, raw's wins."""
+        raw = [_raw_item(category_path=["RawRoot", "RawLeaf"])]
+        cat = [_cat_item(category_path=["AgentRoot", "AgentLeaf"])]
+        merged = merge(raw, cat)
+        assert merged[0]["category_path"] == ["RawRoot", "RawLeaf"]
 
     def test_raw_condition_preserved_when_agent_omits(self):
         raw = [_raw_item(condition="Like New")]

@@ -54,6 +54,7 @@ class TestFieldPresence:
             "additional_images",
             "current_bid",
             "status",
+            "category_path",
             "hibid_category_leaf",
             "hibid_category_path",
             "close_at",
@@ -127,6 +128,23 @@ class TestFieldMapping:
             else:
                 assert mapped["hibid_category_leaf"] == ""
                 assert mapped["hibid_category_path"] == ""
+
+    def test_category_path_is_root_to_leaf(self, mapped_lots):
+        """HiBid sends category leaf → root; output category_path must be root → leaf."""
+        # Lot 100001's fixture category is [Headphones(leaf), Audio, Electronics(root)].
+        lot = next(l for l in mapped_lots if l["id"] == 100001)
+        assert lot["category_path"] == ["Electronics", "Audio", "Headphones"]
+
+    def test_category_path_single_level(self, mapped_lots):
+        """A single-element category array yields a one-element path."""
+        lot = next(l for l in mapped_lots if l["id"] == 100002)
+        # Fixture lot 100002 has one category entry: Stand Mixers
+        assert lot["category_path"] == ["Stand Mixers"]
+
+    def test_category_path_always_list(self, mapped_lots):
+        for lot in mapped_lots:
+            assert isinstance(lot["category_path"], list)
+            assert all(isinstance(c, str) for c in lot["category_path"])
 
 
 # ---------------------------------------------------------------------------

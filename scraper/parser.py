@@ -126,7 +126,13 @@ def map_lot(item: dict[str, Any]) -> dict[str, Any]:
     time_left_title = lot_state.get("timeLeftTitle")
     close_at = _parse_close_at(time_left_title)
 
-    # Category — may be a list or a single object; handle both defensively
+    # Category — HiBid returns an array ordered leaf → root, e.g.
+    #   [{categoryName: "Bed / Bath Items", fullCategory: "Home Goods & Decor - Home Goods - Bed / Bath Items"},
+    #    {categoryName: "Home Goods", ...},
+    #    {categoryName: "Home Goods & Decor", ...}]
+    # We preserve the FULL ordered path (root → leaf) so the viewer can build a
+    # hierarchical filter. Each element of `category_path` is a discrete
+    # category name (no delimiter ambiguity), reversed from the leaf-first array.
     category_raw = item.get("category")
     category_list: list[dict] = []
     if isinstance(category_raw, list):
@@ -134,12 +140,19 @@ def map_lot(item: dict[str, Any]) -> dict[str, Any]:
     elif isinstance(category_raw, dict):
         category_list = [category_raw]
 
-    hibid_category_leaf = ""
+    # root → leaf
+    category_path = [
+        (c or {}).get("categoryName") or ""
+        for c in reversed(category_list)
+    ]
+    category_path = [name for name in category_path if name]
+
+    # Compat fields: leaf name + full breadcrumb string from the leaf entry.
+    hibid_category_leaf = category_path[-1] if category_path else ""
     hibid_category_path = ""
     if category_list:
-        first_cat = category_list[0] or {}
-        hibid_category_leaf = first_cat.get("categoryName") or ""
-        hibid_category_path = first_cat.get("fullCategory") or ""
+        leaf_entry = category_list[0] or {}
+        hibid_category_path = leaf_entry.get("fullCategory") or ""
 
     # Derived lot URL
     lot_url = LOT_URL_TEMPLATE.format(id=lot_id) if lot_id is not None else ""
@@ -157,6 +170,7 @@ def map_lot(item: dict[str, Any]) -> dict[str, Any]:
         "additional_images": additional_images,
         "current_bid": current_bid,
         "status": status,
+        "category_path": category_path,
         "hibid_category_leaf": hibid_category_leaf,
         "hibid_category_path": hibid_category_path,
         "close_at": close_at,

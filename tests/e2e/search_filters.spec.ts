@@ -1,48 +1,33 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
-test('typing in search input filters visible cards in real-time', async ({ page }) => {
+// Read the "Showing N of M lots" count from the sticky header.
+async function shownCount(page: Page): Promise<number> {
+  const text =
+    (await page.locator('header').getByText(/Showing .* of .* lots/).first().textContent()) ?? '';
+  const m = text.match(/Showing\s+([\d,]+)\s+of/);
+  return m ? parseInt(m[1].replace(/,/g, ''), 10) : -1;
+}
+
+test('typing in search input filters lots in real-time', async ({ page }) => {
   await page.goto('/');
+  await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
+  await page.waitForTimeout(500);
 
-  // Wait for the 900ms skeleton to clear and at least one real card to appear
-  await page.waitForSelector('[data-testid="lot-card"]', { timeout: 5000 });
+  const total = await shownCount(page);
+  expect(total).toBeGreaterThan(100);
 
-  // Count visible cards before typing (virtualized — only in-viewport cards are in DOM)
-  const beforeCount = await page.locator('[data-testid="lot-card"]').count();
-  expect(beforeCount).toBeGreaterThan(0);
-
-  // Type "LED" into the search input — 321 out of 9880 lots contain LED
-  // Use the visible instance (desktop header is shown at 1280px wide viewport)
-  const searchInput = page.locator('[data-testid="search-input"]').filter({ visible: true });
+  // "LED" is a common term in the sample auction — narrows but keeps many lots.
+  const searchInput = page.locator('[data-testid="search-input"]').filter({ visible: true }).first();
   await searchInput.fill('LED');
+  // debounce (150ms) + re-render
+  await page.waitForTimeout(450);
 
-  // Wait for the filter to take effect — the grid re-renders
-  await page.waitForTimeout(300);
-  // Wait until lot-card elements are stable (re-rendered after filter)
-  await expect(page.locator('[data-testid="lot-card"]').first()).toBeVisible({ timeout: 5000 });
-
-  const afterCount = await page.locator('[data-testid="lot-card"]').count();
-
-  // After filtering for LED (321 matches), count must be > 0 and < before (pre-filter shows more)
+  const afterCount = await shownCount(page);
   expect(afterCount).toBeGreaterThan(0);
-  // The unfiltered grid shows the same number of visible cards as the filtered grid when
-  // the filtered set is small; assert that every visible card's title contains "LED" (case-insensitive)
-  const cardTitles = await page.locator('[data-testid="lot-card"]').evaluateAll(
-    (cards) =>
-      cards.map((card) => {
-        const h3 = card.querySelector('h3');
-        return h3 ? h3.textContent ?? '' : '';
-      })
-  );
+  expect(afterCount).toBeLessThan(total);
 
-  // All visible cards must have LED in their title (the search filters on title/description/category)
-  for (const title of cardTitles) {
-    expect(title.toUpperCase()).toContain('LED');
-  }
-
-  // Clear the search and verify count returns to a positive number
+  // Clearing restores the full set.
   await searchInput.fill('');
-  await page.waitForTimeout(300);
-  const resetCount = await page.locator('[data-testid="lot-card"]').count();
-
-  expect(resetCount).toBeGreaterThan(0);
+  await page.waitForTimeout(450);
+  expect(await shownCount(page)).toBe(total);
 });

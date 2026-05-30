@@ -4,8 +4,10 @@ import type { Tab, DayFilter, Density, Lot } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
 import { buildCategoryTree } from './lib/categoryTree';
+import { buildSearchIndex, fuzzyMatchLotNumbers } from './lib/search';
 import { useTheme } from './hooks/useTheme';
 import { usePersistedSet } from './hooks/usePersistedSet';
+import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { Header } from './components/Header';
 import { LotGrid } from './components/LotGrid';
 import bundleRaw from './data/auction_bundle.json';
@@ -15,19 +17,6 @@ const allLots = bundleRaw as Lot[];
 
 function uniqueSorted(arr: string[]): string[] {
   return Array.from(new Set(arr)).sort();
-}
-
-function substringSearch(lots: Lot[], query: string): Lot[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return lots;
-  return lots.filter(
-    (l) =>
-      l.title.toLowerCase().includes(q) ||
-      l.description.toLowerCase().includes(q) ||
-      l.lot_number.toLowerCase().includes(q) ||
-      l.category_path.some((c) => c.toLowerCase().includes(q)) ||
-      l.subcategory.toLowerCase().includes(q)
-  );
 }
 
 export function App() {
@@ -50,8 +39,12 @@ export function App() {
     return () => clearTimeout(t);
   }, []);
 
-  // Build the HiBid category hierarchy once from the loaded bundle.
+  // Build the HiBid category hierarchy + fuzzy search index once on load.
   const categoryTree = useMemo(() => buildCategoryTree(allLots), []);
+  const searchIndex = useMemo(() => buildSearchIndex(allLots), []);
+
+  // Debounce the query so the fuzzy pass over ~20k lots doesn't run per keystroke.
+  const debouncedQuery = useDebouncedValue(query, 150);
 
   const batBuckets = useMemo(() => {
     const buckets: string[] = [];
@@ -68,9 +61,14 @@ export function App() {
 
   const filtered = useMemo(() => {
     const rows = filterLots(allLots, { tab, dayFilter, categoryPath, batBucket, watched });
-    const searched = substringSearch(rows, query);
-    return sortLots(searched);
-  }, [tab, query, dayFilter, categoryPath, batBucket, watched]);
+    // Fuzzy search narrows WITHIN the structural filters — it never bypasses
+    // the active tab / category / day. Intersect fuzzy matches with `rows`.
+    if (debouncedQuery.trim()) {
+      const matches = fuzzyMatchLotNumbers(searchIndex, debouncedQuery);
+      return sortLots(rows.filter((l) => matches.has(l.lot_number)));
+    }
+    return sortLots(rows);
+  }, [tab, debouncedQuery, dayFilter, categoryPath, batBucket, watched, searchIndex]);
 
   const toggleExpand = (lotNumber: string) => {
     setExpandedIds((prev) => {

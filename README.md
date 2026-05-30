@@ -2,9 +2,9 @@
 
 ## What this is
 
-The Encore Lot Browser replaces the slow, hard-to-use HiBid website with a fast, searchable browser you run on your own computer. Each week you scrape the auction's lot data directly from HiBid, send it through your ChatGPT Auction Agent to flag Bat's List items and Nice Picks, then build and open the viewer — a clean four-tab grid that lets you search, filter, star lots, and flip between light and dark mode.
+The Encore Lot Browser replaces the slow, hard-to-use HiBid website with a fast, searchable browser you run on your own computer. Each week you scrape the auction's lot data directly from HiBid, send it through your ChatGPT Auction Agent to flag Bat's List items, then build and open the viewer — a clean three-tab grid (All / Bat's List / Watched) that lets you search, drill through HiBid's category tree, star lots, and flip between light and dark mode.
 
-The pipeline has four steps and runs in about a minute once set up. The categorization step (deciding what goes on Bat's List, what's a Nice Pick, scoring confidence) happens entirely inside your ChatGPT Workspace Agent and is not part of this codebase. The code here handles fetching the raw data, turning the Agent's output into a viewer-ready file, and displaying it.
+The pipeline has four steps and runs in about a minute once set up. **Categories come straight from HiBid's own category tree** — the viewer lets you drill down through it (e.g. Home Goods & Decor → Home Goods → Bed / Bath Items). The Auction Agent's only job now is flagging Bat's List items; it no longer assigns categories. **Search is fuzzy and typo-tolerant** (a search for "wustof" finds "Wüsthof"; "kitchenad" finds "KitchenAid"). The code here handles fetching the raw data, joining it with the Agent's Bat's List flags, and displaying it.
 
 ---
 
@@ -117,7 +117,7 @@ python -m build \
   --drop-orphans
 ```
 
-This **joins** the two files on lot number and produces the bundle the viewer reads. The raw scrape supplies titles, images, lot URLs, descriptions and conditions; the categorized file supplies categories, Bat's List flags, Nice Picks and confidence scores.
+This **joins** the two files on lot number and produces the bundle the viewer reads. The raw scrape supplies titles, images, lot URLs, descriptions, conditions, **and HiBid's full category tree**; the categorized file supplies only Bat's List flags and confidence scores. (The Agent's own category guesses, if any, are ignored — HiBid's native tree is the source of truth.)
 
 `--drop-orphans` is the recommended default for routine weekly builds. It tolerates the common case where lots have been removed from the auction between scrapes — each orphan categorized item is logged as a `WARNING` with its lot_number and enrichment fields, then excluded from the bundle. A `Dropped N orphan items` summary line confirms how many were skipped.
 
@@ -150,7 +150,7 @@ https://<your-github-user>.github.io/encore-browser/
 ```bash
 cd viewer && npm run preview
 ```
-Then open `http://localhost:4173/encore-browser/` in your browser. You should see all lots across four tabs: All, Bat's List, Nice Picks, and Watched.
+Then open `http://localhost:4173/encore-browser/` in your browser. You should see all lots across three tabs: All, Bat's List, and Watched. Use the category drop-downs to drill through HiBid's tree, and the search box for fuzzy, typo-tolerant search.
 
 > **One-time GitHub Pages setup.** In your repo settings → Pages → **Source: GitHub Actions** (not "Deploy from a branch"). This needs to be done once; after that, every push to `main` redeploys automatically.
 
@@ -200,7 +200,7 @@ The `condition` field is optional. If the scrape or the Agent's output didn't in
 
 The following items were reviewed and deliberately left out of scope for this version:
 
-- **Automated categorization** — categorization is handled entirely by your external ChatGPT Auction Agent, not by code here.
+- **Category assignment** — categories come from HiBid's own category tree (captured by the scraper), not from code or the Agent. The Agent only flags Bat's List items.
 - **Programmatic HiBid login** — the scraper uses token-paste mode only. You copy a token from your browser once per session.
 - **Two-day (Sunday + Monday) auction merging** — if an auction spans two days, run the scraper for each day and process them separately for now.
 - **Conflict detection between auctions** — no cross-auction deduplication.

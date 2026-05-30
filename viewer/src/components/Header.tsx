@@ -1,8 +1,10 @@
-import { Search, X, Sun, Moon, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Search, X, Sun, Moon, SlidersHorizontal } from 'lucide-react';
 import type { Tab, DayFilter, Density } from '../lib/types';
+import type { CatNode } from '../lib/categoryTree';
 import { TabButton } from './TabButton';
 import { FilterFieldRow } from './FilterFieldRow';
 import { BucketChipRow } from './BucketChipRow';
+import { CategoryFilter } from './CategoryFilter';
 
 interface Props {
   dark: boolean;
@@ -11,9 +13,9 @@ interface Props {
   onQueryChange: (q: string) => void;
   dayFilter: DayFilter;
   onDayChange: (d: DayFilter) => void;
-  category: string;
-  categories: string[];
-  onCategoryChange: (c: string) => void;
+  categoryTree: CatNode;
+  categoryPath: string[];
+  onCategoryPathChange: (p: string[]) => void;
   density: Density;
   onDensityChange: (d: Density) => void;
   tab: Tab;
@@ -37,9 +39,9 @@ export function Header({
   onQueryChange,
   dayFilter,
   onDayChange,
-  category,
-  categories,
-  onCategoryChange,
+  categoryTree,
+  categoryPath,
+  onCategoryPathChange,
   density,
   onDensityChange,
   tab,
@@ -167,23 +169,12 @@ export function Header({
                   </div>
                 </FilterFieldRow>
                 <FilterFieldRow label="Category">
-                  <div className="relative w-full">
-                    <select
-                      value={category}
-                      onChange={(e) => onCategoryChange(e.target.value)}
-                      className="appearance-none w-full h-10 pl-3.5 pr-9 rounded-full bg-white dark:bg-night2 ring-1 ring-rule dark:ring-dusk text-[14px] font-medium text-ink dark:text-bone focus:ring-2 focus:ring-ember focus:outline-none"
-                    >
-                      {categories.map((c) => (
-                        <option key={c} value={c}>
-                          {c === 'All' ? 'All categories' : c}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={15}
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink2 dark:text-bone2"
-                    />
-                  </div>
+                  <CategoryFilter
+                    tree={categoryTree}
+                    selected={categoryPath}
+                    onChange={onCategoryPathChange}
+                    size="md"
+                  />
                 </FilterFieldRow>
                 <FilterFieldRow label="Density">
                   <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk w-full">
@@ -258,23 +249,12 @@ export function Header({
               ))}
             </div>
 
-            <div className="relative shrink-0">
-              <select
-                value={category}
-                onChange={(e) => onCategoryChange(e.target.value)}
-                className="appearance-none h-10 pl-3.5 pr-9 rounded-full bg-white dark:bg-night2 ring-1 ring-rule dark:ring-dusk text-[13px] font-medium text-ink dark:text-bone focus:ring-2 focus:ring-ember focus:outline-none cursor-pointer"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c === 'All' ? 'All categories' : c}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={15}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink2 dark:text-bone2"
-              />
-            </div>
+            <CategoryFilter
+              tree={categoryTree}
+              selected={categoryPath}
+              onChange={onCategoryPathChange}
+              size="sm"
+            />
 
             <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk shrink-0">
               {([{ id: 'standard', label: 'Standard' }, { id: 'compact', label: 'Compact' }] as { id: Density; label: string }[]).map(

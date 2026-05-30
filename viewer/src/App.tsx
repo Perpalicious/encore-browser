@@ -3,6 +3,7 @@ import { ChevronUp, FilterX } from 'lucide-react';
 import type { Tab, DayFilter, Density, Lot } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
+import { buildCategoryTree } from './lib/categoryTree';
 import { useTheme } from './hooks/useTheme';
 import { usePersistedSet } from './hooks/usePersistedSet';
 import { Header } from './components/Header';
@@ -16,13 +17,26 @@ function uniqueSorted(arr: string[]): string[] {
   return Array.from(new Set(arr)).sort();
 }
 
+function substringSearch(lots: Lot[], query: string): Lot[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return lots;
+  return lots.filter(
+    (l) =>
+      l.title.toLowerCase().includes(q) ||
+      l.description.toLowerCase().includes(q) ||
+      l.lot_number.toLowerCase().includes(q) ||
+      l.category_path.some((c) => c.toLowerCase().includes(q)) ||
+      l.subcategory.toLowerCase().includes(q)
+  );
+}
+
 export function App() {
   const [dark, toggleTheme] = useTheme();
   const [watched, toggleWatch] = usePersistedSet('encore_watched');
 
   const [query, setQuery] = useState('');
   const [dayFilter, setDayFilter] = useState<DayFilter>('Both');
-  const [category, setCategory] = useState('All');
+  const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [density, setDensity] = useState<Density>('standard');
   const [tab, setTab] = useState<Tab>('all');
   const [batBucket, setBatBucket] = useState('All');
@@ -36,10 +50,8 @@ export function App() {
     return () => clearTimeout(t);
   }, []);
 
-  const categories = useMemo(
-    () => ['All', ...uniqueSorted(allLots.map((l) => l.category).filter(Boolean))],
-    []
-  );
+  // Build the HiBid category hierarchy once from the loaded bundle.
+  const categoryTree = useMemo(() => buildCategoryTree(allLots), []);
 
   const batBuckets = useMemo(() => {
     const buckets: string[] = [];
@@ -50,12 +62,15 @@ export function App() {
   }, []);
 
   const activeFilterCount =
-    (dayFilter !== 'Both' ? 1 : 0) + (category !== 'All' ? 1 : 0) + (density !== 'standard' ? 1 : 0);
+    (dayFilter !== 'Both' ? 1 : 0) +
+    (categoryPath.length > 0 ? 1 : 0) +
+    (density !== 'standard' ? 1 : 0);
 
   const filtered = useMemo(() => {
-    const rows = filterLots(allLots, { tab, query, dayFilter, category, batBucket, watched });
-    return sortLots(rows);
-  }, [tab, query, dayFilter, category, batBucket, watched]);
+    const rows = filterLots(allLots, { tab, dayFilter, categoryPath, batBucket, watched });
+    const searched = substringSearch(rows, query);
+    return sortLots(searched);
+  }, [tab, query, dayFilter, categoryPath, batBucket, watched]);
 
   const toggleExpand = (lotNumber: string) => {
     setExpandedIds((prev) => {
@@ -69,7 +84,7 @@ export function App() {
   const clearFilters = () => {
     setQuery('');
     setDayFilter('Both');
-    setCategory('All');
+    setCategoryPath([]);
     setBatBucket('All');
     // Tab and density are intentionally preserved.
   };
@@ -77,7 +92,7 @@ export function App() {
   const collapseAll = () => setExpandedIds(new Set());
 
   const anyFilterActive =
-    query !== '' || dayFilter !== 'Both' || category !== 'All' || batBucket !== 'All';
+    query !== '' || dayFilter !== 'Both' || categoryPath.length > 0 || batBucket !== 'All';
   const anyExpanded = expandedIds.size > 0;
 
   // When tab changes, reset bucket
@@ -95,9 +110,9 @@ export function App() {
         onQueryChange={setQuery}
         dayFilter={dayFilter}
         onDayChange={setDayFilter}
-        category={category}
-        categories={categories}
-        onCategoryChange={setCategory}
+        categoryTree={categoryTree}
+        categoryPath={categoryPath}
+        onCategoryPathChange={setCategoryPath}
         density={density}
         onDensityChange={setDensity}
         tab={tab}

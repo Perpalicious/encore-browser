@@ -1,25 +1,28 @@
 import type { Lot, Tab, DayFilter } from './types';
+import { pathHasPrefix } from './categoryTree';
 
+/**
+ * Apply the structural filters: tab, day, hierarchical category, bat bucket.
+ * Search is handled separately (see lib/search.ts) so it can run as a fuzzy
+ * pass narrowed to whatever this function returns.
+ */
 export function filterLots(
   lots: Lot[],
   {
     tab,
-    query,
     dayFilter,
-    category,
+    categoryPath,
     batBucket,
     watched,
   }: {
     tab: Tab;
-    query: string;
     dayFilter: DayFilter;
-    category: string;
+    categoryPath: string[];
     batBucket: string;
     watched: Set<string>;
   }
 ): Lot[] {
   let rows = lots.slice();
-  const q = query.trim().toLowerCase();
 
   if (tab === 'watched') {
     rows = rows.filter((l) => watched.has(l.lot_number));
@@ -33,18 +36,9 @@ export function filterLots(
       rows = rows.filter((l) => l.is_nice_pick);
     }
     if (dayFilter !== 'Both') rows = rows.filter((l) => l.day === dayFilter);
-    if (category !== 'All') rows = rows.filter((l) => l.category === category);
-  }
-
-  if (q) {
-    rows = rows.filter(
-      (l) =>
-        l.title.toLowerCase().includes(q) ||
-        l.description.toLowerCase().includes(q) ||
-        l.lot_number.toLowerCase().includes(q) ||
-        l.category.toLowerCase().includes(q) ||
-        l.subcategory.toLowerCase().includes(q)
-    );
+    if (categoryPath.length > 0) {
+      rows = rows.filter((l) => pathHasPrefix(l.category_path, categoryPath));
+    }
   }
 
   return rows;

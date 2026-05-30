@@ -1,0 +1,161 @@
+# Bat's List — curated item types to flag at auction.
+# The Agent matches SEMANTICALLY against these descriptions.
+# `examples` are illustrative hints, NOT an exhaustive whitelist —
+# generic/off-brand items still match if they fit the description.
+
+buckets:
+  - name: "Smart home"
+    description: >
+      Smart lighting and home-automation devices — smart bulbs, LED light
+      strips, smart switches and plugs, smart thermostats, smart hubs,
+      sensors, video doorbells, and anything app- or voice-controlled for
+      the home. Branded or off-brand both qualify.
+    examples: ["Hue", "Lifx", "Govee", "Lepro", "Ecobee", "Nest", "Wyze", "Kasa", "Sengled"]
+
+  - name: "Smart locks"
+    description: >
+      Smart door locks, smart deadbolts, keyless/keypad entry locks, and
+      connected lock hardware. Branded or generic.
+    examples: ["August", "Schlage Encode", "Yale Assure", "Level", "Wyze Lock"]
+
+  - name: "Electronics"
+    description: >
+      Notable consumer electronics and gadgets with resale value — audio
+      gear, headphones/earbuds, gaming hardware and consoles, computer
+      accessories, tablets, streaming devices, cameras, and similar.
+      Favor recognizable or higher-value items over generic cables and
+      no-name accessories.
+    examples: ["Sony", "Bose", "Anker", "Logitech", "Nintendo", "JBL"]
+
+  - name: "Mechanical keyboards"
+    description: >
+      Mechanical keyboards, keycaps, key switches, and keyboard
+      accessories or parts — prebuilt or custom, branded or generic.
+    examples: ["Keychron", "Ducky", "GMMK", "Akko"]
+
+  - name: "Brand boots & shoes"
+    description: >
+      Boots and shoes that are recognizable brands or clearly quality
+      footwear — winter boots, rain boots, work boots, and notable
+      sneaker/shoe brands.
+    examples: ["Ugg", "Hunter", "Blundstone", "Doc Martens", "Sorel", "Timberland", "Bogs"]
+
+  - name: "Lawn equipment"
+    description: >
+      Powered and large lawn/yard equipment — mowers, string trimmers,
+      leaf blowers, hedge trimmers, edgers, chainsaws, pressure washers,
+      and similar outdoor power equipment. Branded or generic, corded,
+      cordless, or gas.
+    examples: ["EGO", "Greenworks", "Ryobi", "Toro", "Husqvarna", "DeWalt"]
+
+  - name: "Power tools"
+    description: >
+      Power tools and accessories — drills, drivers, saws, sanders,
+      grinders, impact drivers, rotary/multi-tools, and tool
+      batteries/chargers. Branded or generic, corded or cordless.
+    examples: ["DeWalt", "Milwaukee", "Makita", "Bosch", "Ryobi", "Ridgid", "Metabo"]
+
+  - name: "Brand chef knives"
+    description: >
+      Quality chef knives and kitchen cutlery — chef knives, santoku,
+      paring, utility and bread knives, knife sets, and knife blocks.
+      Recognizable knife brands OR clearly quality kitchen knives even if
+      the title doesn't say "knife" (e.g. "cutlery set", a brand name alone).
+    examples: ["Shun", "Wüsthof", "Henckels", "Global", "Mac", "Miyabi", "Victorinox", "Dalstrong"]
+
+  - name: "Brand cookware"
+    description: >
+      Quality pots, pans, and cookware — skillets, fry pans, saucepans,
+      dutch ovens, cookware sets, and bakeware. Premium brands OR clearly
+      quality cookware even when the type word is abbreviated.
+    examples: ["De Buyer", "All-Clad", "Made In", "Le Creuset", "Staub", "Lodge", "Calphalon"]
+
+  - name: "Barbies"
+    description: >
+      Barbie dolls, playsets, vehicles, dreamhouses, and Barbie accessories.
+
+  - name: "Surprise toys"
+    description: >
+      LOL Surprise and Na Na Na Surprise toys — dolls, blind packs/balls,
+      playsets, and accessories.
+
+  - name: "Lego"
+    description: >
+      Lego sets, Lego pieces and parts, Lego building tables, and
+      Lego-compatible building-brick sets. Includes Duplo.
+    examples: ["Lego", "Duplo", "KidKraft Lego table"]
+
+  - name: "Hatchimals"
+    description: >
+      Hatchimals toys — eggs, CollEGGtibles, playsets, and accessories.
+
+  - name: "Bath towels"
+    description: >
+      Bath towels, towel sets, hand towels, washcloths, and bath sheets.
+
+  - name: "Board games"
+    description: >
+      Board games, card games, party games, tabletop games, and puzzles.
+
+  - name: "Tie-downs"
+    description: >
+      Ratchet straps, tie-down straps, bungee cords, cargo straps, and
+      securing/hauling straps.
+
+  - name: "Starbucks coffee"
+    description: >
+      Starbucks-branded coffee products — whole bean, ground coffee,
+      K-cups/pods, and instant coffee.
+
+  - name: "Bed linens"
+    description: >
+      Bed sheets, sheet sets, pillowcases, duvet covers, comforters, and
+      bedding sets.
+
+  - name: "Nightstands"
+    description: >
+      Nightstands, bedside tables, and bedroom side tables.
+
+  - name: "King bed frames"
+    description: >
+      King-size bed frames, headboards, and complete king beds.
+      King size specifically (not queen/full/twin).
+
+  - name: "Tarps"
+    description: >
+      Tarps of any size and heavy-duty covers — poly tarps, canvas tarps,
+      and utility covers.
+
+  - name: "BBQ accessories"
+    description: >
+      BBQ, grill, and smoker accessories — grates, smoke tubes/boxes,
+      pellet hoppers, grill tools, covers, and related parts. Branded or
+      generic.
+    examples: ["Napoleon", "Traeger", "Pit Boss", "Weber", "Char-Broil"]
+
+  - name: "Garden hose"
+    description: >
+      Garden hoses, hose nozzles, sprayers, shutoffs, hose reels, and
+      hose connectors/fittings.
+
+  - name: "Laundry baskets"
+    description: >
+      Laundry baskets, hampers, laundry bags, and laundry sorters.
+
+  - name: "Gardening tools"
+    description: >
+      Hand tools and implements for gardening and yard work — trowels,
+      pruners, secateurs, loppers, shears, spades, shovels, rakes, hoes,
+      hand cultivators, weeders, garden forks, watering cans, and garden
+      kneelers. Branded or generic, if clearly gardening hand tools.
+    examples: ["Fiskars", "Felco", "Corona", "Wolf-Garten"]
+
+  - name: "Garden & lawncare misc"
+    description: >
+      Gardening and lawncare consumables, materials, and accessories that
+      aren't tools or power equipment — garden/landscape edging, grass
+      seed, flower and vegetable seeds, fertilizer, soil, potting mix,
+      compost, mulch, plant supports and stakes, garden netting, weed
+      barrier/landscape fabric, planters and plant pots, and similar
+      yard/garden supplies.
+    examples: ["Scotts", "Miracle-Gro", "Vigoro"]

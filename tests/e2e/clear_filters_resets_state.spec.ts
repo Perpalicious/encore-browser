@@ -21,11 +21,11 @@ test('Clear filters resets search, day, category, and bucket', async ({ page }) 
     await sundayBtn.click();
   }
 
-  // Apply a non-default category via the <select>.
-  const categorySelect = page.locator('select').filter({ visible: true }).first();
-  const optionTexts = await categorySelect.locator('option').allTextContents();
-  const target = optionTexts.find((t) => t && t !== 'All' && t.trim().length > 0) || optionTexts[1];
-  await categorySelect.selectOption({ label: target });
+  // Apply a non-default category via the hierarchical filter's level-0 select.
+  const categoryLevel0 = page.locator('[data-testid="category-level-0"]').filter({ visible: true }).first();
+  const optionTexts = await categoryLevel0.locator('option').allTextContents();
+  const target = optionTexts[1]; // option[0] is the "All categories" sentinel
+  await categoryLevel0.selectOption({ label: target });
 
   // Switch to Bat's List tab so we can pick a bucket chip.
   await page.locator('[data-testid="tab-bat"]').filter({ visible: true }).click();
@@ -56,8 +56,10 @@ test('Clear filters resets search, day, category, and bucket', async ({ page }) 
   // Search empty
   await expect(search).toHaveValue('');
 
-  // Category select back to 'All'
-  await expect(categorySelect).toHaveValue('All');
+  // Category filter reset: level-0 select back to the "All categories" sentinel
+  // (value="") and no deeper drill-down selects present.
+  await expect(categoryLevel0).toHaveValue('');
+  await expect(page.locator('[data-testid="category-level-1"]').filter({ visible: true })).toHaveCount(0);
 
   // Day: Both is the active segmented option
   const bothBtn = page.getByRole('button', { name: /^Both$/ }).first();

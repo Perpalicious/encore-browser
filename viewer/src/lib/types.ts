@@ -1,8 +1,16 @@
 export type Condition = 'New' | 'Like New' | 'Good' | 'Fair' | 'Heavily Used';
 export type Confidence = 'low' | 'medium' | 'high';
+export type ResaleOutlook = 'good' | 'fair' | 'poor';
 export type DayFilter = 'Sunday' | 'Monday' | 'Both';
 export type Density = 'standard' | 'compact';
 export type Tab = 'all' | 'bat' | 'watched';
+
+/**
+ * Resale confidence filter: 'all' = no filter, 'high' = high only,
+ * 'medium-plus' = medium or high. Lots with no resale data are excluded
+ * whenever the filter is not 'all'.
+ */
+export type ConfidenceFilter = 'all' | 'high' | 'medium-plus';
 
 export interface Lot {
   day: string;
@@ -19,6 +27,14 @@ export interface Lot {
   is_bat: boolean;
   bat_buckets: string[];
   confidence: Confidence;
+  // Estimated retail price from HiBid (null when unknown).
+  est_retail_price: number | null;
+  // Resale valuation — all null for lots the valuation pass did not cover.
+  est_resale_low: number | null;
+  est_resale_high: number | null;
+  resale_confidence: Confidence | null;
+  resale_outlook: ResaleOutlook | null;
+  resale_reasoning: string | null;
 }
 
 /**

@@ -54,6 +54,36 @@ def _dedup_ordered(values: list[str]) -> list[str]:
     return result
 
 
+def _to_price(value: Any) -> float | None:
+    """Coerce a price-like value to a float, or None if absent/unparseable."""
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _resale_passthrough(item: dict[str, Any]) -> dict[str, Any]:
+    """
+    Carry the estimated-retail and (optional) resale-valuation fields onto the
+    Lot shape. All resale fields are absent for lots the valuation pass did not
+    cover; they default to None and the viewer simply shows no resale info.
+
+    Enum values (resale_confidence/resale_outlook) are passed through as-is —
+    the resale join (build/resale.py) already normalises or nulls them, and the
+    Lot schema validates the allowed set, so a bad value fails loudly.
+    """
+    return {
+        "est_retail_price": _to_price(item.get("est_retail_price")),
+        "est_resale_low": _to_price(item.get("est_resale_low")),
+        "est_resale_high": _to_price(item.get("est_resale_high")),
+        "resale_confidence": item.get("resale_confidence") or None,
+        "resale_outlook": item.get("resale_outlook") or None,
+        "resale_reasoning": item.get("resale_reasoning") or None,
+    }
+
+
 def _resolve_categories(
     item: dict[str, Any], fallback_subcategory: str
 ) -> tuple[list[str], str, str]:
@@ -125,6 +155,7 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
         "confidence": _bucket_confidence(item.get("predicted_confidence")),
+        **_resale_passthrough(item),
     }
 
 
@@ -165,6 +196,7 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
         "confidence": confidence,
+        **_resale_passthrough(item),
     }
 
 

@@ -18,6 +18,12 @@ function lot(lot_number: string, bat_buckets: string[], is_bat = true): Lot {
     is_bat,
     bat_buckets,
     confidence: 'low',
+    est_retail_price: null,
+    est_resale_low: null,
+    est_resale_high: null,
+    resale_confidence: null,
+    resale_outlook: null,
+    resale_reasoning: null,
   };
 }
 

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ChevronUp, FilterX, ChevronLeft } from 'lucide-react';
-import type { Tab, DayFilter, Density, Bundle } from './lib/types';
+import type { Tab, DayFilter, Density, Bundle, ConfidenceFilter } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
 import { buildCategoryTree } from './lib/categoryTree';
@@ -26,6 +26,8 @@ export function App() {
   const [query, setQuery] = useState('');
   const [dayFilter, setDayFilter] = useState<DayFilter>('Both');
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
+  const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all');
+  const [potentialOnly, setPotentialOnly] = useState(false);
   const [density, setDensity] = useState<Density>('standard');
   const [tab, setTab] = useState<Tab>('all');
   // Bat's List two-level navigation: pick a group, then a bucket. Until a
@@ -58,10 +60,20 @@ export function App() {
   const activeFilterCount =
     (dayFilter !== 'Both' ? 1 : 0) +
     (categoryPath.length > 0 ? 1 : 0) +
+    (confidenceFilter !== 'all' ? 1 : 0) +
+    (potentialOnly ? 1 : 0) +
     (density !== 'standard' ? 1 : 0);
 
   const filtered = useMemo(() => {
-    const rows = filterLots(allLots, { tab, dayFilter, categoryPath, batBucket, watched });
+    const rows = filterLots(allLots, {
+      tab,
+      dayFilter,
+      categoryPath,
+      batBucket,
+      watched,
+      confidenceFilter,
+      potentialOnly,
+    });
     // Fuzzy search narrows WITHIN the structural filters — it never bypasses
     // the active tab / category / day. Intersect fuzzy matches with `rows`.
     if (debouncedQuery.trim()) {
@@ -69,7 +81,7 @@ export function App() {
       return sortLots(rows.filter((l) => matches.has(l.lot_number)));
     }
     return sortLots(rows);
-  }, [tab, debouncedQuery, dayFilter, categoryPath, batBucket, watched, searchIndex]);
+  }, [tab, debouncedQuery, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, searchIndex]);
 
   // Single-accordion: opening a card collapses any other open card; toggling
   // the open card closes it (so zero open is possible).
@@ -81,13 +93,19 @@ export function App() {
     setQuery('');
     setDayFilter('Both');
     setCategoryPath([]);
+    setConfidenceFilter('all');
+    setPotentialOnly(false);
     // Tab and density are intentionally preserved.
   };
 
   const collapseAll = () => setExpandedId(null);
 
   const anyFilterActive =
-    query !== '' || dayFilter !== 'Both' || categoryPath.length > 0;
+    query !== '' ||
+    dayFilter !== 'Both' ||
+    categoryPath.length > 0 ||
+    confidenceFilter !== 'all' ||
+    potentialOnly;
   const anyExpanded = expandedId !== null;
 
   // Switching tabs resets the Bat's List drill-down to the group selector.
@@ -113,6 +131,10 @@ export function App() {
         categoryTree={categoryTree}
         categoryPath={categoryPath}
         onCategoryPathChange={setCategoryPath}
+        confidenceFilter={confidenceFilter}
+        onConfidenceChange={setConfidenceFilter}
+        potentialOnly={potentialOnly}
+        onPotentialToggle={() => setPotentialOnly((v) => !v)}
         density={density}
         onDensityChange={setDensity}
         tab={tab}

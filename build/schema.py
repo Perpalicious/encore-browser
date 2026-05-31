@@ -24,6 +24,21 @@ class Lot(BaseModel):
     bat_buckets: list[str]
     confidence: Literal["low", "medium", "high"]
 
+    # --- Estimated retail (from the scraper, may be missing) ----------------
+    # The lot's estimated retail price as listed by HiBid. None when the
+    # scraper could not extract one.
+    est_retail_price: Optional[float] = None
+
+    # --- Resale valuation (optional, from the resale agent) -----------------
+    # Joined in by `python -m build --resale ...`. Every field is None for the
+    # (possibly large) subset of lots the valuation pass did not cover. The
+    # viewer shows resale info only when est_resale_low/high are both present.
+    est_resale_low: Optional[float] = None
+    est_resale_high: Optional[float] = None
+    resale_confidence: Optional[Literal["low", "medium", "high"]] = None
+    resale_outlook: Optional[Literal["good", "fair", "poor"]] = None
+    resale_reasoning: Optional[str] = None
+
     @field_validator("lot_number", "title", "description", "lot_url", "category",
                      "subcategory", "thumb_url", "image_url",
                      mode="before")

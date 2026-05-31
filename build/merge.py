@@ -115,6 +115,9 @@ def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
     merged["lot_url"] = raw.get("lot_url", "") or ""
     merged["condition"] = raw.get("condition")  # may be None
     merged["close_at"] = raw.get("close_at")
+    merged["est_retail_price"] = raw.get("est_retail_price")  # may be None
+    # Keep the raw id so an optional resale join can match on it as a fallback.
+    merged["id"] = raw.get("id")
     # `current_bid` and `status` aren't on the Lot shape, but pass through
     merged["current_bid"] = raw.get("current_bid")
     merged["status"] = raw.get("status")

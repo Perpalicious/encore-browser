@@ -63,6 +63,18 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--resale",
+        metavar="PATH",
+        default=None,
+        help=(
+            "Optional resale-valuation JSON from the resale agent "
+            "(e.g. data/categorized/auction_743601_resale.json). Joined onto "
+            "lots by lot_number. Valuation may cover only a subset of lots — "
+            "unmatched lots simply get no resale info. Omit the flag entirely "
+            "to build with no resale data (the prior behaviour)."
+        ),
+    )
+    parser.add_argument(
         "--output",
         required=True,
         metavar="PATH",
@@ -126,6 +138,22 @@ def main() -> None:
             f"(categorized items with no raw match)."
         )
     print(f"Joined {len(merged)} items. Validating…")
+
+    # --- Optional resale valuation join -------------------------------------
+    if args.resale:
+        from build.resale import load_resale_items, build_resale_index, attach_resale
+
+        resale_path = Path(args.resale)
+        resale_items = load_resale_items(resale_path)
+        resale_index = build_resale_index(resale_items)
+        attached = attach_resale(merged, resale_index)
+        n_merged = len(merged) or 1
+        print(
+            f"Resale: loaded {len(resale_items)} valuations ({len(resale_index)} "
+            f"with a usable range) from {resale_path}; attached to "
+            f"{attached}/{len(merged)} lots ({100.0 * attached / n_merged:.1f}%). "
+            f"Lots without a valuation show no resale info."
+        )
 
     from build.transform import transform_all
     lots = transform_all(merged)

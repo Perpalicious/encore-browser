@@ -1,5 +1,6 @@
 import { X, ExternalLink, ChevronUp } from 'lucide-react';
 import type { Lot } from '../lib/types';
+import { hasResale, resaleRange, resaleMean, formatMoney } from '../lib/resale';
 import { LotImage } from './pills/LotImage';
 import { ConditionPill } from './pills/ConditionPill';
 import { DayBadge } from './pills/DayBadge';
@@ -110,6 +111,69 @@ export function LotExpandPanel({ lot, onCollapse, fullRow = false }: Props) {
               </>
             )}
           </dl>
+
+          {/* Resale valuation — only when this lot was valued */}
+          {hasResale(lot) && (
+            <div
+              data-testid="resale-detail"
+              className="mt-5 rounded-xl bg-paper2/60 dark:bg-coal/60 ring-1 ring-rule dark:ring-dusk p-4"
+            >
+              <div className="flex items-baseline gap-4 flex-wrap">
+                <span className="inline-flex items-baseline gap-1.5">
+                  <span className="uppercase tracking-[0.14em] font-mono text-[10px] text-ink2/70 dark:text-bone2/70">
+                    Resale
+                  </span>
+                  <span className="font-medium text-[15px] text-emerald-600 dark:text-emerald-400">
+                    {resaleRange(lot)}
+                  </span>
+                  <span className="text-[11px] text-ink2/70 dark:text-bone2/70">
+                    (~{formatMoney(resaleMean(lot))})
+                  </span>
+                </span>
+                {lot.est_retail_price !== null && (
+                  <span className="inline-flex items-baseline gap-1.5">
+                    <span className="uppercase tracking-[0.14em] font-mono text-[10px] text-ink2/70 dark:text-bone2/70">
+                      Retail
+                    </span>
+                    <span className="font-medium text-[15px] text-rose-600/80 dark:text-rose-400/80">
+                      {formatMoney(lot.est_retail_price)}
+                    </span>
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                {lot.resale_confidence && (
+                  <span
+                    data-testid="resale-confidence"
+                    className="inline-flex items-center text-[11px] font-medium px-2 py-[2px] rounded-full bg-white dark:bg-night2 text-ink2 dark:text-bone2 ring-1 ring-rule dark:ring-dusk capitalize"
+                  >
+                    {lot.resale_confidence} confidence
+                  </span>
+                )}
+                {lot.resale_outlook && (
+                  <span
+                    data-testid="resale-outlook"
+                    className={`inline-flex items-center text-[11px] font-medium px-2 py-[2px] rounded-full capitalize ring-1 ${
+                      lot.resale_outlook === 'good'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30'
+                        : lot.resale_outlook === 'fair'
+                          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-amber-500/30'
+                          : 'bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-rose-500/30'
+                    }`}
+                  >
+                    {lot.resale_outlook} outlook
+                  </span>
+                )}
+              </div>
+
+              {lot.resale_reasoning && (
+                <p className="mt-3 text-[13.5px] leading-[1.55] text-ink2 dark:text-bone2 font-sans">
+                  {lot.resale_reasoning}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="mt-6 flex items-center gap-2 flex-wrap">
             <a

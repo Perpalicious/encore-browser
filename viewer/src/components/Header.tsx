@@ -1,9 +1,10 @@
 import { Search, X, Sun, Moon, SlidersHorizontal } from 'lucide-react';
-import type { Tab, DayFilter, Density } from '../lib/types';
+import type { Tab, DayFilter, Density, ConfidenceFilter } from '../lib/types';
 import type { CatNode } from '../lib/categoryTree';
 import { TabButton } from './TabButton';
 import { FilterFieldRow } from './FilterFieldRow';
 import { CategoryFilter } from './CategoryFilter';
+import { ResaleFilter } from './ResaleFilter';
 
 interface Props {
   dark: boolean;
@@ -15,6 +16,10 @@ interface Props {
   categoryTree: CatNode;
   categoryPath: string[];
   onCategoryPathChange: (p: string[]) => void;
+  confidenceFilter: ConfidenceFilter;
+  onConfidenceChange: (c: ConfidenceFilter) => void;
+  potentialOnly: boolean;
+  onPotentialToggle: () => void;
   density: Density;
   onDensityChange: (d: Density) => void;
   tab: Tab;
@@ -38,6 +43,10 @@ export function Header({
   categoryTree,
   categoryPath,
   onCategoryPathChange,
+  confidenceFilter,
+  onConfidenceChange,
+  potentialOnly,
+  onPotentialToggle,
   density,
   onDensityChange,
   tab,
@@ -131,7 +140,7 @@ export function Header({
                 testId="tab-watched"
               />
             </nav>
-            <p className="shrink-0 text-[11px] font-mono uppercase tracking-[0.12em] text-ink2 dark:text-bone2 pb-2">
+            <p data-testid="result-count" className="shrink-0 text-[11px] font-mono uppercase tracking-[0.12em] text-ink2 dark:text-bone2 pb-2">
               {loading ? '…' : `${filteredCount}/${totalCount}`}
             </p>
           </div>
@@ -160,6 +169,15 @@ export function Header({
                     tree={categoryTree}
                     selected={categoryPath}
                     onChange={onCategoryPathChange}
+                    size="md"
+                  />
+                </FilterFieldRow>
+                <FilterFieldRow label="Resale">
+                  <ResaleFilter
+                    confidenceFilter={confidenceFilter}
+                    onConfidenceChange={onConfidenceChange}
+                    potentialOnly={potentialOnly}
+                    onPotentialToggle={onPotentialToggle}
                     size="md"
                   />
                 </FilterFieldRow>
@@ -292,9 +310,18 @@ export function Header({
                 testId="tab-watched"
               />
             </nav>
-            <p className="text-[12px] font-mono uppercase tracking-[0.14em] text-ink2 dark:text-bone2 pb-2">
-              {loading ? 'Loading…' : `Showing ${filteredCount} of ${totalCount} lots`}
-            </p>
+            <div className="flex items-center gap-3 pb-2">
+              <ResaleFilter
+                confidenceFilter={confidenceFilter}
+                onConfidenceChange={onConfidenceChange}
+                potentialOnly={potentialOnly}
+                onPotentialToggle={onPotentialToggle}
+                size="sm"
+              />
+              <p data-testid="result-count" className="text-[12px] font-mono uppercase tracking-[0.14em] text-ink2 dark:text-bone2 whitespace-nowrap">
+                {loading ? 'Loading…' : `Showing ${filteredCount} of ${totalCount} lots`}
+              </p>
+            </div>
           </div>
         </div>
       </div>

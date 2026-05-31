@@ -1,10 +1,15 @@
-import type { Lot, Tab, DayFilter } from './types';
+import type { Lot, Tab, DayFilter, ConfidenceFilter } from './types';
 import { pathHasPrefix } from './categoryTree';
+import { confidencePasses, isPotentialResale } from './resale';
 
 /**
- * Apply the structural filters: tab, day, hierarchical category, bat bucket.
- * Search is handled separately (see lib/search.ts) so it can run as a fuzzy
- * pass narrowed to whatever this function returns.
+ * Apply the structural filters: tab, day, hierarchical category, bat bucket,
+ * plus the resale filters (confidence + potential-resales). Search is handled
+ * separately (see lib/search.ts) so it can run as a fuzzy pass narrowed to
+ * whatever this function returns.
+ *
+ * The resale filters compose with — and narrow within — the current tab /
+ * category / day view, on every tab.
  */
 export function filterLots(
   lots: Lot[],
@@ -14,12 +19,16 @@ export function filterLots(
     categoryPath,
     batBucket,
     watched,
+    confidenceFilter = 'all',
+    potentialOnly = false,
   }: {
     tab: Tab;
     dayFilter: DayFilter;
     categoryPath: string[];
     batBucket: string | null;
     watched: Set<string>;
+    confidenceFilter?: ConfidenceFilter;
+    potentialOnly?: boolean;
   }
 ): Lot[] {
   let rows = lots.slice();
@@ -37,6 +46,12 @@ export function filterLots(
     if (categoryPath.length > 0) {
       rows = rows.filter((l) => pathHasPrefix(l.category_path, categoryPath));
     }
+  }
+
+  // Resale filters apply on every tab, narrowing the current view further.
+  if (potentialOnly) rows = rows.filter(isPotentialResale);
+  if (confidenceFilter !== 'all') {
+    rows = rows.filter((l) => confidencePasses(l, confidenceFilter));
   }
 
   return rows;

@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Lot, Density } from '../lib/types';
+import { hasResale, resaleMean, formatMoney } from '../lib/resale';
 import { LotImage } from './pills/LotImage';
 import { ConditionPill } from './pills/ConditionPill';
 import { DayBadge } from './pills/DayBadge';
@@ -88,6 +89,25 @@ export function LotCard({
           >
             {lot.title}
           </h3>
+
+          {/* Resale / retail summary — only when this lot was valued */}
+          {hasResale(lot) && (
+            <div
+              data-testid="resale-summary"
+              className={`${compact ? 'mt-1.5' : 'mt-2'} flex items-baseline gap-2.5 ${compact ? 'text-[12px]' : 'text-[13px]'}`}
+            >
+              <span className="inline-flex items-baseline gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="uppercase tracking-[0.08em] text-[0.72em] opacity-80">Resale</span>
+                <span>~{formatMoney(resaleMean(lot))}</span>
+              </span>
+              {lot.est_retail_price !== null && (
+                <span className="inline-flex items-baseline gap-1 font-medium text-rose-600/80 dark:text-rose-400/80">
+                  <span className="uppercase tracking-[0.08em] text-[0.72em] opacity-80">Retail</span>
+                  <span>{formatMoney(lot.est_retail_price)}</span>
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Bottom row: bat bucket + details toggle */}
           <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-center gap-1.5 flex-wrap`}>

@@ -19,7 +19,8 @@ interface Props {
   loading: boolean;
   density: Density;
   tab: Tab;
-  expandedIds: Set<string>;
+  // Single-accordion: at most one lot is expanded at a time (null = none).
+  expandedId: string | null;
   watched: Set<string>;
   onToggleExpand: (lotNumber: string) => void;
   onToggleWatch: (lotNumber: string) => void;
@@ -41,7 +42,7 @@ export function LotGrid({
   loading,
   density,
   tab,
-  expandedIds,
+  expandedId,
   watched,
   onToggleExpand,
   onToggleWatch,
@@ -58,17 +59,17 @@ export function LotGrid({
     for (let i = 0; i < lots.length; i += columns) {
       const rowLots = lots.slice(i, i + columns);
       result.push({ type: 'cards', lots: rowLots });
-      // In compact mode, insert full-row expand panels after this row
-      if (compact) {
+      // In compact mode, insert the full-row expand panel after its row
+      if (compact && expandedId !== null) {
         for (const lot of rowLots) {
-          if (expandedIds.has(lot.lot_number)) {
+          if (lot.lot_number === expandedId) {
             result.push({ type: 'panel', lot });
           }
         }
       }
     }
     return result;
-  }, [lots, columns, compact, expandedIds]);
+  }, [lots, columns, compact, expandedId]);
 
   const rowVirtualizer = useWindowVirtualizer({
     count: rows.length,
@@ -122,7 +123,7 @@ export function LotGrid({
                     <LotCard
                       key={lot.lot_number}
                       lot={lot}
-                      expanded={expandedIds.has(lot.lot_number)}
+                      expanded={lot.lot_number === expandedId}
                       onToggleExpand={() => onToggleExpand(lot.lot_number)}
                       watched={watched.has(lot.lot_number)}
                       onToggleWatch={() => onToggleWatch(lot.lot_number)}

@@ -32,7 +32,8 @@ export function App() {
   // bucket is chosen, the grid shows nothing — the group selector drives.
   const [batGroup, setBatGroup] = useState<string | null>(null);
   const [batBucket, setBatBucket] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  // Single-accordion: at most one card is expanded at a time.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -70,13 +71,10 @@ export function App() {
     return sortLots(rows);
   }, [tab, debouncedQuery, dayFilter, categoryPath, batBucket, watched, searchIndex]);
 
+  // Single-accordion: opening a card collapses any other open card; toggling
+  // the open card closes it (so zero open is possible).
   const toggleExpand = (lotNumber: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(lotNumber)) next.delete(lotNumber);
-      else next.add(lotNumber);
-      return next;
-    });
+    setExpandedId((prev) => (prev === lotNumber ? null : lotNumber));
   };
 
   const clearFilters = () => {
@@ -86,11 +84,11 @@ export function App() {
     // Tab and density are intentionally preserved.
   };
 
-  const collapseAll = () => setExpandedIds(new Set());
+  const collapseAll = () => setExpandedId(null);
 
   const anyFilterActive =
     query !== '' || dayFilter !== 'Both' || categoryPath.length > 0;
-  const anyExpanded = expandedIds.size > 0;
+  const anyExpanded = expandedId !== null;
 
   // Switching tabs resets the Bat's List drill-down to the group selector.
   const handleTabChange = (t: Tab) => {
@@ -201,7 +199,7 @@ export function App() {
               loading={loading}
               density={density}
               tab={tab}
-              expandedIds={expandedIds}
+              expandedId={expandedId}
               watched={watched}
               onToggleExpand={toggleExpand}
               onToggleWatch={toggleWatch}

@@ -2,41 +2,40 @@ import { test, expect } from '@playwright/test';
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-test('Collapse all collapses every expanded card', async ({ page }) => {
+// Single-accordion behavior: at most one card is expanded at a time. Opening a
+// card collapses any currently-open card; toggling the open card closes it.
+test('single-accordion: only one card open at a time, Collapse all clears it', async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
 
-  // Toolbar should be hidden when nothing is expanded and no filter is active.
+  // Toolbar hidden when nothing is expanded and no filter is active.
   await expect(page.locator('[data-testid="grid-toolbar"]')).toHaveCount(0);
 
   const cards = page.locator('[data-testid="lot-card"]');
+  const expanded = page.locator('[aria-label="Hide details"]'); // toggles in the open state
 
-  // Expand cards 0 and 1 via the "Show details" affordance.
-  for (const i of [0, 1]) {
-    const toggle = cards.nth(i).locator('[aria-label="Show details"]').first();
-    await toggle.dispatchEvent('click');
-  }
+  // Open card 0 → exactly one card expanded.
+  await cards.nth(0).locator('[aria-label="Show details"]').first().dispatchEvent('click');
+  await expect(expanded).toHaveCount(1, { timeout: 2000 });
 
-  // Two cards' Details affordances should report aria-expanded="true".
-  // (CTAs are present in DOM for every card via the collapsed inline expand-grid;
-  // we assert on the toggle's aria-expanded which is the source of truth.)
-  const expandedToggles = page.locator('[aria-label="Hide details"]');
-  await expect(expandedToggles).toHaveCount(2, { timeout: 2000 });
+  // Open card 1 → still exactly one expanded (card 0 was auto-collapsed).
+  await cards.nth(1).locator('[aria-label="Show details"]').first().dispatchEvent('click');
+  await expect(expanded).toHaveCount(1, { timeout: 2000 });
+  // Card 0 is now collapsed; card 1 is the open one.
+  await expect(cards.nth(0).locator('[aria-label="Show details"]').first()).toHaveAttribute('aria-expanded', 'false');
+  await expect(cards.nth(1).locator('[aria-label="Hide details"]').first()).toHaveAttribute('aria-expanded', 'true');
 
-  // Collapse all button should appear.
+  // Toggling the open card closes it → zero open.
+  await cards.nth(1).locator('[aria-label="Hide details"]').first().dispatchEvent('click');
+  await expect(expanded).toHaveCount(0, { timeout: 2000 });
+
+  // Re-open one, then use Collapse all to clear it.
+  await cards.nth(2).locator('[aria-label="Show details"]').first().dispatchEvent('click');
+  await expect(expanded).toHaveCount(1, { timeout: 2000 });
   const collapseAll = page.locator('[data-testid="collapse-all-btn"]');
   await expect(collapseAll).toBeVisible();
   await collapseAll.click();
-
-  // After clicking, no toggles are in the "Hide details" (expanded) state, and
-  // the toolbar should hide again (no filters active either).
-  await expect(expandedToggles).toHaveCount(0, { timeout: 2000 });
+  await expect(expanded).toHaveCount(0, { timeout: 2000 });
   await expect(collapseAll).toHaveCount(0);
-
-  // Both cards should now report aria-expanded="false" on their Details affordance.
-  for (const i of [0, 1]) {
-    const toggle = cards.nth(i).locator('[aria-label="Show details"]').first();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-  }
 });

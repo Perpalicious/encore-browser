@@ -1,4 +1,4 @@
-import { Search, X, Sun, Moon, SlidersHorizontal } from 'lucide-react';
+import { Search, X, Sun, Moon, SlidersHorizontal, Sparkles } from 'lucide-react';
 import type { Tab, DayFilter, Density, ConfidenceFilter } from '../lib/types';
 import type { CatNode } from '../lib/categoryTree';
 import { TabButton } from './TabButton';
@@ -11,6 +11,8 @@ interface Props {
   onToggleTheme: () => void;
   query: string;
   onQueryChange: (q: string) => void;
+  fuzzy: boolean;
+  onFuzzyToggle: () => void;
   dayFilter: DayFilter;
   onDayChange: (d: DayFilter) => void;
   categoryTree: CatNode;
@@ -38,6 +40,8 @@ export function Header({
   onToggleTheme,
   query,
   onQueryChange,
+  fuzzy,
+  onFuzzyToggle,
   dayFilter,
   onDayChange,
   categoryTree,
@@ -89,6 +93,22 @@ export function Header({
                 </button>
               )}
             </div>
+            <button
+              type="button"
+              data-testid="fuzzy-toggle"
+              onClick={onFuzzyToggle}
+              aria-pressed={fuzzy}
+              aria-label="Toggle fuzzy search"
+              title={fuzzy ? 'Fuzzy search on (tolerates typos)' : 'Exact search (tap for fuzzy)'}
+              className={`shrink-0 h-10 w-10 grid place-items-center rounded-full ring-1 transition-colors
+                ${
+                  fuzzy
+                    ? 'bg-ink text-paper ring-ink dark:bg-bone dark:text-night dark:ring-bone'
+                    : 'bg-white dark:bg-night2 ring-rule dark:ring-dusk text-ink2 dark:text-bone2'
+                }`}
+            >
+              <Sparkles size={17} />
+            </button>
             <button
               onClick={onToggleMobileFilters}
               aria-expanded={mobileFiltersOpen}
@@ -239,6 +259,23 @@ export function Header({
                 </button>
               )}
             </div>
+
+            <button
+              type="button"
+              data-testid="fuzzy-toggle"
+              onClick={onFuzzyToggle}
+              aria-pressed={fuzzy}
+              title={fuzzy ? 'Fuzzy search on (tolerates typos)' : 'Exact search — toggle for fuzzy (tolerates typos)'}
+              className={`inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-[13px] font-medium ring-1 transition-colors shrink-0
+                ${
+                  fuzzy
+                    ? 'bg-ink text-paper ring-ink dark:bg-bone dark:text-night dark:ring-bone'
+                    : 'bg-white dark:bg-night2 ring-rule dark:ring-dusk text-ink2 dark:text-bone2 hover:text-ink dark:hover:text-bone'
+                }`}
+            >
+              <Sparkles size={15} />
+              <span>Fuzzy</span>
+            </button>
 
             <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk shrink-0">
               {(['Sunday', 'Monday', 'Both'] as DayFilter[]).map((d) => (

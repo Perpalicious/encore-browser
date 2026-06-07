@@ -4,7 +4,7 @@ import type { Tab, DayFilter, Density, Bundle, ConfidenceFilter } from './lib/ty
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
 import { buildCategoryTree } from './lib/categoryTree';
-import { buildSearchIndex, fuzzyMatchLotNumbers } from './lib/search';
+import { buildSearchIndex, searchLotNumbers } from './lib/search';
 import { buildBatNav } from './lib/batNav';
 import { useTheme } from './hooks/useTheme';
 import { usePersistedSet } from './hooks/usePersistedSet';
@@ -24,6 +24,9 @@ export function App() {
   const [watched, toggleWatch] = usePersistedSet('encore_watched');
 
   const [query, setQuery] = useState('');
+  // Search is EXACT (substring) by default; this opts into typo-tolerant fuzzy
+  // matching. Session-only (no persistence), default off on load.
+  const [fuzzy, setFuzzy] = useState(false);
   const [dayFilter, setDayFilter] = useState<DayFilter>('Both');
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all');
@@ -74,14 +77,14 @@ export function App() {
       confidenceFilter,
       potentialOnly,
     });
-    // Fuzzy search narrows WITHIN the structural filters — it never bypasses
-    // the active tab / category / day. Intersect fuzzy matches with `rows`.
+    // Search narrows WITHIN the structural filters — it never bypasses the
+    // active tab / category / day. Intersect matches with `rows`.
     if (debouncedQuery.trim()) {
-      const matches = fuzzyMatchLotNumbers(searchIndex, debouncedQuery);
+      const matches = searchLotNumbers(searchIndex, debouncedQuery, fuzzy);
       return sortLots(rows.filter((l) => matches.has(l.lot_number)));
     }
     return sortLots(rows);
-  }, [tab, debouncedQuery, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, searchIndex]);
+  }, [tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, searchIndex]);
 
   // Single-accordion: opening a card collapses any other open card; toggling
   // the open card closes it (so zero open is possible).
@@ -126,6 +129,8 @@ export function App() {
         onToggleTheme={toggleTheme}
         query={query}
         onQueryChange={setQuery}
+        fuzzy={fuzzy}
+        onFuzzyToggle={() => setFuzzy((v) => !v)}
         dayFilter={dayFilter}
         onDayChange={setDayFilter}
         categoryTree={categoryTree}

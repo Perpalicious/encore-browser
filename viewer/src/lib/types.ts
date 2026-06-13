@@ -6,6 +6,23 @@ export type Density = 'standard' | 'compact';
 export type Tab = 'all' | 'bat' | 'watched';
 
 /**
+ * Item-list sort order. 'lot' is the default (Bat-first / Sunday-first /
+ * lot-number). The value-based orders sort lots with no data to the end.
+ *  - 'resale-desc' / 'resale-asc': by resale mean (low/high midpoint)
+ *  - 'retail-desc': by estimated retail price
+ */
+export type SortKey = 'lot' | 'resale-desc' | 'resale-asc' | 'retail-desc';
+
+/** Condition values in canonical (best → worst) order for filter chips. */
+export const CONDITION_ORDER: Condition[] = [
+  'New',
+  'Like New',
+  'Good',
+  'Fair',
+  'Heavily Used',
+];
+
+/**
  * Resale confidence filter: 'all' = no filter, 'high' = high only,
  * 'medium-plus' = medium or high. Lots with no resale data are excluded
  * whenever the filter is not 'all'.

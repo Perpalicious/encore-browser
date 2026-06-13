@@ -9,8 +9,9 @@ test('single-accordion: only one card open at a time, Collapse all clears it', a
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
 
-  // Toolbar hidden when nothing is expanded and no filter is active.
-  await expect(page.locator('[data-testid="grid-toolbar"]')).toHaveCount(0);
+  // The toolbar persistently hosts sort/condition controls, but the
+  // Collapse-all action is hidden while nothing is expanded.
+  await expect(page.locator('[data-testid="collapse-all-btn"]')).toHaveCount(0);
 
   const cards = page.locator('[data-testid="lot-card"]');
   const expanded = page.locator('[aria-label="Hide details"]'); // toggles in the open state

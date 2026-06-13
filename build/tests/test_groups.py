@@ -31,6 +31,25 @@ class TestLoadBucketGroups:
         assert set(order) == set(mapping.values())
         assert len(order) >= 8  # the curated file defines at least the 8 documented groups
 
+    def test_bucket_count_and_integrity(self):
+        """The curated file holds exactly 45 buckets, every one grouped, no
+        duplicate names. Guards accidental drops/dupes when buckets evolve."""
+        mapping, _ = load_bucket_groups(BUCKETS_YAML)
+        # load_bucket_groups dedupes into a dict, so re-read raw to catch dupes.
+        import yaml
+
+        raw = yaml.safe_load(BUCKETS_YAML.read_text(encoding="utf-8"))
+        names = [b["name"] for b in raw["buckets"]]
+        assert len(names) == 45
+        assert len(names) == len(set(names)), "duplicate bucket names"
+        assert all(b.get("group") for b in raw["buckets"]), "a bucket is missing its group"
+        assert len(mapping) == 45
+
+    def test_new_outdoor_furniture_bucket(self):
+        """The 'Outdoor furniture & hammocks' bucket exists in Outdoor & garden."""
+        mapping, _ = load_bucket_groups(BUCKETS_YAML)
+        assert mapping["Outdoor furniture & hammocks"] == "Outdoor & garden"
+
 
 class TestResolveBucketGroups:
     def test_all_present_buckets_mapped(self):

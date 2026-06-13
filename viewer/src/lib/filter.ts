@@ -1,4 +1,4 @@
-import type { Lot, Tab, DayFilter, ConfidenceFilter } from './types';
+import type { Lot, Tab, DayFilter, ConfidenceFilter, Condition } from './types';
 import { pathHasPrefix } from './categoryTree';
 import { confidencePasses, isPotentialResale } from './resale';
 
@@ -21,6 +21,7 @@ export function filterLots(
     watched,
     confidenceFilter = 'all',
     potentialOnly = false,
+    conditions,
   }: {
     tab: Tab;
     dayFilter: DayFilter;
@@ -29,6 +30,7 @@ export function filterLots(
     watched: Set<string>;
     confidenceFilter?: ConfidenceFilter;
     potentialOnly?: boolean;
+    conditions?: Set<Condition>;
   }
 ): Lot[] {
   let rows = lots.slice();
@@ -52,6 +54,12 @@ export function filterLots(
   if (potentialOnly) rows = rows.filter(isPotentialResale);
   if (confidenceFilter !== 'all') {
     rows = rows.filter((l) => confidencePasses(l, confidenceFilter));
+  }
+
+  // Condition chips: when any are selected, keep only lots whose condition is
+  // among them. Lots with no condition are excluded while the filter is active.
+  if (conditions && conditions.size > 0) {
+    rows = rows.filter((l) => l.condition !== null && conditions.has(l.condition));
   }
 
   return rows;

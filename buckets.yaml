@@ -20,9 +20,12 @@ buckets:
   - name: "Smart locks"
     group: "Electronics & gaming"
     description: >
-      Smart door locks, smart deadbolts, keyless/keypad entry locks, and
-      connected lock hardware. Branded or generic.
-    examples: ["August", "Schlage Encode", "Yale Assure", "Level", "Wyze Lock"]
+      Smart and keyless locks of every kind — not just doors. Smart door
+      locks and deadbolts, keypad/keyless entry locks, fingerprint and app-
+      or Bluetooth-controlled locks, smart gate locks, smart padlocks, and
+      outdoor/garage smart locks. Any keyless-entry hardware counts.
+      Branded or generic.
+    examples: ["August", "Schlage Encode", "Yale Assure", "Level", "Wyze Lock", "Master Lock smart", "eufy"]
 
   - name: "Electronics"
     group: "Electronics & gaming"
@@ -117,8 +120,11 @@ buckets:
   - name: "Tarps"
     group: "Outdoor & garden"
     description: >
-      Tarps of any size and heavy-duty covers — poly tarps, canvas tarps,
-      and utility covers.
+      Tarps and protective covers of all kinds and sizes — poly tarps,
+      canvas tarps, and utility covers, plus outdoor furniture covers,
+      BBQ/grill covers, patio set covers, equipment and machinery covers,
+      and vehicle/car/boat covers. Anything that shields gear from the
+      elements. Branded or generic.
 
   - name: "BBQ accessories"
     group: "Outdoor & garden"
@@ -147,12 +153,24 @@ buckets:
     group: "Outdoor & garden"
     description: >
       Gardening and lawncare consumables, materials, and accessories that
-      aren't tools or power equipment — garden/landscape edging, grass
-      seed, flower and vegetable seeds, fertilizer, soil, potting mix,
-      compost, mulch, plant supports and stakes, garden netting, weed
-      barrier/landscape fabric, planters and plant pots, and similar
-      yard/garden supplies.
+      aren't tools or power equipment. Explicitly includes grass/lawn seed
+      and flower/vegetable seeds, compost, fertilizer and plant food, soil
+      and potting mix/topsoil, mulch and bark, and lawn treatments
+      (weed-and-feed, grub control, lime, lawn care/treatment products).
+      Also garden/landscape edging, plant supports and stakes, garden
+      netting, weed barrier/landscape fabric, planters and plant pots, and
+      similar yard/garden supplies.
     examples: ["Scotts", "Miracle-Gro", "Vigoro"]
+
+  - name: "Outdoor furniture & hammocks"
+    group: "Outdoor & garden"
+    description: >
+      Outdoor and patio furniture and comfortable seating — hammocks and
+      hammock stands, patio/outdoor loungers and chaise lounges, outdoor
+      chairs, sofas, gliders and benches, porch and patio swings, Adirondack
+      chairs, and patio seating sets. Comfortable outdoor furniture for
+      relaxing. Branded or generic.
+    examples: ["ENO", "Sunnydaze", "Keter", "Adirondack"]
 
   - name: "Bath towels"
     group: "Home & bedroom"

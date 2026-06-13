@@ -1,6 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ChevronUp, FilterX, ChevronLeft } from 'lucide-react';
-import type { Tab, DayFilter, Density, Bundle, ConfidenceFilter } from './lib/types';
+import { ChevronUp, FilterX, Sparkles } from 'lucide-react';
+import type {
+  Tab,
+  DayFilter,
+  Density,
+  Bundle,
+  ConfidenceFilter,
+  SortKey,
+  Condition,
+} from './lib/types';
+import { CONDITION_ORDER } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
 import { buildCategoryTree } from './lib/categoryTree';
@@ -11,7 +20,8 @@ import { usePersistedSet } from './hooks/usePersistedSet';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { Header } from './components/Header';
 import { LotGrid } from './components/LotGrid';
-import { BatGroupNav } from './components/BatGroupNav';
+import { BatBucketSelect } from './components/BatBucketSelect';
+import { ItemControls } from './components/ItemControls';
 import bundleRaw from './data/auction_bundle.json';
 
 const bundle = bundleRaw as Bundle;
@@ -33,10 +43,13 @@ export function App() {
   const [potentialOnly, setPotentialOnly] = useState(false);
   const [density, setDensity] = useState<Density>('standard');
   const [tab, setTab] = useState<Tab>('all');
-  // Bat's List two-level navigation: pick a group, then a bucket. Until a
-  // bucket is chosen, the grid shows nothing — the group selector drives.
-  const [batGroup, setBatGroup] = useState<string | null>(null);
+  // Bat's List: a single grouped dropdown picks the bucket. Null = nothing
+  // picked yet (we prompt rather than flood the grid with thousands of lots).
+  // Remembered for the session so switching tabs and back keeps your place.
   const [batBucket, setBatBucket] = useState<string | null>(null);
+  // Sort order + condition chips apply to whatever lots are currently shown.
+  const [sortKey, setSortKey] = useState<SortKey>('lot');
+  const [conditions, setConditions] = useState<Set<Condition>>(new Set());
   // Single-accordion: at most one card is expanded at a time.
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +70,13 @@ export function App() {
     []
   );
 
+  // Condition values actually present in the data, in canonical order.
+  const availableConditions = useMemo<Condition[]>(() => {
+    const present = new Set<Condition>();
+    for (const l of allLots) if (l.condition !== null) present.add(l.condition);
+    return CONDITION_ORDER.filter((c) => present.has(c));
+  }, []);
+
   // Debounce the query so the fuzzy pass over ~20k lots doesn't run per keystroke.
   const debouncedQuery = useDebouncedValue(query, 150);
 
@@ -65,6 +85,7 @@ export function App() {
     (categoryPath.length > 0 ? 1 : 0) +
     (confidenceFilter !== 'all' ? 1 : 0) +
     (potentialOnly ? 1 : 0) +
+    (conditions.size > 0 ? 1 : 0) +
     (density !== 'standard' ? 1 : 0);
 
   const filtered = useMemo(() => {
@@ -76,20 +97,30 @@ export function App() {
       watched,
       confidenceFilter,
       potentialOnly,
+      conditions,
     });
     // Search narrows WITHIN the structural filters — it never bypasses the
     // active tab / category / day. Intersect matches with `rows`.
     if (debouncedQuery.trim()) {
       const matches = searchLotNumbers(searchIndex, debouncedQuery, fuzzy);
-      return sortLots(rows.filter((l) => matches.has(l.lot_number)));
+      return sortLots(rows.filter((l) => matches.has(l.lot_number)), sortKey);
     }
-    return sortLots(rows);
-  }, [tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, searchIndex]);
+    return sortLots(rows, sortKey);
+  }, [tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, conditions, sortKey, searchIndex]);
 
   // Single-accordion: opening a card collapses any other open card; toggling
   // the open card closes it (so zero open is possible).
   const toggleExpand = (lotNumber: string) => {
     setExpandedId((prev) => (prev === lotNumber ? null : lotNumber));
+  };
+
+  const toggleCondition = (c: Condition) => {
+    setConditions((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
   };
 
   const clearFilters = () => {
@@ -98,7 +129,8 @@ export function App() {
     setCategoryPath([]);
     setConfidenceFilter('all');
     setPotentialOnly(false);
-    // Tab and density are intentionally preserved.
+    setConditions(new Set());
+    // Tab, density, and sort order are intentionally preserved.
   };
 
   const collapseAll = () => setExpandedId(null);
@@ -108,19 +140,20 @@ export function App() {
     dayFilter !== 'Both' ||
     categoryPath.length > 0 ||
     confidenceFilter !== 'all' ||
-    potentialOnly;
+    potentialOnly ||
+    conditions.size > 0;
   const anyExpanded = expandedId !== null;
 
-  // Switching tabs resets the Bat's List drill-down to the group selector.
   const handleTabChange = (t: Tab) => {
     setTab(t);
-    setBatGroup(null);
-    setBatBucket(null);
   };
 
-  // In the Bat's List tab, the group/bucket selector is shown until a bucket
-  // is chosen. Everywhere else (and once a bucket is chosen) we show the grid.
-  const showBatSelector = tab === 'bat' && batBucket === null;
+  // Bat's List prompts for a bucket via the dropdown; until one is picked we
+  // show the prompt instead of the grid (no thousands-of-items flood).
+  const showBatPrompt = tab === 'bat' && batBucket === null;
+  // The sort + condition controls ride above any item grid (every tab once a
+  // grid is shown), but not over the Bat's List "pick a bucket" prompt.
+  const showItemControls = !loading && !showBatPrompt;
 
   return (
     <div className="min-h-screen bg-paper dark:bg-night text-ink dark:text-bone">
@@ -154,48 +187,52 @@ export function App() {
       />
 
       <main className="mx-auto max-w-[1480px] px-4 md:px-6 pt-4 md:pt-6 pb-24">
-        {showBatSelector ? (
-          <BatGroupNav
-            groups={batNav}
-            selectedGroup={batGroup}
-            onSelectGroup={setBatGroup}
-            onSelectBucket={setBatBucket}
-            onBack={() => setBatGroup(null)}
-          />
+        {/* Bat's List bucket picker — always shown on the Bat's List tab so you
+            can switch buckets in one action, no drill-in / back-out. */}
+        {tab === 'bat' && (
+          <div className="mb-3 md:mb-4">
+            <BatBucketSelect
+              groups={batNav}
+              value={batBucket}
+              onChange={setBatBucket}
+            />
+          </div>
+        )}
+
+        {showBatPrompt ? (
+          <div
+            data-testid="bat-prompt"
+            className="mx-auto max-w-md text-center py-20 md:py-28"
+          >
+            <div className="mx-auto mb-5 h-14 w-14 grid place-items-center rounded-full bg-paper2 dark:bg-coal text-ember">
+              <Sparkles size={24} strokeWidth={1.75} />
+            </div>
+            <h2 className="font-serif text-[26px] leading-tight text-ink dark:text-bone">
+              Pick a bucket
+            </h2>
+            <p className="mt-2 text-[14px] text-ink2 dark:text-bone2 leading-relaxed">
+              Choose a bucket from the dropdown above to see Bat's curated lots.
+            </p>
+          </div>
         ) : (
           <>
-            {tab === 'bat' && batBucket !== null && (
-              <div
-                data-testid="bat-breadcrumb"
-                className="mb-3 md:mb-4 flex items-center gap-2 flex-wrap"
-              >
-                <button
-                  type="button"
-                  data-testid="bat-back-to-buckets"
-                  onClick={() => setBatBucket(null)}
-                  className="inline-flex items-center gap-1 h-8 pl-2 pr-3 rounded-full text-[12px] font-medium text-ink2 dark:text-bone2 bg-paper2 dark:bg-coal hover:bg-rule dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk transition-colors"
-                >
-                  <ChevronLeft size={15} />
-                  {batGroup}
-                </button>
-                <span className="text-[13px] font-medium text-ink dark:text-bone">
-                  {batBucket}
-                </span>
-                <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70">
-                  {filtered.length} {filtered.length === 1 ? 'lot' : 'lots'}
-                </span>
-              </div>
-            )}
-
-            {!loading && (anyExpanded || anyFilterActive) && (
+            {/* Sort + condition controls, plus collapse/clear actions. */}
+            {showItemControls && (
               <div
                 data-testid="grid-toolbar"
-                className="mb-3 md:mb-4 flex items-center justify-between gap-3"
+                className="mb-3 md:mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3"
               >
-                <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70">
-                  Showing {filtered.length} of {allLots.length} lots
-                </span>
-                <div className="flex items-center gap-1.5">
+                <ItemControls
+                  sortKey={sortKey}
+                  onSortChange={setSortKey}
+                  conditions={conditions}
+                  onToggleCondition={toggleCondition}
+                  availableConditions={availableConditions}
+                />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="mr-1 text-[11px] font-mono uppercase tracking-[0.14em] text-ink2/70 dark:text-bone2/70 whitespace-nowrap">
+                    {filtered.length} {filtered.length === 1 ? 'lot' : 'lots'}
+                  </span>
                   {anyExpanded && (
                     <button
                       type="button"

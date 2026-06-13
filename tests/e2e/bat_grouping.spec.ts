@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-// Two-level Bat's List navigation: groups → buckets → items, with back-nav.
-// Runs against the real committed bundle (deterministic group/count math is
-// unit-tested in viewer/src/lib/batNav.test.ts).
-test('Bat\'s List uses two-level group → bucket → items navigation', async ({ page }) => {
+// Bat's List navigation is a single grouped dropdown: pick a bucket and its
+// items show immediately; switch buckets by just changing the dropdown — no
+// drill-in, no back-out. Deterministic group/count math is unit-tested in
+// viewer/src/lib/batNav.test.ts.
+test("Bat's List uses a grouped bucket dropdown (no drill-in)", async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
@@ -14,52 +15,35 @@ test('Bat\'s List uses two-level group → bucket → items navigation', async (
   await page.locator('[data-testid="tab-bat"]').filter({ visible: true }).click();
   await page.waitForTimeout(300);
 
-  // Default Bat's List view is the GROUP selector — NOT a flood of item cards.
-  const groupNav = page.locator('[data-testid="bat-group-nav"]');
-  await expect(groupNav).toBeVisible();
+  // Default view: the dropdown selector + a "pick a bucket" prompt — NOT a
+  // flood of item cards.
+  const dropdown = page.locator('[data-testid="bat-bucket-dropdown"]');
+  await expect(dropdown).toBeVisible();
+  await expect(page.locator('[data-testid="bat-prompt"]')).toBeVisible();
   await expect(page.locator('[data-testid="lot-card"]')).toHaveCount(0);
 
-  // There is NO flat row of dozens of bucket chips at this level — only groups.
-  const groups = page.locator('[data-testid="bat-group"]');
-  const groupCount = await groups.count();
-  expect(groupCount).toBeGreaterThanOrEqual(1);
-  expect(groupCount).toBeLessThanOrEqual(12); // a handful of groups, never 44 chips
+  // The dropdown groups buckets under optgroup headings (one per group).
+  const optgroupCount = await dropdown.locator('optgroup').count();
+  expect(optgroupCount).toBeGreaterThanOrEqual(1);
+  expect(optgroupCount).toBeLessThanOrEqual(12);
+  // Options carry counts like "Dinnerware (10)".
+  const someOption = dropdown.locator('optgroup option').first();
+  expect((await someOption.textContent()) ?? '').toMatch(/\(\d+\)\s*$/);
 
-  // Each group shows a numeric count.
-  const firstGroupText = (await groups.first().textContent()) ?? '';
-  expect(firstGroupText).toMatch(/\d/);
-
-  // Select a group → its buckets appear (still no item cards yet).
-  await groups.first().click();
-  await page.waitForTimeout(200);
-  const buckets = page.locator('[data-testid="bat-bucket"]');
-  await expect(buckets.first()).toBeVisible();
-  await expect(page.locator('[data-testid="lot-card"]')).toHaveCount(0);
-  const bucketName = await buckets.first().getAttribute('data-bucket');
-  expect(bucketName).toBeTruthy();
-
-  // Select a bucket → item cards for that bucket appear.
-  await buckets.first().click();
+  // Pick a bucket → its item cards appear immediately, prompt gone.
+  const firstValue =
+    (await dropdown.locator('optgroup option').first().getAttribute('value')) ?? '';
+  expect(firstValue).toBeTruthy();
+  await dropdown.selectOption(firstValue);
   await page.waitForTimeout(300);
   await expect(page.locator('[data-testid="lot-card"]').first()).toBeVisible();
-  await expect(groupNav).toHaveCount(0); // selector replaced by the grid
-  // Breadcrumb shows where we are, with a way back.
-  await expect(page.locator('[data-testid="bat-breadcrumb"]')).toBeVisible();
+  await expect(page.locator('[data-testid="bat-prompt"]')).toHaveCount(0);
 
-  // Back to that group's buckets.
-  await page.locator('[data-testid="bat-back-to-buckets"]').click();
-  await page.waitForTimeout(200);
-  await expect(buckets.first()).toBeVisible();
-  await expect(page.locator('[data-testid="lot-card"]')).toHaveCount(0);
-
-  // Back to all groups.
-  await page.locator('[data-testid="bat-back-to-groups"]').click();
-  await page.waitForTimeout(200);
-  await expect(groups.first()).toBeVisible();
-  expect(await groups.count()).toBe(groupCount);
+  // The dropdown is STILL visible — switching buckets needs no back-out.
+  await expect(dropdown).toBeVisible();
 });
 
-test('selecting a bucket filters items to that bucket', async ({ page }) => {
+test('switching the dropdown swaps buckets with no back-out', async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
@@ -67,19 +51,46 @@ test('selecting a bucket filters items to that bucket', async ({ page }) => {
   await page.locator('[data-testid="tab-bat"]').filter({ visible: true }).click();
   await page.waitForTimeout(300);
 
-  // Drill into the first group, then read the first bucket's advertised count.
-  await page.locator('[data-testid="bat-group"]').first().click();
-  await page.waitForTimeout(200);
-  const firstBucket = page.locator('[data-testid="bat-bucket"]').first();
-  const bucketLabel = (await firstBucket.textContent()) ?? '';
-  const advertised = parseInt((bucketLabel.match(/(\d+)\s*$/) ?? [])[1] ?? '0', 10);
-  expect(advertised).toBeGreaterThan(0);
+  const dropdown = page.locator('[data-testid="bat-bucket-dropdown"]');
+  const options = dropdown.locator('optgroup option');
+  const count = await options.count();
+  expect(count).toBeGreaterThanOrEqual(2);
 
-  await firstBucket.click();
+  // Read advertised counts for two distinct buckets from the option labels.
+  const readCount = (label: string) =>
+    parseInt((label.match(/\((\d+)\)\s*$/) ?? [])[1] ?? '-1', 10);
+
+  const valA = (await options.nth(0).getAttribute('value')) ?? '';
+  const labelA = (await options.nth(0).textContent()) ?? '';
+  const advertisedA = readCount(labelA);
+
+  const valB = (await options.nth(1).getAttribute('value')) ?? '';
+  const labelB = (await options.nth(1).textContent()) ?? '';
+  const advertisedB = readCount(labelB);
+
+  expect(advertisedA).toBeGreaterThan(0);
+  expect(advertisedB).toBeGreaterThan(0);
+
+  // Select bucket A — shown lot count matches its advertised count.
+  await dropdown.selectOption(valA);
   await page.waitForTimeout(300);
+  await expect(page.locator('[data-testid="lot-card"]').first()).toBeVisible();
+  const shownA = parseInt(
+    ((await page.locator('[data-testid="grid-toolbar"]').textContent()) ?? '').match(
+      /(\d+)\s*lots?/
+    )?.[1] ?? '-1',
+    10
+  );
+  expect(shownA).toBe(advertisedA);
 
-  // The breadcrumb's lot count should equal the bucket's advertised count.
-  const crumb = (await page.locator('[data-testid="bat-breadcrumb"]').textContent()) ?? '';
-  const shown = parseInt((crumb.match(/(\d+)\s*lots?/) ?? [])[1] ?? '-1', 10);
-  expect(shown).toBe(advertised);
+  // Switch DIRECTLY to bucket B via the dropdown — no back-out step.
+  await dropdown.selectOption(valB);
+  await page.waitForTimeout(300);
+  const shownB = parseInt(
+    ((await page.locator('[data-testid="grid-toolbar"]').textContent()) ?? '').match(
+      /(\d+)\s*lots?/
+    )?.[1] ?? '-1',
+    10
+  );
+  expect(shownB).toBe(advertisedB);
 });

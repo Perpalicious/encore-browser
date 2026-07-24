@@ -5,6 +5,7 @@ import { TabButton } from './TabButton';
 import { FilterFieldRow } from './FilterFieldRow';
 import { CategoryFilter } from './CategoryFilter';
 import { ResaleFilter } from './ResaleFilter';
+import { PersonalFilter } from './PersonalFilter';
 
 interface Props {
   dark: boolean;
@@ -22,6 +23,8 @@ interface Props {
   onConfidenceChange: (c: ConfidenceFilter) => void;
   potentialOnly: boolean;
   onPotentialToggle: () => void;
+  personalOnly: boolean;
+  onPersonalToggle: () => void;
   density: Density;
   onDensityChange: (d: Density) => void;
   tab: Tab;
@@ -51,6 +54,8 @@ export function Header({
   onConfidenceChange,
   potentialOnly,
   onPotentialToggle,
+  personalOnly,
+  onPersonalToggle,
   density,
   onDensityChange,
   tab,
@@ -201,6 +206,13 @@ export function Header({
                     size="md"
                   />
                 </FilterFieldRow>
+                <FilterFieldRow label="Personal">
+                  <PersonalFilter
+                    personalOnly={personalOnly}
+                    onPersonalToggle={onPersonalToggle}
+                    size="md"
+                  />
+                </FilterFieldRow>
                 <FilterFieldRow label="Density">
                   <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk w-full">
                     {([{ id: 'standard', label: 'Standard' }, { id: 'compact', label: 'Compact' }] as { id: Density; label: string }[]).map((opt) => (
@@ -348,6 +360,11 @@ export function Header({
               />
             </nav>
             <div className="flex items-center gap-3 pb-2">
+              <PersonalFilter
+                personalOnly={personalOnly}
+                onPersonalToggle={onPersonalToggle}
+                size="sm"
+              />
               <ResaleFilter
                 confidenceFilter={confidenceFilter}
                 onConfidenceChange={onConfidenceChange}

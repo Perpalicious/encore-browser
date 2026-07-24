@@ -84,6 +84,24 @@ def _resale_passthrough(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _personal_passthrough(item: dict[str, Any]) -> dict[str, Any]:
+    """
+    Carry the optional personal-match fields onto the Lot shape. Categorized
+    files produced before the personal-match pass lack these fields entirely;
+    they default to None and the lot simply omits personal-match info — same
+    tolerant pattern as the resale fields above.
+    """
+    tags = item.get("personal_tags")
+    types = item.get("match_types")
+    return {
+        "personal_match": item.get("personal_match"),
+        "personal_tags": [str(t) for t in tags] if isinstance(tags, list) else None,
+        "match_strength": item.get("match_strength") or None,
+        "match_types": [str(t) for t in types] if isinstance(types, list) else None,
+        "personal_reasoning": item.get("personal_reasoning") or None,
+    }
+
+
 def _resolve_categories(
     item: dict[str, Any], fallback_subcategory: str
 ) -> tuple[list[str], str, str]:
@@ -156,6 +174,7 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         "bat_buckets": bat_buckets,
         "confidence": _bucket_confidence(item.get("predicted_confidence")),
         **_resale_passthrough(item),
+        **_personal_passthrough(item),
     }
 
 
@@ -197,6 +216,7 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "bat_buckets": bat_buckets,
         "confidence": confidence,
         **_resale_passthrough(item),
+        **_personal_passthrough(item),
     }
 
 

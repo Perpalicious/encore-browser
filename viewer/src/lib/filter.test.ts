@@ -80,3 +80,71 @@ describe('filterLots condition filter', () => {
     expect(out.map((l) => l.lot_number)).toEqual(['1']);
   });
 });
+
+describe('filterLots personal-picks filter', () => {
+  const PERSONAL_LOTS: Lot[] = [
+    lot('1', { personal_match: true, is_bat: true, bat_buckets: ['Lego'], condition: 'New' }),
+    lot('2', { personal_match: false }),
+    lot('3', { personal_match: null }),
+    lot('4'), // fields absent entirely (older bundle)
+    lot('5', { personal_match: true, day: 'Monday' }),
+  ];
+
+  it('off by default: all lots pass through', () => {
+    const out = filterLots(PERSONAL_LOTS, { ...base });
+    expect(out).toHaveLength(5);
+  });
+
+  it('on: keeps only personal_match === true (false/null/absent excluded)', () => {
+    const out = filterLots(PERSONAL_LOTS, { ...base, personalOnly: true });
+    expect(out.map((l) => l.lot_number).sort()).toEqual(['1', '5']);
+  });
+
+  it('composes with the day filter', () => {
+    const out = filterLots(PERSONAL_LOTS, {
+      ...base,
+      personalOnly: true,
+      dayFilter: 'Monday',
+    });
+    expect(out.map((l) => l.lot_number)).toEqual(['5']);
+  });
+
+  it('composes with the bat bucket drill-down (narrows within the bucket)', () => {
+    const out = filterLots(PERSONAL_LOTS, {
+      ...base,
+      tab: 'bat',
+      batBucket: 'Lego',
+      personalOnly: true,
+    });
+    expect(out.map((l) => l.lot_number)).toEqual(['1']);
+  });
+
+  it('composes with the condition filter', () => {
+    const out = filterLots(PERSONAL_LOTS, {
+      ...base,
+      personalOnly: true,
+      conditions: new Set<Condition>(['New']),
+    });
+    expect(out.map((l) => l.lot_number)).toEqual(['1']);
+  });
+
+  it('composes with the resale confidence filter (both must pass)', () => {
+    const lots = [
+      lot('1', { personal_match: true, resale_confidence: 'high', est_resale_low: 10, est_resale_high: 20 }),
+      lot('2', { personal_match: true }), // personal but un-valued
+      lot('3', { resale_confidence: 'high', est_resale_low: 10, est_resale_high: 20 }), // valued but not personal
+    ];
+    const out = filterLots(lots, {
+      ...base,
+      personalOnly: true,
+      confidenceFilter: 'high',
+    });
+    expect(out.map((l) => l.lot_number)).toEqual(['1']);
+  });
+
+  it('older bundles (no personal fields anywhere) are unaffected when off, empty when on', () => {
+    const older = [lot('1'), lot('2')];
+    expect(filterLots(older, { ...base })).toHaveLength(2);
+    expect(filterLots(older, { ...base, personalOnly: true })).toHaveLength(0);
+  });
+});

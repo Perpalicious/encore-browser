@@ -1,6 +1,7 @@
 import type { Lot, Tab, DayFilter, ConfidenceFilter, Condition } from './types';
 import { pathHasPrefix } from './categoryTree';
 import { confidencePasses, isPotentialResale } from './resale';
+import { isPersonalPick } from './personal';
 
 /**
  * Apply the structural filters: tab, day, hierarchical category, bat bucket,
@@ -21,6 +22,7 @@ export function filterLots(
     watched,
     confidenceFilter = 'all',
     potentialOnly = false,
+    personalOnly = false,
     conditions,
   }: {
     tab: Tab;
@@ -30,6 +32,7 @@ export function filterLots(
     watched: Set<string>;
     confidenceFilter?: ConfidenceFilter;
     potentialOnly?: boolean;
+    personalOnly?: boolean;
     conditions?: Set<Condition>;
   }
 ): Lot[] {
@@ -50,7 +53,10 @@ export function filterLots(
     }
   }
 
-  // Resale filters apply on every tab, narrowing the current view further.
+  // Resale + personal-pick filters apply on every tab, narrowing the current
+  // view further. Lots without personal-match data are excluded while the
+  // personal filter is on (personal_match must be exactly true).
+  if (personalOnly) rows = rows.filter(isPersonalPick);
   if (potentialOnly) rows = rows.filter(isPotentialResale);
   if (confidenceFilter !== 'all') {
     rows = rows.filter((l) => confidencePasses(l, confidenceFilter));

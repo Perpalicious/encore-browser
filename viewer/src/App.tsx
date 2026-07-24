@@ -41,6 +41,7 @@ export function App() {
   const [categoryPath, setCategoryPath] = useState<string[]>([]);
   const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all');
   const [potentialOnly, setPotentialOnly] = useState(false);
+  const [personalOnly, setPersonalOnly] = useState(false);
   const [density, setDensity] = useState<Density>('standard');
   const [tab, setTab] = useState<Tab>('all');
   // Bat's List: a single grouped dropdown picks the bucket. Null = nothing
@@ -85,6 +86,7 @@ export function App() {
     (categoryPath.length > 0 ? 1 : 0) +
     (confidenceFilter !== 'all' ? 1 : 0) +
     (potentialOnly ? 1 : 0) +
+    (personalOnly ? 1 : 0) +
     (conditions.size > 0 ? 1 : 0) +
     (density !== 'standard' ? 1 : 0);
 
@@ -97,6 +99,7 @@ export function App() {
       watched,
       confidenceFilter,
       potentialOnly,
+      personalOnly,
       conditions,
     });
     // Search narrows WITHIN the structural filters — it never bypasses the
@@ -106,7 +109,7 @@ export function App() {
       return sortLots(rows.filter((l) => matches.has(l.lot_number)), sortKey);
     }
     return sortLots(rows, sortKey);
-  }, [tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, conditions, sortKey, searchIndex]);
+  }, [tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex]);
 
   // Single-accordion: opening a card collapses any other open card; toggling
   // the open card closes it (so zero open is possible).
@@ -129,6 +132,7 @@ export function App() {
     setCategoryPath([]);
     setConfidenceFilter('all');
     setPotentialOnly(false);
+    setPersonalOnly(false);
     setConditions(new Set());
     // Tab, density, and sort order are intentionally preserved.
   };
@@ -141,6 +145,7 @@ export function App() {
     categoryPath.length > 0 ||
     confidenceFilter !== 'all' ||
     potentialOnly ||
+    personalOnly ||
     conditions.size > 0;
   const anyExpanded = expandedId !== null;
 
@@ -173,6 +178,8 @@ export function App() {
         onConfidenceChange={setConfidenceFilter}
         potentialOnly={potentialOnly}
         onPotentialToggle={() => setPotentialOnly((v) => !v)}
+        personalOnly={personalOnly}
+        onPersonalToggle={() => setPersonalOnly((v) => !v)}
         density={density}
         onDensityChange={setDensity}
         tab={tab}

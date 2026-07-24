@@ -39,6 +39,15 @@ class Lot(BaseModel):
     resale_outlook: Optional[Literal["good", "fair", "poor"]] = None
     resale_reasoning: Optional[str] = None
 
+    # --- Personal match (optional, from the personal-match pass) ------------
+    # Present only when the categorized input carries personal-match fields.
+    # Older categorized files lack them entirely; every field stays None then.
+    personal_match: Optional[bool] = None
+    personal_tags: Optional[list[str]] = None
+    match_strength: Optional[str] = None
+    match_types: Optional[list[str]] = None
+    personal_reasoning: Optional[str] = None
+
     @field_validator("lot_number", "title", "description", "lot_url", "category",
                      "subcategory", "thumb_url", "image_url",
                      mode="before")

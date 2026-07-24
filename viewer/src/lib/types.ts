@@ -52,6 +52,13 @@ export interface Lot {
   resale_confidence: Confidence | null;
   resale_outlook: ResaleOutlook | null;
   resale_reasoning: string | null;
+  // Personal match — optional: absent (or null) on lots from bundles built
+  // before the personal-match pass, and on lots the pass didn't flag.
+  personal_match?: boolean | null;
+  personal_tags?: string[] | null;
+  match_strength?: string | null;
+  match_types?: string[] | null;
+  personal_reasoning?: string | null;
 }
 
 /**

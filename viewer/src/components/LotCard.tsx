@@ -5,7 +5,9 @@ import { LotImage } from './pills/LotImage';
 import { ConditionPill } from './pills/ConditionPill';
 import { DayBadge } from './pills/DayBadge';
 import { BatBucketPill } from './pills/BatBucketPill';
+import { PersonalPickBadge } from './pills/PersonalPickBadge';
 import { StarButton } from './pills/StarButton';
+import { isPersonalPick } from '../lib/personal';
 import { LotExpandPanel } from './LotExpandPanel';
 
 interface Props {
@@ -109,8 +111,14 @@ export function LotCard({
             </div>
           )}
 
-          {/* Bottom row: bat bucket + details toggle */}
+          {/* Bottom row: personal pick + bat bucket + details toggle */}
           <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-center gap-1.5 flex-wrap`}>
+            {isPersonalPick(lot) && (
+              <PersonalPickBadge
+                strength={lot.match_strength}
+                size={compact ? 'sm' : 'md'}
+              />
+            )}
             {lot.is_bat && lot.bat_buckets.length > 0 && (
               <BatBucketPill
                 label={lot.bat_buckets[0]}

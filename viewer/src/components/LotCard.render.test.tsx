@@ -94,3 +94,84 @@ describe('LotExpandPanel resale detail', () => {
     expect(html).not.toContain('data-testid="resale-detail"');
   });
 });
+
+describe('LotCard personal-pick badge', () => {
+  it('renders the badge only when personal_match is true', () => {
+    const html = renderCard(
+      lot({ lot_number: '1', personal_match: true, match_strength: 'strong' })
+    );
+    expect(html).toContain('data-testid="personal-badge"');
+    expect(html).toContain('Personal pick');
+    // Strength surfaces in the badge tooltip.
+    expect(html).toContain('Personal pick — strong match');
+  });
+
+  it('no badge for false, null, or absent personal_match', () => {
+    for (const l of [
+      lot({ lot_number: '2', personal_match: false }),
+      lot({ lot_number: '3', personal_match: null }),
+      lot({ lot_number: '4' }), // fields absent (older bundle)
+    ]) {
+      const html = renderCard(l);
+      expect(html).not.toContain('data-testid="personal-badge"');
+      expect(html).not.toContain('Personal pick');
+    }
+  });
+
+  it('badge is independent of Bat/resale chips (a plain lot can be a pick)', () => {
+    const html = renderCard(lot({ lot_number: '5', personal_match: true }));
+    expect(html).toContain('data-testid="personal-badge"');
+    expect(html).not.toContain('data-testid="resale-summary"');
+  });
+});
+
+describe('LotExpandPanel personal detail', () => {
+  it('renders strength, tags, and reasoning when present', () => {
+    const html = renderToStaticMarkup(
+      <LotExpandPanel
+        lot={lot({
+          lot_number: '1',
+          personal_match: true,
+          match_strength: 'strong',
+          personal_tags: ['woodworking', 'power tools'],
+          personal_reasoning: 'Matches the workshop tool interest.',
+        })}
+        onCollapse={noop}
+        fullRow
+      />
+    );
+    expect(html).toContain('data-testid="personal-detail"');
+    expect(html).toContain('Personal pick — strong match');
+    expect(html).toContain('data-testid="personal-tags"');
+    expect(html).toContain('woodworking');
+    expect(html).toContain('power tools');
+    expect(html).toContain('data-testid="personal-reasoning"');
+    expect(html).toContain('Matches the workshop tool interest.');
+  });
+
+  it('omits tags/reasoning rows cleanly when only personal_match is set', () => {
+    const html = renderToStaticMarkup(
+      <LotExpandPanel
+        lot={lot({ lot_number: '2', personal_match: true })}
+        onCollapse={noop}
+        fullRow
+      />
+    );
+    expect(html).toContain('data-testid="personal-detail"');
+    expect(html).toContain('Personal pick');
+    expect(html).not.toContain('data-testid="personal-tags"');
+    expect(html).not.toContain('data-testid="personal-reasoning"');
+  });
+
+  it('omits the personal detail entirely when not a pick', () => {
+    for (const l of [
+      lot({ lot_number: '3', personal_match: false }),
+      lot({ lot_number: '4' }),
+    ]) {
+      const html = renderToStaticMarkup(
+        <LotExpandPanel lot={l} onCollapse={noop} fullRow />
+      );
+      expect(html).not.toContain('data-testid="personal-detail"');
+    }
+  });
+});

@@ -1,6 +1,8 @@
 import { X, ExternalLink, ChevronUp } from 'lucide-react';
 import type { Lot } from '../lib/types';
 import { hasResale, resaleRange, resaleMean, formatMoney } from '../lib/resale';
+import { isPersonalPick } from '../lib/personal';
+import { PersonalPickBadge } from './pills/PersonalPickBadge';
 import { LotImage } from './pills/LotImage';
 import { ConditionPill } from './pills/ConditionPill';
 import { DayBadge } from './pills/DayBadge';
@@ -170,6 +172,41 @@ export function LotExpandPanel({ lot, onCollapse, fullRow = false }: Props) {
               {lot.resale_reasoning && (
                 <p className="mt-3 text-[13.5px] leading-[1.55] text-ink2 dark:text-bone2 font-sans">
                   {lot.resale_reasoning}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Personal match — only when the personal-match pass flagged this lot */}
+          {isPersonalPick(lot) && (
+            <div
+              data-testid="personal-detail"
+              className="mt-5 rounded-xl bg-violet-500/[0.06] dark:bg-violet-400/10 ring-1 ring-violet-500/20 dark:ring-violet-400/25 p-4"
+            >
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <PersonalPickBadge strength={lot.match_strength} showStrength />
+              </div>
+              {(lot.personal_tags?.length ?? 0) > 0 && (
+                <div
+                  data-testid="personal-tags"
+                  className="mt-3 flex items-center gap-1.5 flex-wrap"
+                >
+                  {lot.personal_tags!.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center text-[11px] font-medium px-2 py-[2px] rounded-full bg-white dark:bg-night2 text-ink2 dark:text-bone2 ring-1 ring-rule dark:ring-dusk"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {lot.personal_reasoning && (
+                <p
+                  data-testid="personal-reasoning"
+                  className="mt-3 text-[13.5px] leading-[1.55] text-ink2 dark:text-bone2 font-sans"
+                >
+                  {lot.personal_reasoning}
                 </p>
               )}
             </div>

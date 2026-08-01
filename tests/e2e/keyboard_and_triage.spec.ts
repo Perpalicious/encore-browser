@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, devices } from '@playwright/test';
 import { ready, shownCount } from './helpers';
 
 test.describe('keyboard navigation', () => {
@@ -128,6 +128,7 @@ test.describe('swipe triage', () => {
     await page.waitForTimeout(600);
     await page.locator('[data-testid="lot-row"]').first().click();
     await expect(page.locator('[data-testid="lot-detail"]')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 
   test('a short swipe snaps back without committing', async ({ page }) => {
@@ -139,5 +140,53 @@ test.describe('swipe triage', () => {
     await swipe(page, 40); // under the ±70px threshold
     expect(await shownCount(page)).toBe(before);
     await expect(page.locator('[data-testid="tab-watched"]')).toContainText('0');
+  });
+});
+
+/**
+ * Emulated phone rather than a bare small viewport — the bug below only
+ * reproduces with full device emulation, and reproducing it is the entire
+ * point of this block.
+ */
+const PIXEL_5 = devices['Pixel 5'];
+
+test.describe('swipe triage on an emulated phone', () => {
+  // Everything the device descriptor carries except `defaultBrowserType`,
+  // which Playwright refuses at describe level.
+  test.use({
+    viewport: PIXEL_5.viewport,
+    userAgent: PIXEL_5.userAgent,
+    deviceScaleFactor: PIXEL_5.deviceScaleFactor,
+    isMobile: PIXEL_5.isMobile,
+    hasTouch: PIXEL_5.hasTouch,
+  });
+
+  async function drag(page: import('@playwright/test').Page, dx: number) {
+    const row = page.locator('[data-testid="lot-row"]').first();
+    const box = (await row.boundingBox())!;
+    const y = box.y + box.height / 2;
+    const startX = box.x + box.width / 2;
+    await page.mouse.move(startX, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) await page.mouse.move(startX + (dx * i) / 6, y);
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+  }
+
+  test('a left drag does not poison the next swipe', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('[data-testid="lot-row"]', { timeout: 15000 });
+    await page.waitForTimeout(600);
+
+    // Dragging horizontally across a row used to start a native text
+    // selection. The browser then owned the gesture, pointermove stopped
+    // reaching the row, and the NEXT swipe silently did nothing — which is
+    // exactly what anyone reaching for the removed hide gesture out of habit
+    // would have done first. `user-select: none` on the row is the fix.
+    await drag(page, -130);
+    await page.waitForTimeout(600);
+
+    await drag(page, 130);
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('1');
   });
 });

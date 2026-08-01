@@ -200,6 +200,13 @@ export function LotRow({
           cursor: 'pointer',
           background: rowBackground,
           touchAction: 'pan-y',
+          // Only where swipe is live. A horizontal drag across a row otherwise
+          // starts a native text selection, and the browser then treats the
+          // whole thing as a selection gesture — pointermove stops reaching us
+          // and the NEXT swipe silently does nothing. Desktop keeps selectable
+          // text, since nothing there drags.
+          userSelect: coarse ? 'none' : undefined,
+          WebkitUserSelect: coarse ? 'none' : undefined,
         }}
       >
         <div

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Tab, SortKey, ViewMode } from '../lib/types';
 
@@ -48,6 +49,8 @@ interface Props {
   searchRef?: React.RefObject<HTMLInputElement>;
   view: ViewMode;
   onViewChange: (v: ViewMode) => void;
+  /** Jump-to-lot: fired on Enter with whatever was typed. */
+  onJump: (raw: string) => void;
   /** Touch device: the hint line advertises swipe rather than the key map. */
   coarse: boolean;
 }
@@ -109,8 +112,66 @@ export function Header({
   searchRef,
   view,
   onViewChange,
+  onJump,
   coarse,
 }: Props) {
+  // Ephemeral: what you typed to get somewhere is not part of the view, so it
+  // is neither lifted to App nor persisted to the hash.
+  const [jump, setJump] = useState('');
+
+  const jumpField = (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 7,
+        height: 32,
+        padding: '0 10px',
+        borderRadius: 8,
+        background: 'var(--s2)',
+        border: '1px solid var(--line)',
+        flex: 'none',
+      }}
+    >
+      <label
+        htmlFor="jump-to-lot"
+        style={{
+          fontFamily: MONO,
+          fontWeight: 500,
+          fontSize: '8.5px',
+          lineHeight: 1,
+          letterSpacing: '.12em',
+          color: 'var(--dim3)',
+        }}
+      >
+        LOT
+      </label>
+      <input
+        id="jump-to-lot"
+        data-testid="jump-input"
+        value={jump}
+        onChange={(e) => setJump(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          onJump(jump);
+        }}
+        placeholder="S-1200"
+        aria-label="Jump to lot number"
+        style={{
+          width: 62,
+          fontFamily: MONO,
+          fontWeight: 500,
+          fontSize: '11.5px',
+          background: 'none',
+          border: 'none',
+          outline: 'none',
+          color: 'var(--text)',
+        }}
+      />
+    </div>
+  );
+
   const search = (
     <div
       style={{
@@ -325,6 +386,7 @@ export function Header({
           <div style={{ flex: 1, display: 'flex', marginLeft: 6, minWidth: 0 }}>{search}</div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span
+              className="hint-keys"
               style={{
                 fontFamily: MONO,
                 fontWeight: 500,
@@ -336,6 +398,7 @@ export function Header({
             >
               {coarse ? 'SWIPE → WATCH · SWIPE ← HIDE' : '← → MOVE · SPACE OPEN · W WATCH · / SEARCH'}
             </span>
+            {jumpField}
             <div
               style={{
                 display: 'flex',

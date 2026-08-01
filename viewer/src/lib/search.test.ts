@@ -5,6 +5,7 @@ import {
   exactMatchLotNumbers,
   fuzzyMatchLotNumbers,
   searchLotNumbers,
+  lotCandidates,
   SEARCH_THRESHOLD,
 } from './search';
 import type { Lot } from './types';
@@ -129,5 +130,27 @@ describe('threshold constant', () => {
   it('is adjustable and tightened below the old 0.3', () => {
     expect(SEARCH_THRESHOLD).toBeGreaterThan(0);
     expect(SEARCH_THRESHOLD).toBeLessThanOrEqual(0.2);
+  });
+});
+
+describe('lotCandidates (the jump-to-lot field)', () => {
+  it('accepts a bare number as either auction, most likely first', () => {
+    expect(lotCandidates('1042')).toEqual(['S-1042', 'M-1042', '1042']);
+  });
+
+  it('honours an explicit prefix, however it was typed', () => {
+    expect(lotCandidates('S-1042')).toEqual(['S-1042']);
+    expect(lotCandidates('m1042')).toEqual(['M-1042']);
+    expect(lotCandidates(' s 1042 ')).toEqual(['S-1042']);
+  });
+
+  it('keeps the unprefixed form last, for single-auction weeks', () => {
+    expect(lotCandidates('7')).toContain('7');
+  });
+
+  it('returns nothing for input that is not a lot number', () => {
+    expect(lotCandidates('')).toEqual([]);
+    expect(lotCandidates('dewalt')).toEqual([]);
+    expect(lotCandidates('12ab')).toEqual([]);
   });
 });

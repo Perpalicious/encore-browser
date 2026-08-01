@@ -65,8 +65,13 @@ interface Props {
 export interface LotGridHandle {
   /** Columns currently laid out — the ↑/↓ step size. */
   cols: number;
-  /** Scroll the given index into view by direct arithmetic, not scrollIntoView. */
-  revealIndex: (index: number) => void;
+  /**
+   * Scroll the given index into view by direct arithmetic, not scrollIntoView.
+   * `'nearest'` (the default) moves as little as possible, which is what
+   * arrow-key stepping wants; `'top'` parks the row at the top of the
+   * viewport, which is what a jump from somewhere else entirely wants.
+   */
+  revealIndex: (index: number, align?: 'nearest' | 'top') => void;
 }
 
 /** Rows rendered above and below the viewport. */
@@ -156,14 +161,15 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
     ref,
     () => ({
       cols,
-      revealIndex(index: number) {
+      revealIndex(index: number, align: 'nearest' | 'top' = 'nearest') {
         const el = scrollRef.current;
         if (!el || index < 0) return;
         const rowTop = Math.floor(index / cols) * rowH + contentTop;
         const rowBottom = rowTop + rowH;
         // Direct scrollTop arithmetic, not scrollIntoView: the window is
         // absolutely positioned, so scrollIntoView would fight the virtualiser.
-        if (rowTop < el.scrollTop) el.scrollTop = rowTop;
+        if (align === 'top') el.scrollTop = rowTop;
+        else if (rowTop < el.scrollTop) el.scrollTop = rowTop;
         else if (rowBottom > el.scrollTop + vh) el.scrollTop = rowBottom - vh;
         setScrollTop(el.scrollTop);
       },

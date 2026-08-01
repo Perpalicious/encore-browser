@@ -16,7 +16,7 @@ import { CONDITION_ORDER } from './lib/types';
 import { filterLots } from './lib/filter';
 import { sortLots } from './lib/sort';
 import { buildCategoryTree } from './lib/categoryTree';
-import { buildSearchIndex, searchLotNumbers } from './lib/search';
+import { buildSearchIndex, searchLotNumbers, lotCandidates } from './lib/search';
 import { buildBatNav } from './lib/batNav';
 import { buildLotViews, indexViews } from './lib/lotView';
 import {
@@ -102,6 +102,10 @@ export function App() {
   // The rail's two overlays. Both are modal.
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  // A lot number we owe a scroll to. Held as state rather than acted on
+  // immediately because reaching it may mean clearing filters first, and the
+  // result set that decides its index is a render behind that.
+  const [pendingJump, setPendingJump] = useState<string | null>(null);
 
   const gridRef = useRef<LotGridHandle>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -262,6 +266,63 @@ export function App() {
     },
     [toggleHidden, hidden, showToast]
   );
+
+  /**
+   * Jump to lot — docs/design/README.md § "Sticky header", the `LOT` field.
+   *
+   * The auctioneer calls a number and you need that lot, so this never dead-ends
+   * on "not in current results" the way the prototype does. If the lot exists
+   * but the active tab, filters or your hidden list are covering it, we get out
+   * of the way and say so in the toast.
+   */
+  const jumpToLot = useCallback(
+    (raw: string) => {
+      const candidates = lotCandidates(raw);
+      if (candidates.length === 0) return;
+      // Bat's List with no bucket picked shows the picker, not the grid, so
+      // nothing is reachable from there without leaving it first.
+      const gridShowing = !(tab === 'bat' && batBucket === null);
+      const onScreen = gridShowing
+        ? candidates.find((c) => filtered.some((l) => l.lot_number === c))
+        : undefined;
+      const target = onScreen ?? candidates.find((c) => viewByLot.has(c));
+      if (target === undefined) {
+        showToast(`No lot ${candidates[0]} in this auction`);
+        return;
+      }
+      if (onScreen === undefined) {
+        setTab('all');
+        setBatBucket(null);
+        clearFilters();
+        if (hidden.has(target)) toggleHidden(target);
+        showToast(`Filters cleared to reach ${target}`);
+      }
+      setPendingJump(target);
+    },
+    [filtered, viewByLot, hidden, toggleHidden, clearFilters, showToast, tab, batBucket]
+  );
+
+  /**
+   * Settle the jump once the lot is actually in the results. When filters were
+   * cleared to reach it this takes an extra pass — the search box is debounced,
+   * so `filtered` catches up a beat later — hence waiting rather than giving up
+   * on the first miss. The timeout is the backstop for a lot that never shows.
+   */
+  useEffect(() => {
+    if (pendingJump === null) return;
+    const i = filtered.findIndex((l) => l.lot_number === pendingJump);
+    if (i >= 0) {
+      setCursor(i);
+      setPendingJump(null);
+      gridRef.current?.revealIndex(i, 'top');
+    }
+  }, [pendingJump, filtered]);
+
+  useEffect(() => {
+    if (pendingJump === null) return;
+    const t = setTimeout(() => setPendingJump(null), 2000);
+    return () => clearTimeout(t);
+  }, [pendingJump]);
 
   // The rail's category button reads as the deepest thing you picked.
   const categoryLabel =
@@ -483,6 +544,7 @@ export function App() {
         onClearAll={clearFilters}
         view={view}
         onViewChange={setView}
+        onJump={jumpToLot}
         coarse={coarsePointer}
       />
 

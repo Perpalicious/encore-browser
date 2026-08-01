@@ -144,6 +144,25 @@ export function fuzzyMatchLotNumbers(index: SearchIndex, query: string): Set<str
 }
 
 /**
+ * Lot numbers the jump-to-lot field could mean, most likely first.
+ *
+ * The auctioneer calls "lot ten-forty-two", so the field has to accept what
+ * that sounds like: `1042`, `s1042`, `S-1042`, `m 1042`. Two-auction weeks
+ * prefix every lot with `S-`/`M-` (see CLAUDE.md), so a bare number is
+ * genuinely ambiguous — both candidates are returned and the caller picks the
+ * one that exists, preferring whatever is already on screen. The unprefixed
+ * form is kept last for single-auction weeks, where lot numbers carry no
+ * prefix at all.
+ */
+export function lotCandidates(raw: string): string[] {
+  const v = raw.trim().toUpperCase();
+  const m = /^([SM])?\W*(\d+)$/.exec(v);
+  if (!m) return [];
+  const [, prefix, digits] = m;
+  return prefix ? [`${prefix}-${digits}`] : [`S-${digits}`, `M-${digits}`, digits];
+}
+
+/**
  * Dispatch to exact (default) or fuzzy (opt-in) matching. Callers intersect the
  * result with the structurally-filtered rows so search always narrows within
  * the active tab / category / day view, never bypasses it.

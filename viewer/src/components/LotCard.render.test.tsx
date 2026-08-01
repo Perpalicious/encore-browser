@@ -1,97 +1,87 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Lot } from '../lib/types';
+import { buildLotViews } from '../lib/lotView';
+import { lot } from '../test/lotFixture';
 import { LotCard } from './LotCard';
-import { LotExpandPanel } from './LotExpandPanel';
 
 const noop = () => {};
 
-function lot(partial: Partial<Lot> & { lot_number: string }): Lot {
-  return {
-    day: 'Sunday',
-    title: `Lot ${partial.lot_number}`,
-    description: 'A thing.',
-    condition: 'Good',
-    thumb_url: '',
-    image_url: '',
-    lot_url: 'https://encoreauctions.hibid.com/lot/1/x',
-    category: 'Tools',
-    subcategory: 'Hand Tools',
-    category_path: ['Tools', 'Hand Tools'],
-    is_bat: false,
-    bat_buckets: [],
-    confidence: 'low',
-    est_retail_price: null,
-    est_resale_low: null,
-    est_resale_high: null,
-    resale_confidence: null,
-    resale_outlook: null,
-    resale_reasoning: null,
-    ...partial,
-  };
-}
-
+/** Render a card through the real mapping layer, as the grid does. */
 function renderCard(l: Lot): string {
+  const [view] = buildLotViews([l]);
   return renderToStaticMarkup(
     <LotCard
-      lot={l}
+      view={view}
+      colW={196}
+      textH={83}
       expanded={false}
       onToggleExpand={noop}
       watched={false}
       onToggleWatch={noop}
-      density="standard"
     />
   );
 }
 
 describe('LotCard resale summary', () => {
-  it('renders resale + retail when the lot is valued', () => {
+  it('renders the resale mean and the retail figure when the lot is valued', () => {
     const html = renderCard(
       lot({ lot_number: '1', est_resale_low: 40, est_resale_high: 70, est_retail_price: 120 })
     );
     expect(html).toContain('data-testid="resale-summary"');
-    expect(html).toContain('Resale');
-    expect(html).toContain('~$55'); // mean of 40 and 70
-    expect(html).toContain('Retail');
+    expect(html).toContain('$55'); // mean of 40 and 70
     expect(html).toContain('$120');
+    // Money is greyscale and unlabelled in the redesign — size and weight carry
+    // the distinction, so the "Resale"/"Retail" words are deliberately gone.
+    expect(html).not.toContain('Resale');
+    expect(html).not.toContain('Retail');
   });
 
-  it('omits the resale row entirely when the lot is not valued', () => {
+  it('omits the resale figure entirely when the lot is not valued', () => {
     const html = renderCard(lot({ lot_number: '2', est_retail_price: 120 }));
     expect(html).not.toContain('data-testid="resale-summary"');
-    expect(html).not.toContain('Resale');
+    expect(html).toContain('$120'); // retail still shows
   });
-});
 
-describe('LotExpandPanel resale detail', () => {
-  it('renders range, confidence, outlook, and reasoning when valued', () => {
-    const html = renderToStaticMarkup(
-      <LotExpandPanel
-        lot={lot({
-          lot_number: '1',
+  it('treats a 0 resale range as unvalued rather than printing $0', () => {
+    const html = renderCard(
+      lot({ lot_number: '3', est_resale_low: 0, est_resale_high: 0, est_retail_price: 120 })
+    );
+    expect(html).not.toContain('data-testid="resale-summary"');
+    expect(html).not.toContain('$0');
+  });
+
+  it('omits retail when it is 0 or null, without disturbing resale', () => {
+    for (const retail of [0, null]) {
+      const html = renderCard(
+        lot({
+          lot_number: '4',
           est_resale_low: 40,
           est_resale_high: 70,
-          est_retail_price: 120,
-          resale_confidence: 'medium',
-          resale_outlook: 'good',
-          resale_reasoning: 'Comparable units resell steadily.',
-        })}
-        onCollapse={noop}
-        fullRow
-      />
-    );
-    expect(html).toContain('data-testid="resale-detail"');
-    expect(html).toContain('$40–$70'); // range
-    expect(html).toContain('medium confidence');
-    expect(html).toContain('good outlook');
-    expect(html).toContain('Comparable units resell steadily.');
+          est_retail_price: retail,
+        })
+      );
+      expect(html).toContain('data-testid="resale-summary"');
+      expect(html).toContain('$55');
+      expect(html).not.toContain('$0');
+    }
   });
 
-  it('omits the resale detail when not valued', () => {
-    const html = renderToStaticMarkup(
-      <LotExpandPanel lot={lot({ lot_number: '2' })} onCollapse={noop} fullRow />
+  it('shows the condition word and the bucket, falling back to the subcategory', () => {
+    const plain = renderCard(lot({ lot_number: '5', condition: 'Like New' }));
+    expect(plain).toContain('LIKE NEW');
+    expect(plain).toContain('Hand Tools'); // no bucket → subcategory
+
+    const bat = renderCard(
+      lot({ lot_number: '6', is_bat: true, bat_buckets: ['Kitchen appliances'] })
     );
-    expect(html).not.toContain('data-testid="resale-detail"');
+    expect(bat).toContain('Kitchen appliances');
+  });
+
+  it('renders cleanly with no condition at all', () => {
+    const html = renderCard(lot({ lot_number: '7', condition: null }));
+    expect(html).toContain('data-testid="lot-card"');
+    expect(html).not.toContain('null');
   });
 });
 
@@ -101,9 +91,9 @@ describe('LotCard personal-pick badge', () => {
       lot({ lot_number: '1', personal_match: true, match_strength: 'strong' })
     );
     expect(html).toContain('data-testid="personal-badge"');
-    expect(html).toContain('Personal pick');
-    // Strength surfaces in the badge tooltip.
-    expect(html).toContain('Personal pick — strong match');
+    // The badge is now a 6px dot on the thumb rather than a chip in the text
+    // block — it costs zero layout, so its label is the accessible name.
+    expect(html).toContain('aria-label="Personal pick"');
   });
 
   it('no badge for false, null, or absent personal_match', () => {
@@ -125,53 +115,35 @@ describe('LotCard personal-pick badge', () => {
   });
 });
 
-describe('LotExpandPanel personal detail', () => {
-  it('renders strength, tags, and reasoning when present', () => {
-    const html = renderToStaticMarkup(
-      <LotExpandPanel
-        lot={lot({
-          lot_number: '1',
-          personal_match: true,
-          match_strength: 'strong',
-          personal_tags: ['woodworking', 'power tools'],
-          personal_reasoning: 'Matches the workshop tool interest.',
-        })}
-        onCollapse={noop}
-        fullRow
+describe('LotCard watch state', () => {
+  it('exposes the star as a pressed toggle with a lot-specific label', () => {
+    const off = renderToStaticMarkup(
+      <LotCard
+        view={buildLotViews([lot({ lot_number: '1', title: 'Cordless drill' })])[0]}
+        colW={196}
+        textH={83}
+        expanded={false}
+        onToggleExpand={noop}
+        watched={false}
+        onToggleWatch={noop}
       />
     );
-    expect(html).toContain('data-testid="personal-detail"');
-    expect(html).toContain('Personal pick — strong match');
-    expect(html).toContain('data-testid="personal-tags"');
-    expect(html).toContain('woodworking');
-    expect(html).toContain('power tools');
-    expect(html).toContain('data-testid="personal-reasoning"');
-    expect(html).toContain('Matches the workshop tool interest.');
-  });
+    expect(off).toContain('aria-pressed="false"');
+    expect(off).toContain('Add to list: Cordless drill');
 
-  it('omits tags/reasoning rows cleanly when only personal_match is set', () => {
-    const html = renderToStaticMarkup(
-      <LotExpandPanel
-        lot={lot({ lot_number: '2', personal_match: true })}
-        onCollapse={noop}
-        fullRow
+    const on = renderToStaticMarkup(
+      <LotCard
+        view={buildLotViews([lot({ lot_number: '1', title: 'Cordless drill' })])[0]}
+        colW={196}
+        textH={83}
+        expanded={false}
+        onToggleExpand={noop}
+        watched
+        onToggleWatch={noop}
       />
     );
-    expect(html).toContain('data-testid="personal-detail"');
-    expect(html).toContain('Personal pick');
-    expect(html).not.toContain('data-testid="personal-tags"');
-    expect(html).not.toContain('data-testid="personal-reasoning"');
-  });
-
-  it('omits the personal detail entirely when not a pick', () => {
-    for (const l of [
-      lot({ lot_number: '3', personal_match: false }),
-      lot({ lot_number: '4' }),
-    ]) {
-      const html = renderToStaticMarkup(
-        <LotExpandPanel lot={l} onCollapse={noop} fullRow />
-      );
-      expect(html).not.toContain('data-testid="personal-detail"');
-    }
+    expect(on).toContain('aria-pressed="true"');
+    expect(on).toContain('Remove from list: Cordless drill');
   });
 });
+

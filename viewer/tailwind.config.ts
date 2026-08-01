@@ -6,12 +6,40 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Geist Sans', 'Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        serif: ['Newsreader', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['Instrument Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Instrument Serif', 'ui-serif', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
-        // Warm editorial palette (light)
+        // Design tokens (src/styles/tokens.css). Theme-aware via CSS variables,
+        // so these carry no dark: pair — one attribute flip on <html> switches
+        // every one of them. Note: because the values are raw var() references,
+        // Tailwind's `/opacity` modifier does NOT work on them.
+        bg: 'var(--bg)',
+        surface: 'var(--surface)',
+        s2: 'var(--s2)',
+        s3: 'var(--s3)',
+        line: 'var(--line)',
+        line2: 'var(--line2)',
+        text: 'var(--text)',
+        dim: 'var(--dim)',
+        dim2: 'var(--dim2)',
+        dim3: 'var(--dim3)',
+        lav: 'var(--lav)',
+        lavt: 'var(--lavt)',
+        lavbg: 'var(--lavbg)',
+        lavbd: 'var(--lavbd)',
+        onlav: 'var(--onlav)',
+        blusht: 'var(--blusht)',
+        blushbg: 'var(--blushbg)',
+        blushbd: 'var(--blushbd)',
+        pick: 'var(--pick)',
+        sk: 'var(--sk)',
+        sk2: 'var(--sk2)',
+        ov: 'var(--ov)',
+
+        // Warm editorial palette (light) — pre-redesign components still use
+        // these with dark: pairs. Removed stage by stage as they are ported.
         paper: '#FAF6EE',
         paper2: '#F3ECDD',
         ink: '#1A1612',

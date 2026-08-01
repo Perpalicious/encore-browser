@@ -1,384 +1,550 @@
-import { Search, X, Sun, Moon, SlidersHorizontal, Sparkles } from 'lucide-react';
-import type { Tab, DayFilter, Density, ConfidenceFilter } from '../lib/types';
-import type { CatNode } from '../lib/categoryTree';
-import { TabButton } from './TabButton';
-import { FilterFieldRow } from './FilterFieldRow';
-import { CategoryFilter } from './CategoryFilter';
-import { ResaleFilter } from './ResaleFilter';
-import { PersonalFilter } from './PersonalFilter';
+import type { CSSProperties, ReactNode } from 'react';
+import type { Tab, SortKey, ViewMode } from '../lib/types';
+
+/**
+ * The sticky header — docs/design/README.md § "Sticky header".
+ *
+ * Two rows. Row 1 is identity and search. Row 2 is the RAIL, and it is the row
+ * that must never leave the viewport: everything that was a CONTROL is behind
+ * one of three buttons (category, sort, filters), and everything that was STATE
+ * is a removable chip. Nothing is hidden — you can always see what you filtered.
+ *
+ * Unlike the header this replaces, there is ONE markup tree, not a `md:hidden`
+ * mobile copy beside a `hidden md:block` desktop copy. Sizes and which pieces
+ * appear are driven by the `mobile` prop.
+ */
+
+export interface ActiveChip {
+  /** Stable key, also the test id suffix. */
+  id: string;
+  label: string;
+  onRemove: () => void;
+}
 
 interface Props {
+  mobile: boolean;
   dark: boolean;
   onToggleTheme: () => void;
   query: string;
   onQueryChange: (q: string) => void;
   fuzzy: boolean;
   onFuzzyToggle: () => void;
-  dayFilter: DayFilter;
-  onDayChange: (d: DayFilter) => void;
-  categoryTree: CatNode;
-  categoryPath: string[];
-  onCategoryPathChange: (p: string[]) => void;
-  confidenceFilter: ConfidenceFilter;
-  onConfidenceChange: (c: ConfidenceFilter) => void;
-  potentialOnly: boolean;
-  onPotentialToggle: () => void;
-  personalOnly: boolean;
-  onPersonalToggle: () => void;
-  density: Density;
-  onDensityChange: (d: Density) => void;
   tab: Tab;
   onTabChange: (t: Tab) => void;
   watchedCount: number;
   filteredCount: number;
   totalCount: number;
   loading: boolean;
-  mobileFiltersOpen: boolean;
-  onToggleMobileFilters: () => void;
+  /** Rail: category button label + open handler. */
+  categoryLabel: string;
+  categoryActive: boolean;
+  onOpenCategory: () => void;
+  sortKey: SortKey;
+  onCycleSort: () => void;
+  onOpenFilters: () => void;
   activeFilterCount: number;
+  chips: ActiveChip[];
+  onClearAll: () => void;
+  searchRef?: React.RefObject<HTMLInputElement>;
+  view: ViewMode;
+  onViewChange: (v: ViewMode) => void;
+  /** Touch device: the hint line advertises swipe rather than the key map. */
+  coarse: boolean;
 }
 
+const MONO = "'JetBrains Mono', ui-monospace, monospace";
+
+const SORT_LABEL: Record<SortKey, string> = {
+  lot: 'Lot number',
+  'resale-desc': 'Resale ↓',
+  'resale-asc': 'Resale ↑',
+  'retail-desc': 'Retail ↓',
+};
+
+const TABS: { id: Tab; label: string; testId: string }[] = [
+  { id: 'all', label: 'All', testId: 'tab-all' },
+  { id: 'bat', label: '✦ Bat’s List', testId: 'tab-bat' },
+  { id: 'watched', label: 'Watched', testId: 'tab-watched' },
+];
+
+const railButton: CSSProperties = {
+  height: 30,
+  padding: '0 11px',
+  borderRadius: 8,
+  background: 'var(--s2)',
+  border: '1px solid var(--line)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  fontSize: '11.5px',
+  fontWeight: 500,
+  color: 'var(--dim)',
+  flex: 'none',
+  maxWidth: 240,
+};
+
 export function Header({
+  mobile,
   dark,
   onToggleTheme,
   query,
   onQueryChange,
   fuzzy,
   onFuzzyToggle,
-  dayFilter,
-  onDayChange,
-  categoryTree,
-  categoryPath,
-  onCategoryPathChange,
-  confidenceFilter,
-  onConfidenceChange,
-  potentialOnly,
-  onPotentialToggle,
-  personalOnly,
-  onPersonalToggle,
-  density,
-  onDensityChange,
   tab,
   onTabChange,
   watchedCount,
   filteredCount,
   totalCount,
   loading,
-  mobileFiltersOpen,
-  onToggleMobileFilters,
+  categoryLabel,
+  categoryActive,
+  onOpenCategory,
+  sortKey,
+  onCycleSort,
+  onOpenFilters,
   activeFilterCount,
+  chips,
+  onClearAll,
+  searchRef,
+  view,
+  onViewChange,
+  coarse,
 }: Props) {
+  const search = (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        height: mobile ? 36 : 34,
+        padding: '0 6px 0 12px',
+        borderRadius: 9,
+        background: 'var(--s2)',
+        border: '1px solid var(--line)',
+        maxWidth: mobile ? undefined : 440,
+        minWidth: 0,
+      }}
+    >
+      <span style={{ fontFamily: MONO, fontSize: '12px', color: 'var(--dim3)' }}>⌕</span>
+      <input
+        ref={searchRef}
+        type="search"
+        data-testid="search-input"
+        value={query}
+        onChange={(e) => onQueryChange(e.target.value)}
+        placeholder={mobile ? 'Search lots…' : 'Search lots…   ( / )'}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          fontSize: mobile ? '13px' : '12.5px',
+          background: 'none',
+          border: 'none',
+          outline: 'none',
+          color: 'var(--text)',
+        }}
+      />
+      <button
+        type="button"
+        data-testid="fuzzy-toggle"
+        onClick={onFuzzyToggle}
+        aria-pressed={fuzzy}
+        aria-label="Toggle fuzzy search"
+        title={fuzzy ? 'Fuzzy search on (tolerates typos)' : 'Exact search — toggle for fuzzy'}
+        style={{
+          flex: 'none',
+          fontFamily: MONO,
+          fontWeight: 500,
+          fontSize: '9px',
+          letterSpacing: '.1em',
+          padding: '5px 7px',
+          borderRadius: 6,
+          background: fuzzy ? 'var(--lavbg)' : 'transparent',
+          color: fuzzy ? 'var(--lavt)' : 'var(--dim3)',
+        }}
+      >
+        {fuzzy ? 'FUZZY' : 'EXACT'}
+      </button>
+    </div>
+  );
+
+  const themeToggle = (
+    <button
+      type="button"
+      onClick={onToggleTheme}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{
+        width: mobile ? 36 : 32,
+        height: mobile ? 36 : 32,
+        flex: 'none',
+        borderRadius: 8,
+        background: 'var(--s2)',
+        border: '1px solid var(--line)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '13px',
+        color: 'var(--dim2)',
+      }}
+    >
+      {dark ? '☀' : '☾'}
+    </button>
+  );
+
+  const tabs = (
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 2 }} aria-label="Lot view">
+      {TABS.map((t) => {
+        const on = tab === t.id;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            data-testid={t.testId}
+            onClick={() => onTabChange(t.id)}
+            aria-pressed={on}
+            style={{
+              padding: '7px 13px',
+              borderRadius: 7,
+              background: on ? 'var(--lavbg)' : 'transparent',
+              fontWeight: on ? 600 : 500,
+              fontSize: mobile ? '13px' : '12.5px',
+              lineHeight: 1,
+              color: on ? 'var(--lavt)' : 'var(--dim2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t.label}
+            {t.id === 'watched' && (
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 500,
+                  fontSize: '9.5px',
+                  lineHeight: 1,
+                  padding: '3px 5px',
+                  borderRadius: 4,
+                  background: 'var(--s3)',
+                  color: 'var(--dim2)',
+                }}
+              >
+                {watchedCount}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </nav>
+  );
+
+  const count = (
+    <p
+      data-testid="result-count"
+      style={{
+        margin: 0,
+        marginLeft: 'auto',
+        flex: 'none',
+        fontFamily: MONO,
+        fontWeight: 500,
+        fontSize: '10.5px',
+        letterSpacing: '.08em',
+        color: 'var(--dim3)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {loading
+        ? 'LOADING…'
+        : `${filteredCount.toLocaleString('en-US')} / ${totalCount.toLocaleString('en-US')}${
+            mobile ? '' : ' LOTS'
+          }`}
+    </p>
+  );
+
   return (
-    <header className="sticky top-0 z-30 bg-paper/85 dark:bg-night/85 backdrop-blur-xl border-b border-rule dark:border-dusk supports-[backdrop-filter]:bg-paper/70 dark:supports-[backdrop-filter]:bg-night/70">
-      <div className="mx-auto max-w-[1480px] px-3 md:px-6">
-        {/* === MOBILE HEADER === */}
-        <div className="md:hidden">
-          {/* Row 1: search + filters + theme */}
-          <div className="flex items-center gap-2 pt-2.5 pb-2">
-            <div className="relative flex-1 min-w-0">
-              <Search
-                size={17}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-ink2/70 dark:text-bone2/70"
-              />
-              <input
-                type="search"
-                data-testid="search-input"
-                value={query}
-                onChange={(e) => onQueryChange(e.target.value)}
-                placeholder="Search lots..."
-                className="w-full h-10 pl-9 pr-9 rounded-full bg-white dark:bg-night2 ring-1 ring-rule dark:ring-dusk placeholder:text-ink2/60 dark:placeholder:text-bone2/60 text-[15px] focus:ring-2 focus:ring-ember focus:outline-none"
-              />
-              {query && (
-                <button
-                  onClick={() => onQueryChange('')}
-                  aria-label="Clear search"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded-full hover:bg-paper2 dark:hover:bg-coal text-ink2 dark:text-bone2"
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              data-testid="fuzzy-toggle"
-              onClick={onFuzzyToggle}
-              aria-pressed={fuzzy}
-              aria-label="Toggle fuzzy search"
-              title={fuzzy ? 'Fuzzy search on (tolerates typos)' : 'Exact search (tap for fuzzy)'}
-              className={`shrink-0 h-10 w-10 grid place-items-center rounded-full ring-1 transition-colors
-                ${
-                  fuzzy
-                    ? 'bg-ink text-paper ring-ink dark:bg-bone dark:text-night dark:ring-bone'
-                    : 'bg-white dark:bg-night2 ring-rule dark:ring-dusk text-ink2 dark:text-bone2'
-                }`}
-            >
-              <Sparkles size={17} />
-            </button>
-            <button
-              onClick={onToggleMobileFilters}
-              aria-expanded={mobileFiltersOpen}
-              aria-label="Filters"
-              className={`relative h-10 w-10 grid place-items-center rounded-full ring-1 transition-colors
-                ${
-                  mobileFiltersOpen || activeFilterCount > 0
-                    ? 'bg-ink text-paper ring-ink dark:bg-bone dark:text-night dark:ring-bone'
-                    : 'bg-white dark:bg-night2 ring-rule dark:ring-dusk text-ink2 dark:text-bone2'
-                }`}
-            >
-              <SlidersHorizontal size={17} />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 grid place-items-center rounded-full bg-ember text-white text-[10px] font-semibold ring-2 ring-paper dark:ring-night">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={onToggleTheme}
-              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="h-10 w-10 grid place-items-center rounded-full bg-white dark:bg-night2 ring-1 ring-rule dark:ring-dusk text-ink2 dark:text-bone2"
-            >
-              {dark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+    <header
+      style={{
+        flex: 'none',
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--line)',
+        position: 'relative',
+        zIndex: 30,
+      }}
+    >
+      {/* Row 1 — identity and search. */}
+      {mobile ? (
+        <div style={{ padding: '8px 12px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {search}
+            <FiltersButton count={activeFilterCount} onClick={onOpenFilters} size={36} />
+            {themeToggle}
           </div>
-
-          {/* Row 2: tabs + count */}
-          <div className="flex items-center justify-between gap-3">
-            <nav className="flex items-center gap-0" aria-label="Lot view">
-              <TabButton
-                active={tab === 'all'}
-                onClick={() => onTabChange('all')}
-                label="All"
-                testId="tab-all"
-              />
-              <TabButton
-                active={tab === 'bat'}
-                onClick={() => onTabChange('bat')}
-                label="Bat's List"
-                sparkle
-                testId="tab-bat"
-              />
-              <TabButton
-                active={tab === 'watched'}
-                onClick={() => onTabChange('watched')}
-                label="Watched"
-                badge={watchedCount}
-                testId="tab-watched"
-              />
-            </nav>
-            <p data-testid="result-count" className="shrink-0 text-[11px] font-mono uppercase tracking-[0.12em] text-ink2 dark:text-bone2 pb-2">
-              {loading ? '…' : `${filteredCount}/${totalCount}`}
-            </p>
-          </div>
-
-          {/* Collapsible filter panel */}
-          <div className={`expand-grid ${mobileFiltersOpen ? 'open' : ''}`}>
-            <div className="expand-inner">
-              <div className="pt-1 pb-3 space-y-2 border-t border-rule/60 dark:border-dusk/60 mt-0">
-                <FilterFieldRow label="Day">
-                  <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk w-full">
-                    {(['Sunday', 'Monday', 'Both'] as DayFilter[]).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => onDayChange(d)}
-                        aria-pressed={dayFilter === d}
-                        className={`flex-1 h-9 text-[13px] font-medium rounded-full transition-colors
-                            ${dayFilter === d ? 'bg-white text-ink shadow-sm dark:bg-night2 dark:text-bone' : 'text-ink2 dark:text-bone2'}`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                </FilterFieldRow>
-                <FilterFieldRow label="Category">
-                  <CategoryFilter
-                    tree={categoryTree}
-                    selected={categoryPath}
-                    onChange={onCategoryPathChange}
-                    size="md"
-                  />
-                </FilterFieldRow>
-                <FilterFieldRow label="Resale">
-                  <ResaleFilter
-                    confidenceFilter={confidenceFilter}
-                    onConfidenceChange={onConfidenceChange}
-                    potentialOnly={potentialOnly}
-                    onPotentialToggle={onPotentialToggle}
-                    size="md"
-                  />
-                </FilterFieldRow>
-                <FilterFieldRow label="Personal">
-                  <PersonalFilter
-                    personalOnly={personalOnly}
-                    onPersonalToggle={onPersonalToggle}
-                    size="md"
-                  />
-                </FilterFieldRow>
-                <FilterFieldRow label="Density">
-                  <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk w-full">
-                    {([{ id: 'standard', label: 'Standard' }, { id: 'compact', label: 'Compact' }] as { id: Density; label: string }[]).map((opt) => (
-                      <button
-                        key={opt.id}
-                        onClick={() => onDensityChange(opt.id)}
-                        aria-pressed={density === opt.id}
-                        className={`flex-1 h-9 text-[13px] font-medium rounded-full transition-colors
-                            ${density === opt.id ? 'bg-white text-ink shadow-sm dark:bg-night2 dark:text-bone' : 'text-ink2 dark:text-bone2'}`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </FilterFieldRow>
-              </div>
-            </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 0 2px',
+              overflowX: 'auto',
+            }}
+            className="no-scrollbar"
+          >
+            {tabs}
+            {count}
           </div>
         </div>
-
-        {/* === DESKTOP HEADER === */}
-        <div className="hidden md:block">
-          <div className="flex items-center gap-3 pt-3 pb-2.5">
-            <a
-              href="#"
-              className="group inline-flex items-baseline gap-2 select-none mr-1 shrink-0"
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            height: 52,
+            padding: '0 16px',
+            borderBottom: '1px solid var(--line2)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flex: 'none' }}>
+            <span style={{ font: "400 19px/1 'Instrument Serif', serif" }}>Encore</span>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontWeight: 500,
+                fontSize: '8.5px',
+                lineHeight: 1,
+                letterSpacing: '.16em',
+                color: 'var(--dim3)',
+              }}
             >
-              <span className="font-serif italic text-[22px] leading-none text-ink dark:text-bone tracking-tight">
-                Encore
-              </span>
-              <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-ink2 dark:text-bone2">
-                Lot Browser
-              </span>
-            </a>
-
-            <div className="relative flex-1 min-w-0 max-w-xl">
-              <Search
-                size={18}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink2/70 dark:text-bone2/70"
-              />
-              <input
-                type="search"
-                data-testid="search-input"
-                value={query}
-                onChange={(e) => onQueryChange(e.target.value)}
-                placeholder="Search lots..."
-                className="w-full h-10 pl-10 pr-10 rounded-full bg-white dark:bg-night2 ring-1 ring-rule dark:ring-dusk placeholder:text-ink2/60 dark:placeholder:text-bone2/60 text-[14px] focus:ring-2 focus:ring-ember focus:outline-none"
-              />
-              {query && (
-                <button
-                  onClick={() => onQueryChange('')}
-                  aria-label="Clear search"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 grid place-items-center rounded-full hover:bg-paper2 dark:hover:bg-coal text-ink2 dark:text-bone2"
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-
-            <button
-              type="button"
-              data-testid="fuzzy-toggle"
-              onClick={onFuzzyToggle}
-              aria-pressed={fuzzy}
-              title={fuzzy ? 'Fuzzy search on (tolerates typos)' : 'Exact search — toggle for fuzzy (tolerates typos)'}
-              className={`inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-[13px] font-medium ring-1 transition-colors shrink-0
-                ${
-                  fuzzy
-                    ? 'bg-ink text-paper ring-ink dark:bg-bone dark:text-night dark:ring-bone'
-                    : 'bg-white dark:bg-night2 ring-rule dark:ring-dusk text-ink2 dark:text-bone2 hover:text-ink dark:hover:text-bone'
-                }`}
+              LOT BROWSER
+            </span>
+          </div>
+          <div style={{ marginLeft: 8 }}>{tabs}</div>
+          <div style={{ flex: 1, display: 'flex', marginLeft: 6, minWidth: 0 }}>{search}</div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontWeight: 500,
+                fontSize: '8.5px',
+                letterSpacing: '.11em',
+                color: 'var(--dim3)',
+                whiteSpace: 'nowrap',
+              }}
             >
-              <Sparkles size={15} />
-              <span>Fuzzy</span>
-            </button>
-
-            <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk shrink-0">
-              {(['Sunday', 'Monday', 'Both'] as DayFilter[]).map((d) => (
-                <button
-                  key={d}
-                  onClick={() => onDayChange(d)}
-                  aria-pressed={dayFilter === d}
-                  className={`px-3 h-[34px] text-[13px] font-medium rounded-full transition-colors
-                      ${dayFilter === d ? 'bg-white text-ink shadow-sm dark:bg-night2 dark:text-bone' : 'text-ink2 dark:text-bone2 hover:text-ink dark:hover:text-bone'}`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-
-            <CategoryFilter
-              tree={categoryTree}
-              selected={categoryPath}
-              onChange={onCategoryPathChange}
-              size="sm"
-            />
-
-            <div className="inline-flex p-[3px] rounded-full bg-paper2 dark:bg-coal ring-1 ring-rule dark:ring-dusk shrink-0">
-              {([{ id: 'standard', label: 'Standard' }, { id: 'compact', label: 'Compact' }] as { id: Density; label: string }[]).map(
-                (opt) => (
+              {coarse ? 'SWIPE → WATCH · SWIPE ← HIDE' : '← → MOVE · SPACE OPEN · W WATCH · / SEARCH'}
+            </span>
+            <div
+              style={{
+                display: 'flex',
+                padding: 2,
+                borderRadius: 8,
+                background: 'var(--s2)',
+                border: '1px solid var(--line)',
+              }}
+            >
+              {(['grid', 'list'] as ViewMode[]).map((v) => {
+                const on = view === v;
+                return (
                   <button
-                    key={opt.id}
-                    onClick={() => onDensityChange(opt.id)}
-                    aria-pressed={density === opt.id}
-                    className={`px-3 h-[34px] text-[13px] font-medium rounded-full transition-colors
-                        ${density === opt.id ? 'bg-white text-ink shadow-sm dark:bg-night2 dark:text-bone' : 'text-ink2 dark:text-bone2 hover:text-ink dark:hover:text-bone'}`}
+                    key={v}
+                    type="button"
+                    data-testid={`view-${v}`}
+                    onClick={() => onViewChange(v)}
+                    aria-pressed={on}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: 6,
+                      background: on ? 'var(--s3)' : 'transparent',
+                      fontWeight: on ? 600 : 500,
+                      fontSize: '11px',
+                      lineHeight: 1,
+                      color: on ? 'var(--text)' : 'var(--dim3)',
+                      textTransform: 'capitalize',
+                    }}
                   >
-                    {opt.label}
+                    {v}
                   </button>
-                )
-              )}
+                );
+              })}
             </div>
-
-            <button
-              onClick={onToggleTheme}
-              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="h-10 w-10 grid place-items-center rounded-full hover:bg-paper2 dark:hover:bg-coal text-ink2 dark:text-bone2 shrink-0"
-            >
-              {dark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-
-          {/* Row 2: tabs + count */}
-          <div className="flex items-center justify-between gap-3">
-            <nav className="flex items-end gap-0" aria-label="Lot view">
-              <TabButton
-                active={tab === 'all'}
-                onClick={() => onTabChange('all')}
-                label="All"
-                testId="tab-all"
-              />
-              <TabButton
-                active={tab === 'bat'}
-                onClick={() => onTabChange('bat')}
-                label="Bat's List"
-                sparkle
-                testId="tab-bat"
-              />
-              <TabButton
-                active={tab === 'watched'}
-                onClick={() => onTabChange('watched')}
-                label="Watched"
-                badge={watchedCount}
-                testId="tab-watched"
-              />
-            </nav>
-            <div className="flex items-center gap-3 pb-2">
-              <PersonalFilter
-                personalOnly={personalOnly}
-                onPersonalToggle={onPersonalToggle}
-                size="sm"
-              />
-              <ResaleFilter
-                confidenceFilter={confidenceFilter}
-                onConfidenceChange={onConfidenceChange}
-                potentialOnly={potentialOnly}
-                onPotentialToggle={onPotentialToggle}
-                size="sm"
-              />
-              <p data-testid="result-count" className="text-[12px] font-mono uppercase tracking-[0.14em] text-ink2 dark:text-bone2 whitespace-nowrap">
-                {loading ? 'Loading…' : `Showing ${filteredCount} of ${totalCount} lots`}
-              </p>
-            </div>
+            {themeToggle}
           </div>
         </div>
+      )}
+
+      {/* Row 2 — the pinned rail. */}
+      <div
+        data-testid="header-rail"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          height: 44,
+          padding: '0 16px',
+          overflowX: 'auto',
+        }}
+        className="no-scrollbar"
+      >
+        <button
+          type="button"
+          data-testid="category-button"
+          onClick={onOpenCategory}
+          style={{
+            ...railButton,
+            background: categoryActive ? 'var(--lavbg)' : 'var(--s2)',
+            borderColor: categoryActive ? 'var(--lavbd)' : 'var(--line)',
+            color: categoryActive ? 'var(--lavt)' : 'var(--dim)',
+          }}
+        >
+          <span
+            style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          >
+            {categoryLabel}
+          </span>
+          <span style={{ flex: 'none', color: 'var(--dim3)' }}>⌄</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="sort-button"
+          onClick={onCycleSort}
+          title="Cycle sort order"
+          style={railButton}
+        >
+          <span style={{ color: 'var(--dim3)' }}>⇅</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{SORT_LABEL[sortKey]}</span>
+        </button>
+
+        <FiltersButton count={activeFilterCount} onClick={onOpenFilters} label="Filters" />
+
+        {chips.length > 0 && (
+          <span style={{ width: 1, height: 18, background: 'var(--line)', flex: 'none' }} />
+        )}
+        {chips.map((chip) => (
+          <button
+            key={chip.id}
+            type="button"
+            data-testid={`chip-${chip.id}`}
+            onClick={chip.onRemove}
+            aria-label={`Remove filter: ${chip.label}`}
+            style={{
+              height: 26,
+              padding: '0 8px',
+              borderRadius: 20,
+              background: 'var(--blushbg)',
+              border: '1px solid var(--blushbd)',
+              color: 'var(--blusht)',
+              fontSize: '11px',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              flex: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {chip.label}
+            <span style={{ opacity: 0.75 }}>✕</span>
+          </button>
+        ))}
+        {chips.length > 0 && (
+          <button
+            type="button"
+            data-testid="clear-filters-btn"
+            onClick={onClearAll}
+            style={{
+              flex: 'none',
+              fontFamily: MONO,
+              fontWeight: 500,
+              fontSize: '10.5px',
+              letterSpacing: '.06em',
+              color: 'var(--dim3)',
+            }}
+          >
+            CLEAR
+          </button>
+        )}
+
+        {!mobile && count}
       </div>
     </header>
+  );
+}
+
+function FiltersButton({
+  count,
+  onClick,
+  label,
+  size,
+}: {
+  count: number;
+  onClick: () => void;
+  label?: string;
+  size?: number;
+}) {
+  const on = count > 0;
+  const badge: ReactNode = on && (
+    <span
+      style={{
+        fontFamily: MONO,
+        fontWeight: 700,
+        fontSize: '9px',
+        lineHeight: 1,
+        padding: '2px 4px',
+        borderRadius: 4,
+        background: 'var(--lav)',
+        color: 'var(--onlav)',
+      }}
+    >
+      {count}
+    </span>
+  );
+
+  if (size) {
+    return (
+      <button
+        type="button"
+        data-testid="filters-button"
+        onClick={onClick}
+        aria-label="Filters"
+        style={{
+          width: size,
+          height: size,
+          flex: 'none',
+          borderRadius: 8,
+          background: on ? 'var(--lavbg)' : 'var(--s2)',
+          border: `1px solid ${on ? 'var(--lavbd)' : 'var(--line)'}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          fontSize: '13px',
+          color: on ? 'var(--lavt)' : 'var(--dim2)',
+          position: 'relative',
+        }}
+      >
+        ⚙{badge}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-testid="filters-button"
+      onClick={onClick}
+      style={{
+        ...railButton,
+        background: on ? 'var(--lavbg)' : 'var(--s2)',
+        borderColor: on ? 'var(--lavbd)' : 'var(--line)',
+        color: on ? 'var(--lavt)' : 'var(--dim)',
+      }}
+    >
+      {label}
+      {badge}
+    </button>
   );
 }

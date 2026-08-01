@@ -4,7 +4,28 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Encore Lot Browser</title>
-    <meta name="theme-color" content="#FAF6EE" />
+    <meta name="theme-color" content="#0a0a0d" />
+    <script>
+      // Resolve the theme before first paint, so a dark-mode user never sees a
+      // flash of the cream palette while the 40MB bundle parses. Mirrors
+      // getInitialDark() in src/hooks/useTheme.ts — keep the two in step.
+      (function () {
+        var dark = false;
+        try {
+          var stored = localStorage.getItem('encore_theme');
+          if (stored === 'dark') dark = true;
+          else if (stored !== 'light' && window.matchMedia)
+            dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch (e) {
+          /* ignore */
+        }
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        document.documentElement.classList.toggle('dark', dark);
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute('content', dark ? '#0a0a0d' : '#f6f3ec');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

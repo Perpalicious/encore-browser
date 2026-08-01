@@ -18,8 +18,14 @@ export function useTheme(): [boolean, () => void] {
   const [dark, setDark] = useState(getInitialDark);
 
   useEffect(() => {
+    // Two mechanisms, deliberately kept in sync:
+    //   data-theme — what the design tokens key off (src/styles/tokens.css);
+    //                dark is :root's default, light is the [data-theme] override.
+    //   .dark      — what Tailwind's `dark:` variant keys off; the pre-redesign
+    //                components still depend on it. Drops out once they're ported.
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', dark);
-    const color = dark ? '#0F1012' : '#FAF6EE';
+    const color = dark ? '#0a0a0d' : '#f6f3ec';
     let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (!meta) {
       meta = document.createElement('meta');

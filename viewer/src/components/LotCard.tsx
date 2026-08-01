@@ -1,173 +1,351 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { Lot, Density } from '../lib/types';
-import { hasResale, resaleMean, formatMoney } from '../lib/resale';
-import { LotImage } from './pills/LotImage';
-import { ConditionPill } from './pills/ConditionPill';
-import { DayBadge } from './pills/DayBadge';
-import { BatBucketPill } from './pills/BatBucketPill';
-import { PersonalPickBadge } from './pills/PersonalPickBadge';
-import { StarButton } from './pills/StarButton';
-import { isPersonalPick } from '../lib/personal';
-import { LotExpandPanel } from './LotExpandPanel';
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
+import type { MobileCols } from '../lib/types';
+import type { LotView } from '../lib/lotView';
+import { conditionColor } from '../lib/lotView';
+import { formatMoney } from '../lib/resale';
+import { TITLE_H, FIGURE_ROW_H, META_ROW_H } from '../hooks/useGridGeometry';
+import { TileImage } from './pills/TileImage';
+
+/**
+ * A lot card — docs/design/README.md § "Desktop grid".
+ *
+ * Hierarchy is thumb → title → condition → resale. Condition owns the colour
+ * (the 2px lid plus the mono word); money is greyscale, separated by size and
+ * weight rather than hue; retail is demoted to --dim3. The whole card is the
+ * click target — the old per-card "Details" button is gone.
+ *
+ * Height is FIXED, and the virtualiser depends on that: the title clamps to two
+ * lines with a min-height, and the text block is a constant TEXT_H tall. See
+ * the note in LotGrid before making anything here grow.
+ */
 
 interface Props {
-  lot: Lot;
+  view: LotView;
   expanded: boolean;
+  /** The keyboard cursor sits on this card. */
+  cursor?: boolean;
   onToggleExpand: () => void;
   watched: boolean;
   onToggleWatch: () => void;
-  density: Density;
-  inlineExpand?: boolean;
+  /** Measured column width — drives tile padding at narrow widths. */
+  colW: number;
+  /** Mobile column count, when the mobile card stepper is driving the grid. */
+  mobileCols?: MobileCols;
+  /** Height of the text block, from the geometry hook. */
+  textH: number;
 }
 
+const MONO = "'JetBrains Mono', ui-monospace, monospace";
+
+/** Tile padding tightens as columns narrow, per the handoff. */
+function tilePadding(colW: number): number {
+  if (colW < 100) return 8;
+  if (colW < 150) return 11;
+  return 16;
+}
+
+const figureStyle: CSSProperties = {
+  fontFamily: MONO,
+  fontWeight: 500,
+  fontSize: '12.5px',
+  lineHeight: 1,
+  color: 'var(--text)',
+  fontVariantNumeric: 'tabular-nums',
+};
+
+const subFigureStyle: CSSProperties = {
+  fontFamily: MONO,
+  fontWeight: 400,
+  fontSize: '9.5px',
+  lineHeight: 1,
+  color: 'var(--dim3)',
+  fontVariantNumeric: 'tabular-nums',
+};
+
 export function LotCard({
-  lot,
+  view,
   expanded,
+  cursor = false,
   onToggleExpand,
   watched,
   onToggleWatch,
-  density,
-  inlineExpand = true,
+  colW,
+  mobileCols,
+  textH,
 }: Props) {
-  const compact = density === 'compact';
-  const aspect = compact ? 'aspect-[5/4]' : 'aspect-[4/3]';
+  const cc = conditionColor(view.cond);
+  // At 4-up the title can no longer carry the lot, so the photo does: the
+  // figures move onto the image in a gradient plate, and the value tick is
+  // suppressed to keep the tile readable. At 3-up the bucket line is dropped.
+  const plate = mobileCols === 4;
+  const showMeta = mobileCols === undefined || mobileCols === 2;
+  const titleFs = mobileCols === 4 ? '10px' : mobileCols === 3 ? '11px' : '12.5px';
+  const titleH = mobileCols === 4 ? 25 : mobileCols === 3 ? 28 : TITLE_H;
+  const figFs = mobileCols === 3 ? '11.5px' : '12.5px';
+  const textPad =
+    mobileCols === 4 ? '5px 6px 6px' : mobileCols === 3 ? '6px 7px 7px' : '8px 9px 9px';
+
+  const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggleExpand();
+    }
+  };
+
+  const onStarClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onToggleWatch();
+  };
 
   return (
     <article
       data-testid="lot-card"
-      data-lot-number={lot.lot_number}
-      className={`group relative overflow-hidden rounded-2xl bg-white dark:bg-night2
-                  shadow-card dark:shadow-cardDark
-                  ring-1 ring-rule/60 dark:ring-dusk
-                  transition-all duration-200 hover:-translate-y-[1px] hover:shadow-cardHover
-                  ${lot.is_bat ? 'ring-ember/35 dark:ring-ember/35' : ''}
-                  ${watched ? 'ring-ember/60 dark:ring-ember/60' : ''}`}
+      data-lot-number={view.lot}
+      className="lot-card"
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      aria-label={expanded ? 'Hide details' : 'Show details'}
+      onClick={onToggleExpand}
+      onKeyDown={onKeyDown}
+      data-expanded={expanded ? 'true' : undefined}
+      data-cursor={cursor ? 'true' : undefined}
     >
-      {/* Bat-list left accent stripe */}
-      {lot.is_bat && (
+      <div style={{ position: 'relative' }}>
+        <TileImage src={view.img} alt={view.title} pad={tilePadding(colW)} tint={view.tint} />
+
+        {/* Day letter — which of the two auctions this lot belongs to. */}
         <span
           aria-hidden
-          className="absolute left-0 top-0 bottom-0 w-[3px] bg-ember/80 dark:bg-ember z-10"
-        />
-      )}
+          style={{
+            position: 'absolute',
+            top: 5,
+            left: 6,
+            fontFamily: MONO,
+            fontWeight: 700,
+            fontSize: '8px',
+            lineHeight: 1,
+            color: 'var(--ink2)',
+          }}
+        >
+          {view.day}
+        </span>
 
-      {/* Star button */}
-      <StarButton watched={watched} onToggle={onToggleWatch} />
-
-      {/* Clickable body region */}
-      <button
-        type="button"
-        onClick={onToggleExpand}
-        aria-expanded={expanded}
-        className="block w-full text-left"
-      >
-        <div className="relative">
-          <LotImage src={lot.thumb_url} alt={lot.title} aspect={aspect} />
-          {watched && (
-            <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] font-medium px-2 py-1 rounded-full bg-ember text-white shadow">
-              Watching
-            </span>
-          )}
-        </div>
-
-        <div className={`px-4 ${compact ? 'pt-2.5 pb-2.5' : 'pt-3.5 pb-4'}`}>
-          {/* Meta row */}
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <ConditionPill value={lot.condition} size={compact ? 'sm' : 'md'} />
-            <DayBadge day={lot.day} className="text-ink2 dark:text-bone2" />
-          </div>
-
-          {/* Title */}
-          <h3
-            className={`font-serif ${compact ? 'text-[15px] leading-[1.25]' : 'text-[17px] leading-[1.22]'} text-ink dark:text-bone`}
+        {/* Personal match — was a full chip row, now costs zero layout. */}
+        {view.pick && (
+          <span
+            data-testid="personal-badge"
+            title="Personal pick"
+            aria-label="Personal pick"
             style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              minHeight: compact ? '2.5em' : '2.45em',
-            } as React.CSSProperties}
-            title={lot.title}
+              position: 'absolute',
+              top: 5,
+              left: 20,
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'var(--pick)',
+              boxShadow: '0 0 0 2px rgba(255,255,255,.7)',
+            }}
+          />
+        )}
+
+        {/* Exceptional value — top-decile resale-to-retail ratio, computed once
+            over the whole set at load (see lib/lotView.ts). */}
+        {view.tick && !plate && (
+          <span
+            data-testid="value-badge"
+            title="Top-decile resale-to-retail spread"
+            style={{
+              position: 'absolute',
+              bottom: 5,
+              left: 6,
+              fontFamily: MONO,
+              fontWeight: 700,
+              fontSize: '8.5px',
+              lineHeight: 1,
+              letterSpacing: '.06em',
+              padding: '3px 5px',
+              borderRadius: 4,
+              background: 'var(--pick)',
+              color: '#fff',
+            }}
           >
-            {lot.title}
-          </h3>
+            ▲ VALUE
+          </span>
+        )}
 
-          {/* Resale / retail summary — only when this lot was valued */}
-          {hasResale(lot) && (
-            <div
-              data-testid="resale-summary"
-              className={`${compact ? 'mt-1.5' : 'mt-2'} flex items-baseline gap-2.5 ${compact ? 'text-[12px]' : 'text-[13px]'}`}
-            >
-              <span className="inline-flex items-baseline gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                <span className="uppercase tracking-[0.08em] text-[0.72em] opacity-80">Resale</span>
-                <span>~{formatMoney(resaleMean(lot))}</span>
+        {plate && (
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              padding: '10px 5px 3px',
+              background: 'linear-gradient(to top, var(--plate), var(--plate0))',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+            }}
+          >
+            {view.mid !== null && (
+              <span
+                data-testid="resale-summary"
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 700,
+                  fontSize: '10.5px',
+                  lineHeight: 1,
+                  color: 'var(--plink)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {formatMoney(view.mid)}
               </span>
-              {lot.est_retail_price !== null && (
-                <span className="inline-flex items-baseline gap-1 font-medium text-rose-600/80 dark:text-rose-400/80">
-                  <span className="uppercase tracking-[0.08em] text-[0.72em] opacity-80">Retail</span>
-                  <span>{formatMoney(lot.est_retail_price)}</span>
-                </span>
-              )}
-            </div>
-          )}
+            )}
+            {view.retail !== null && (
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontWeight: 500,
+                  fontSize: '8px',
+                  lineHeight: 1,
+                  color: 'var(--ink2)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {formatMoney(view.retail)}
+              </span>
+            )}
+          </div>
+        )}
 
-          {/* Bottom row: personal pick + bat bucket + details toggle */}
-          <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-center gap-1.5 flex-wrap`}>
-            {isPersonalPick(lot) && (
-              <PersonalPickBadge
-                strength={lot.match_strength}
-                size={compact ? 'sm' : 'md'}
-              />
-            )}
-            {lot.is_bat && lot.bat_buckets.length > 0 && (
-              <BatBucketPill
-                label={lot.bat_buckets[0]}
-                extra={Math.max(0, lot.bat_buckets.length - 1)}
-                size={compact ? 'sm' : 'md'}
-              />
-            )}
-            {lot.is_bat && lot.bat_buckets.length === 0 && (
-              <BatBucketPill label="Match" size={compact ? 'sm' : 'md'} />
-            )}
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onToggleExpand();
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onToggleExpand();
-                }
-              }}
-              aria-expanded={expanded}
-              aria-label={expanded ? 'Hide details' : 'Show details'}
-              className={`ml-auto inline-flex items-center gap-1 rounded-full font-medium transition-colors cursor-pointer
-                          ${compact ? 'h-7 px-2 text-[11px]' : 'h-8 px-2.5 text-[12px]'}
-                          ${
-                            expanded
-                              ? 'bg-ink text-paper dark:bg-bone dark:text-night'
-                              : 'bg-paper2 text-ink hover:bg-rule dark:bg-coal dark:text-bone dark:hover:bg-dusk ring-1 ring-rule/60 dark:ring-dusk'
-                          }`}
-            >
-              <span>{expanded ? 'Hide' : 'Details'}</span>
-              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        <button
+          type="button"
+          data-testid="star-btn"
+          onClick={onStarClick}
+          aria-pressed={watched}
+          aria-label={`${watched ? 'Remove from list' : 'Add to list'}: ${view.title}`}
+          style={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            width: 26,
+            height: 26,
+            borderRadius: 8,
+            background: 'rgba(14,12,22,.45)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '13px',
+            lineHeight: 1,
+            color: watched ? 'var(--star)' : 'rgba(255,255,255,.8)',
+          }}
+        >
+          {watched ? '★' : '☆'}
+        </button>
+      </div>
+
+      {/* Condition lid — the only full-width colour in the grid. */}
+      <div aria-hidden style={{ height: 2, background: cc }} />
+
+      {/* Fixed height — the virtualiser's row pitch is derived from it. */}
+      <div
+        style={{
+          height: textH,
+          padding: textPad,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          className="lot-card__title"
+          title={view.title}
+          style={{
+            flex: 'none',
+            height: titleH,
+            fontWeight: 600,
+            fontSize: titleFs,
+            lineHeight: 1.28,
+            color: 'var(--text)',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {view.title}
+        </div>
+
+        {/* The figure row is dropped at 4-up — the plate on the tile carries it. */}
+        {!plate && (
+        <div
+          style={{
+            flex: 'none',
+            height: FIGURE_ROW_H,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 5,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: MONO,
+              fontWeight: 500,
+              fontSize: '8.5px',
+              lineHeight: 1,
+              letterSpacing: '.05em',
+              color: cc,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {view.cond ? view.cond.toUpperCase() : ''}
+          </span>
+          {view.mid !== null && (
+            <span data-testid="resale-summary" style={{ ...figureStyle, fontSize: figFs }}>
+              {formatMoney(view.mid)}
             </span>
-          </div>
+          )}
         </div>
-      </button>
+        )}
 
-      {/* Inline expand panel (standard mode) */}
-      {inlineExpand && (
-        <div className={`expand-grid ${expanded ? 'open' : ''}`}>
-          <div className="expand-inner">
-            <LotExpandPanel lot={lot} onCollapse={onToggleExpand} fullRow={false} />
-          </div>
+        {/* Bucket ↔ retail survives only at 2-up and on desktop. */}
+        {showMeta && (
+        <div
+          style={{
+            flex: 'none',
+            height: META_ROW_H,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              fontSize: '9.5px',
+              lineHeight: 1.2,
+              color: 'var(--dim3)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {view.bucket ?? view.sub}
+          </span>
+          {view.retail !== null && <span style={subFigureStyle}>{formatMoney(view.retail)}</span>}
         </div>
-      )}
+        )}
+      </div>
     </article>
   );
 }

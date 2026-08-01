@@ -5,6 +5,13 @@ export type DayFilter = 'Sunday' | 'Monday' | 'Both';
 export type Density = 'standard' | 'compact';
 export type Tab = 'all' | 'bat' | 'watched';
 
+/** Desktop layout: the card grid, or one row per lot. */
+export type ViewMode = 'grid' | 'list';
+/** Mobile layout: 78px rows, or the card grid at the chosen column count. */
+export type MobileView = 'rows' | 'cards';
+/** Mobile card columns. 3 is the default — ~9 lots/screen at 113px targets. */
+export type MobileCols = 2 | 3 | 4;
+
 /**
  * Item-list sort order. 'lot' is the default (Bat-first / Sunday-first /
  * lot-number). The value-based orders sort lots with no data to the end.
@@ -28,6 +35,18 @@ export const CONDITION_ORDER: Condition[] = [
  * whenever the filter is not 'all'.
  */
 export type ConfidenceFilter = 'all' | 'high' | 'medium-plus';
+
+/**
+ * Resale-outlook filter: 'all' = no filter, otherwise the exact outlook.
+ *
+ * The design handoff assumes four outlook steps (Poor/Fair/Good/Strong); our
+ * resale pass only ever emits three, so this deliberately has no fourth value.
+ * Lots with no outlook are excluded whenever the filter is not 'all'.
+ */
+export type OutlookFilter = 'all' | ResaleOutlook;
+
+/** Outlook values worst → best, for the filter's segmented control. */
+export const OUTLOOK_ORDER: ResaleOutlook[] = ['poor', 'fair', 'good'];
 
 export interface Lot {
   day: string;

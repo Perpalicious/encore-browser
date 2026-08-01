@@ -1,12 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-
-// Read the "Showing N of M lots" count from the sticky header.
-async function shownCount(page: Page): Promise<number> {
-  const text =
-    (await page.locator('header').getByText(/Showing .* of .* lots/).first().textContent()) ?? '';
-  const m = text.match(/Showing\s+([\d,]+)\s+of/);
-  return m ? parseInt(m[1].replace(/,/g, ''), 10) : -1;
-}
+import { test, expect } from '@playwright/test';
+import { shownCount } from './helpers';
 
 test('typing in search input filters lots in real-time', async ({ page }) => {
   await page.goto('/');

@@ -1,55 +1,85 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { shownCount, topCategories, pickCategory } from './helpers';
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-// Read the "Showing N of M lots" count from the sticky header (always present).
-async function shownCount(page: Page): Promise<number> {
-  const text = (await page.locator('header').getByText(/Showing .* of .* lots/).first().textContent()) ?? '';
-  const m = text.match(/Showing\s+([\d,]+)\s+of/);
-  return m ? parseInt(m[1].replace(/,/g, ''), 10) : -1;
-}
-
-test('hierarchical category filter drills down and narrows results', async ({ page }) => {
+// The category filter is a two-pane drill-down popover anchored under the rail:
+// categories with counts on the left, sub-categories of the selection on the
+// right. It replaces the cascading <select> chain, which needed one interaction
+// per level and showed no counts.
+test('the category popover drills down and narrows results', async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
 
   const total = await shownCount(page);
-  expect(total).toBeGreaterThan(100); // sample auction is ~9880 lots
+  expect(total).toBeGreaterThan(100);
 
-  // Level 0 select exists; pick the first real top-level category.
-  // (mobile + desktop headers both render one; target the visible/desktop one)
-  const level0 = page.locator('[data-testid="category-level-0"]').filter({ visible: true }).first();
-  await expect(level0).toBeVisible();
-  const topOptions = await level0.locator('option').allTextContents();
-  // option[0] is the "All categories" sentinel; option[1] is the first category.
-  const firstCategory = topOptions[1];
-  expect(firstCategory).toBeTruthy();
-  await level0.selectOption({ label: firstCategory });
-  await page.waitForTimeout(300);
+  // Before anything is picked, the rail button reads "All categories".
+  const railButton = page.locator('[data-testid="category-button"]');
+  await expect(railButton).toContainText('All categories');
 
+  const cats = await topCategories(page);
+  expect(cats.length).toBeGreaterThan(1);
+
+  // Pick the largest top-level category (the popover sorts by count desc).
+  await pickCategory(page, cats[0]);
   const afterTop = await shownCount(page);
   expect(afterTop).toBeGreaterThan(0);
-  expect(afterTop).toBeLessThan(total); // narrowed to one top-level branch
+  expect(afterTop).toBeLessThan(total); // narrowed to one branch
+  // The rail button now names the selection and surfaces a removable chip.
+  await expect(railButton).toContainText(cats[0]);
+  await expect(page.locator('[data-testid="chip-category"]')).toBeVisible();
 
-  // A level-1 drill-down select should now appear (top categories have children).
-  const level1 = page.locator('[data-testid="category-level-1"]').filter({ visible: true }).first();
-  await expect(level1).toBeVisible();
+  // Drill into a sub-category — picking one closes the popover by itself.
+  await railButton.click();
+  const popover = page.locator('[data-testid="category-popover"]');
+  await expect(popover).toBeVisible();
+  const subs = await popover
+    .locator('[data-testid="category-level-1"] button span:first-child')
+    .allTextContents();
+  expect(subs.length).toBeGreaterThan(0);
+  await popover
+    .locator('[data-testid="category-level-1"] button')
+    .filter({ hasText: subs[0] })
+    .first()
+    .click();
+  await expect(popover).toHaveCount(0);
+  await page.waitForTimeout(300);
 
-  // Drill into the first subcategory.
-  const subOptions = await level1.locator('option').allTextContents();
-  if (subOptions.length > 1) {
-    await level1.selectOption({ label: subOptions[1] });
-    await page.waitForTimeout(300);
-    const afterSub = await shownCount(page);
-    expect(afterSub).toBeGreaterThan(0);
-    expect(afterSub).toBeLessThanOrEqual(afterTop); // narrower or equal
-  }
+  const afterSub = await shownCount(page);
+  expect(afterSub).toBeGreaterThan(0);
+  expect(afterSub).toBeLessThanOrEqual(afterTop);
+  await expect(railButton).toContainText(subs[0]);
 
-  // Selecting the "All categories" sentinel at level 0 resets to the full set.
-  await level0.selectOption({ value: '' });
+  // "All categories" clears both levels.
+  await railButton.click();
+  await page.locator('[data-testid="category-all"]').click();
   await page.waitForTimeout(300);
   expect(await shownCount(page)).toBe(total);
-  // Drill-down selects collapse away once the prefix is cleared.
-  await expect(page.locator('[data-testid="category-level-1"]').filter({ visible: true })).toHaveCount(0);
+  await expect(railButton).toContainText('All categories');
+  await expect(page.locator('[data-testid="chip-category"]')).toHaveCount(0);
+});
+
+test('each pane shows lot counts, largest first', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
+  await page.waitForTimeout(500);
+
+  await page.locator('[data-testid="category-button"]').click();
+  const pane = page.locator('[data-testid="category-level-0"]');
+  await expect(pane).toBeVisible();
+
+  const counts = (await pane.locator('button span:last-child').allTextContents()).map((t) =>
+    parseInt(t.replace(/,/g, ''), 10)
+  );
+
+  expect(counts.length).toBeGreaterThan(1);
+  expect(counts.every((n) => n > 0)).toBe(true);
+  // Sorted descending, so the biggest branches are reachable without scrolling.
+  for (let i = 1; i < counts.length; i++) {
+    expect(counts[i]).toBeLessThanOrEqual(counts[i - 1]);
+  }
+  // The right pane prompts rather than sitting blank until a category is picked.
+  await expect(page.locator('[data-testid="category-level-1"]')).toContainText('PICK A CATEGORY');
 });

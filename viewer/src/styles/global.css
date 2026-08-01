@@ -1,34 +1,38 @@
-/* Font imports (self-hosted via @fontsource) — must come before @tailwind */
-@import '@fontsource/newsreader/400.css';
-@import '@fontsource/newsreader/400-italic.css';
-@import '@fontsource/newsreader/500.css';
-@import '@fontsource/newsreader/600.css';
-@import '@fontsource/geist-sans/400.css';
-@import '@fontsource/geist-sans/500.css';
-@import '@fontsource/geist-sans/600.css';
-@import '@fontsource/geist-sans/700.css';
+/* Font imports (self-hosted via @fontsource) — must come before @tailwind.
+   Instrument Sans = all UI and titles, JetBrains Mono = every numeric figure
+   and micro-label, Instrument Serif = the wordmark only. */
+@import '@fontsource/instrument-sans/400.css';
+@import '@fontsource/instrument-sans/500.css';
+@import '@fontsource/instrument-sans/600.css';
+@import '@fontsource/instrument-serif/400.css';
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+/* Design tokens — must also precede @tailwind so utilities can override. */
+@import './tokens.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* The app owns its own scrolling: the shell is a 100dvh flex column and the
+   lot grid scrolls inside it, which is what the virtualiser's scrollTop math
+   is measured against. The document itself must never scroll. */
 html,
 body {
-  background: #faf6ee;
-}
-html.dark,
-html.dark body {
-  background: #0f1012;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
 }
 
 body {
-  font-family: 'Geist Sans', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  margin: 0;
+  font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: 'ss01', 'cv11';
 }
 
 .font-serif {
@@ -45,7 +49,7 @@ body {
   scrollbar-width: none;
 }
 
-/* Skeleton shimmer */
+/* Skeleton shimmer (pre-redesign components) */
 .shimmer {
   background-image: linear-gradient(
     90deg,
@@ -66,6 +70,28 @@ body {
   );
 }
 
+/* Lot card — hover/focus states live here rather than inline so they can use
+   pseudo-classes. Geometry and typography are in LotCard.tsx. */
+.lot-card {
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color 140ms ease-out;
+}
+.lot-card:hover {
+  border-color: var(--lavbd);
+}
+.lot-card[data-expanded='true'],
+.lot-card[data-cursor='true'] {
+  border-color: var(--lav);
+  box-shadow: 0 0 0 2px var(--lavbd);
+}
+.lot-card__title {
+  text-wrap: pretty;
+}
+
 /* Expand animation: grid-template-rows trick */
 .expand-grid {
   display: grid;
@@ -79,14 +105,11 @@ body {
   overflow: hidden;
 }
 
-/* Focus rings — warm, not blue */
+/* Focus rings */
 *:focus-visible {
-  outline: 2px solid #b6502a;
+  outline: 2px solid var(--lav);
   outline-offset: 2px;
-  border-radius: 4px;
-}
-html.dark *:focus-visible {
-  outline-color: #d87b57;
+  border-radius: 7px;
 }
 
 /* Stop iOS auto-zoom on input focus */
@@ -98,9 +121,10 @@ textarea {
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  .expand-grid,
-  .expand-grid * {
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
     animation: none !important;
+    transition: none !important;
   }
 }

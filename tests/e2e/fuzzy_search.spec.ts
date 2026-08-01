@@ -1,11 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-
-async function shownCount(page: Page): Promise<number> {
-  const text =
-    (await page.locator('header').getByText(/Showing .* of .* lots/).first().textContent()) ?? '';
-  const m = text.match(/Showing\s+([\d,]+)\s+of/);
-  return m ? parseInt(m[1].replace(/,/g, ''), 10) : -1;
-}
+import { test, expect } from '@playwright/test';
+import { shownCount } from './helpers';
 
 // Search is EXACT by default; fuzzy is an opt-in toggle. This confirms both the
 // default (a typo finds nothing) and that flipping the "Fuzzy" toggle makes the

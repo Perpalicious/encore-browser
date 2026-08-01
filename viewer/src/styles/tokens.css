@@ -1,0 +1,166 @@
+/*
+ * Design tokens — docs/design/README.md § "Design tokens".
+ *
+ * Dark is the primary theme and lives on :root; light ("cream") is an override
+ * keyed on [data-theme="light"], so switching themes is a single attribute flip
+ * on <html>. `useTheme` also keeps the legacy `.dark` class in sync because the
+ * pre-redesign components still style themselves with Tailwind `dark:` pairs.
+ *
+ * The demoted text tiers (--dim, --dim2, --dim3) were raised from an earlier
+ * draft to clear ~4.5:1 / ~3.4:1 contrast. Do not darken them for aesthetics —
+ * this app is read on a phone in a bright venue.
+ */
+
+:root {
+  --bg: #0a0a0d;
+  --surface: #0f0f13;
+  --s2: #17171d;
+  --s3: #1b1b22;
+  --line: rgba(255, 255, 255, 0.08);
+  --line2: rgba(255, 255, 255, 0.05);
+  --text: #f2f0f7;
+  --dim: rgba(242, 240, 247, 0.62);
+  --dim2: rgba(242, 240, 247, 0.5);
+  --dim3: rgba(242, 240, 247, 0.42);
+  --lav: #b3a4ff;
+  --lavt: #c8bcff;
+  --lavbg: rgba(179, 164, 255, 0.15);
+  --lavbd: rgba(179, 164, 255, 0.35);
+  --onlav: #0d0b16;
+  --blusht: #ffb9d6;
+  --blushbg: rgba(255, 159, 198, 0.12);
+  --blushbd: rgba(255, 159, 198, 0.3);
+  --c-new: #7fe6bd;
+  --c-like: #a8d4ff;
+  --c-good: #cfcadd;
+  --c-fair: #ffcf8a;
+  --c-heavy: #ff9d9d;
+  --t0: #efedf5;
+  --t1: #f4eef2;
+  --t2: #eef2f6;
+  --t3: #f2f1ec;
+  --t4: #f0eef5;
+  --t5: #f5eff1;
+  --t6: #edf1f3;
+  --t7: #f3f0ec;
+  --ink: rgba(24, 20, 40, 0.16);
+  --ink2: rgba(24, 20, 40, 0.45);
+  --plate: rgba(248, 247, 252, 0.94);
+  --plate0: rgba(248, 247, 252, 0);
+  --plink: #16141f;
+  --sk: rgba(255, 255, 255, 0.05);
+  --sk2: rgba(255, 255, 255, 0.09);
+  --ov: rgba(6, 5, 10, 0.66);
+  --sh: 0 24px 60px rgba(0, 0, 0, 0.6);
+  /* Literal in both themes — the personal-pick dot and the watched star. */
+  --pick: #8b6bff;
+  --star: #ffd166;
+  --star2: #f0a500;
+}
+
+[data-theme='light'] {
+  --bg: #f6f3ec;
+  --surface: #fffdf8;
+  --s2: #efebe1;
+  --s3: #e8e3d7;
+  --line: rgba(28, 24, 20, 0.12);
+  --line2: rgba(28, 24, 20, 0.07);
+  --text: #1b1922;
+  --dim: rgba(27, 25, 34, 0.76);
+  --dim2: rgba(27, 25, 34, 0.63);
+  --dim3: rgba(27, 25, 34, 0.53);
+  --lav: #6b53d6;
+  --lavt: #5942bb;
+  --lavbg: rgba(107, 83, 214, 0.1);
+  --lavbd: rgba(107, 83, 214, 0.3);
+  --onlav: #fff;
+  --blusht: #c2437c;
+  --blushbg: rgba(217, 79, 140, 0.09);
+  --blushbd: rgba(217, 79, 140, 0.28);
+  --c-new: #1c8f68;
+  --c-like: #2a72b0;
+  --c-good: #6d6780;
+  --c-fair: #a86c11;
+  --c-heavy: #bd4247;
+  --t0: #f1eff4;
+  --t1: #f4eef1;
+  --t2: #edf1f4;
+  --t3: #f2f0ea;
+  --t4: #f0eef4;
+  --t5: #f4eff1;
+  --t6: #ecf0f2;
+  --t7: #f2efe9;
+  --ink: rgba(24, 20, 40, 0.18);
+  --ink2: rgba(24, 20, 40, 0.5);
+  --plate: rgba(255, 254, 250, 0.95);
+  --plate0: rgba(255, 254, 250, 0);
+  --plink: #1b1922;
+  --sk: rgba(28, 24, 20, 0.05);
+  --sk2: rgba(28, 24, 20, 0.09);
+  --ov: rgba(40, 34, 28, 0.42);
+  --sh: 0 24px 60px rgba(60, 50, 35, 0.22);
+}
+
+/* Motion — all ≤180ms, all disabled under prefers-reduced-motion (below). */
+@keyframes sk {
+  0% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.55;
+  }
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slidein {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes sheetup {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Visually hidden (aria-live regions, labels on icon-only controls). */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--s3);
+  border-radius: 6px;
+  border: 3px solid var(--bg);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

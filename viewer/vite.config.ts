@@ -25,9 +25,6 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom')) {
               return 'react-vendor';
             }
-            if (id.includes('@tanstack')) {
-              return 'virtual-vendor';
-            }
             if (id.includes('lucide-react')) {
               return 'icons-vendor';
             }

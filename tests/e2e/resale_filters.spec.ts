@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { counts, inFilters, openFilters, closeFilters, clearAll } from './helpers';
 
 // The resale filters (confidence + "Potential resales") narrow the current
 // view. These assertions are written to hold whether or not the loaded bundle
@@ -12,13 +13,6 @@ test.use({ viewport: { width: 1280, height: 900 } });
 
 const VISIBLE_TOGGLE = '[data-testid="potential-resales-toggle"]:visible';
 
-// Returns [filteredCount, totalCount] parsed from the visible result-count.
-async function counts(page: Page): Promise<[number, number]> {
-  const text = (await page.locator('[data-testid="result-count"]:visible').textContent()) ?? '';
-  const nums = (text.match(/\d+/g) ?? []).map(Number);
-  return [nums[0] ?? 0, nums[1] ?? 0];
-}
-
 async function ready(page: Page): Promise<void> {
   await page.goto('/');
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
@@ -30,12 +24,15 @@ test('potential-resales filter shows only valued lots, then clears', async ({ pa
   const [, total] = await counts(page);
   expect(total).toBeGreaterThan(0);
 
+  // The toggle lives in the filters overlay now; its state surfaces on the rail
+  // as a chip once it is on.
+  await openFilters(page);
   const toggle = page.locator(VISIBLE_TOGGLE);
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-  await page.waitForTimeout(500);
+  await closeFilters(page);
+  await expect(page.locator('[data-testid="chip-resales"]')).toBeVisible();
 
   // Filtered total is a subset of the full view.
   const [filtered] = await counts(page);
@@ -47,21 +44,21 @@ test('potential-resales filter shows only valued lots, then clears', async ({ pa
   const summaries = await page.locator('[data-testid="resale-summary"]').count();
   expect(summaries).toBe(cards);
 
-  // Clear filters restores the full count and un-presses the toggle.
-  const clear = page.locator('[data-testid="clear-filters-btn"]');
-  await expect(clear).toBeVisible();
-  await clear.click();
-  await page.waitForTimeout(400);
-  await expect(page.locator(VISIBLE_TOGGLE)).toHaveAttribute('aria-pressed', 'false');
+  // Clear restores the full count and un-presses the toggle.
+  await clearAll(page);
   expect((await counts(page))[0]).toBe(total);
+  await inFilters(page, async () => {
+    await expect(page.locator(VISIBLE_TOGGLE)).toHaveAttribute('aria-pressed', 'false');
+  });
 });
 
 test('confidence filter (High) narrows to valued lots and is reversible', async ({ page }) => {
   await ready(page);
   const [, total] = await counts(page);
 
-  await page.locator('[data-testid="confidence-high"]:visible').click();
-  await page.waitForTimeout(500);
+  await inFilters(page, async () => {
+    await page.locator('[data-testid="confidence-high"]:visible').click();
+  });
 
   const [filtered] = await counts(page);
   expect(filtered).toBeLessThanOrEqual(total);
@@ -72,7 +69,8 @@ test('confidence filter (High) narrows to valued lots and is reversible', async 
   expect(summaries).toBe(cards);
 
   // Back to "All" restores the full count.
-  await page.locator('[data-testid="confidence-all"]:visible').click();
-  await page.waitForTimeout(400);
+  await inFilters(page, async () => {
+    await page.locator('[data-testid="confidence-all"]:visible').click();
+  });
   expect((await counts(page))[0]).toBe(total);
 });

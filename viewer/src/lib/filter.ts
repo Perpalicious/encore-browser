@@ -1,7 +1,29 @@
-import type { Lot, Tab, DayFilter, ConfidenceFilter, Condition } from './types';
+import type {
+  Lot,
+  Tab,
+  DayFilter,
+  ConfidenceFilter,
+  OutlookFilter,
+  Condition,
+} from './types';
 import { pathHasPrefix } from './categoryTree';
 import { confidencePasses, isPotentialResale } from './resale';
 import { isPersonalPick } from './personal';
+import { dayLetter } from './lotView';
+
+/**
+ * Match a lot against the day filter.
+ *
+ * NOT `lot.day === dayFilter`: on two-auction weeks the scrape leaves `day` as
+ * an empty string on every Monday lot, so a direct comparison matched nothing
+ * and the Monday filter silently returned zero results. `dayLetter` derives the
+ * day from the 'S-'/'M-' lot-number prefix, which the combine step applies to
+ * every row.
+ */
+function dayMatches(lot: Lot, dayFilter: DayFilter): boolean {
+  if (dayFilter === 'Both') return true;
+  return dayLetter(lot) === (dayFilter === 'Monday' ? 'M' : 'S');
+}
 
 /**
  * Apply the structural filters: tab, day, hierarchical category, bat bucket,
@@ -20,7 +42,9 @@ export function filterLots(
     categoryPath,
     batBucket,
     watched,
+    hidden,
     confidenceFilter = 'all',
+    outlookFilter = 'all',
     potentialOnly = false,
     personalOnly = false,
     conditions,
@@ -30,13 +54,22 @@ export function filterLots(
     categoryPath: string[];
     batBucket: string | null;
     watched: Set<string>;
+    hidden?: Set<string>;
     confidenceFilter?: ConfidenceFilter;
+    outlookFilter?: OutlookFilter;
     potentialOnly?: boolean;
     personalOnly?: boolean;
     conditions?: Set<Condition>;
   }
 ): Lot[] {
   let rows = lots.slice();
+
+  // Hidden lots are swipe-dismissed during triage. They drop out everywhere
+  // EXCEPT the Watched tab — if you starred something and later hid it, the
+  // shortlist you built is still the thing you asked to see.
+  if (hidden && hidden.size > 0 && tab !== 'watched') {
+    rows = rows.filter((l) => !hidden.has(l.lot_number));
+  }
 
   if (tab === 'watched') {
     rows = rows.filter((l) => watched.has(l.lot_number));
@@ -45,9 +78,9 @@ export function filterLots(
     // drives the view and no items are shown (no thousands-of-items flood).
     if (batBucket === null) return [];
     rows = rows.filter((l) => l.is_bat && l.bat_buckets.includes(batBucket));
-    if (dayFilter !== 'Both') rows = rows.filter((l) => l.day === dayFilter);
+    if (dayFilter !== 'Both') rows = rows.filter((l) => dayMatches(l, dayFilter));
   } else {
-    if (dayFilter !== 'Both') rows = rows.filter((l) => l.day === dayFilter);
+    if (dayFilter !== 'Both') rows = rows.filter((l) => dayMatches(l, dayFilter));
     if (categoryPath.length > 0) {
       rows = rows.filter((l) => pathHasPrefix(l.category_path, categoryPath));
     }
@@ -60,6 +93,11 @@ export function filterLots(
   if (potentialOnly) rows = rows.filter(isPotentialResale);
   if (confidenceFilter !== 'all') {
     rows = rows.filter((l) => confidencePasses(l, confidenceFilter));
+  }
+  // Outlook is the exact market read, where `potentialOnly` is the combined
+  // demand-aware shortcut (outlook AND confidence). They compose.
+  if (outlookFilter !== 'all') {
+    rows = rows.filter((l) => l.resale_outlook === outlookFilter);
   }
 
   // Condition chips: when any are selected, keep only lots whose condition is

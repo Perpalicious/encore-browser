@@ -1,8 +1,10 @@
 name: Deploy viewer to GitHub Pages
 
+# Deploys are done locally with `npx gh-pages -d dist -b gh-pages`, not here.
+# The push trigger is intentionally removed: this repo is capped on Actions
+# storage, so a push to main must not kick off a Pages build. Left as
+# workflow_dispatch-only so it can still be run by hand if that ever changes.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

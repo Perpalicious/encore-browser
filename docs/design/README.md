@@ -261,7 +261,7 @@ When the pointer is coarse:
 - **List rows grow to 78px** (from 67px) with `11px 12px` padding.
 - **Star hit areas grow to 44×44** (from 34px, 13px glyph → 16px).
 - **The detail panel and filters render as bottom sheets** rather than a side drawer / anchored popover.
-- **The header hint line** switches from the keyboard map to `SWIPE → WATCH · SWIPE ← HIDE`.
+- **The header hint line** switches from the keyboard map to `SWIPE → WATCH` (no hide — see the deviation note under "Swipe triage").
 
 No stepper is offered on tablet: 4-up on a 1024pt iPad is roughly the same physical card size as 3-up on a phone, so the computed column count is already right.
 
@@ -285,7 +285,9 @@ The cursor is a visible ring on the card. Moving it scrolls the container by dir
 
 ### Swipe triage (mobile rows)
 
-Pointer events on the row; the row translates on X up to ±140px over a fixed action layer. Past **+70px** → watch (row background `--lavbg`, `★ WATCH` revealed left); past **−70px** → hide from results (`--s2`, `HIDE ✕` revealed right). Release below threshold snaps back. `touch-action: pan-y` keeps vertical scrolling intact. Each commit fires a toast.
+Pointer events on the row; the row translates on X up to +140px over a fixed action layer. Past **+70px** → watch (row background `--lavbg`, `★ WATCH` revealed left; `☆ REMOVE` when the lot is already watched, since the same gesture is the undo). Release below threshold snaps back. `touch-action: pan-y` keeps vertical scrolling intact. Each commit fires a toast.
+
+> **Deviation from this spec, decided 2026-08-01.** The spec's second gesture — swipe **left** past −70px to hide the lot from the results — was implemented, used, and then removed. Dropping lots out of the result set on a flick is too destructive for a gesture that easy to make by accident while scrolling a phone one-handed at a venue. There is now exactly one swipe, it is rightward, and it toggles. A left drag does not move the row at all, so nothing suggests an action is hiding over there. Do not reinstate it without a deliberate decision; `tests/e2e/keyboard_and_triage.spec.ts` asserts a left swipe is inert.
 
 This is what makes "Watched" useful for this team: it is a shortlist you build while scanning, not a bid tracker (bids are tracked on Encore itself).
 

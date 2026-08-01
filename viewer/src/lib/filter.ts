@@ -42,7 +42,6 @@ export function filterLots(
     categoryPath,
     batBucket,
     watched,
-    hidden,
     confidenceFilter = 'all',
     outlookFilter = 'all',
     potentialOnly = false,
@@ -54,7 +53,6 @@ export function filterLots(
     categoryPath: string[];
     batBucket: string | null;
     watched: Set<string>;
-    hidden?: Set<string>;
     confidenceFilter?: ConfidenceFilter;
     outlookFilter?: OutlookFilter;
     potentialOnly?: boolean;
@@ -63,13 +61,6 @@ export function filterLots(
   }
 ): Lot[] {
   let rows = lots.slice();
-
-  // Hidden lots are swipe-dismissed during triage. They drop out everywhere
-  // EXCEPT the Watched tab — if you starred something and later hid it, the
-  // shortlist you built is still the thing you asked to see.
-  if (hidden && hidden.size > 0 && tab !== 'watched') {
-    rows = rows.filter((l) => !hidden.has(l.lot_number));
-  }
 
   if (tab === 'watched') {
     rows = rows.filter((l) => watched.has(l.lot_number));

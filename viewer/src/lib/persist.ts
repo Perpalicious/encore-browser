@@ -19,8 +19,8 @@ import type {
  *  - The URL hash carries everything that describes WHAT YOU ARE LOOKING AT, so
  *    a filtered view is a link you can send to someone at the venue.
  *  - localStorage carries the same, plus the things that are yours alone and
- *    would be meaningless (or hostile) to share: your watch list, the lots
- *    you've hidden, and where you were scrolled to.
+ *    would be meaningless (or hostile) to share: your watch list and where you
+ *    were scrolled to.
  *
  * On load the hash wins, so following a link overrides your last session
  * without destroying it.
@@ -28,7 +28,6 @@ import type {
 
 export const STORAGE_KEY = 'encore.lotbrowser.v1';
 export const WATCHED_KEY = 'encore_watched';
-export const HIDDEN_KEY = 'encore.hidden.v1';
 export const SCROLL_KEY = 'encore.scroll.v1';
 /** Long enough that a burst of typing or chip-clicking writes once. */
 export const PERSIST_DEBOUNCE_MS = 350;

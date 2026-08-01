@@ -52,7 +52,6 @@ interface Props {
   watched: Set<string>;
   onToggleExpand: (lotNumber: string) => void;
   onToggleWatch: (lotNumber: string) => void;
-  onHide: (lotNumber: string) => void;
   onClearFilters: () => void;
   /** True when a single day is filtered — the day label is then redundant. */
   singleDay: boolean;
@@ -107,7 +106,6 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
     watched,
     onToggleExpand,
     onToggleWatch,
-    onHide,
     onClearFilters,
     singleDay,
     initialScrollTop = 0,
@@ -264,7 +262,6 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   cursor={isCursor || lot.lot_number === expandedId}
                   onOpen={open}
                   onToggleWatch={() => onToggleWatch(lot.lot_number)}
-                  onHide={() => onHide(lot.lot_number)}
                 />
               );
             })}

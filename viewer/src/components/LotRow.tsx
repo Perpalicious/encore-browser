@@ -12,9 +12,15 @@ import { TileImage } from './pills/TileImage';
  * fixed columns, mobile stacks title over a meta line with the figures
  * right-aligned. What actually differs between them is density, not structure.
  *
- * Swipe triage is enabled by INPUT, not width — a touch-capable desktop gets it
- * too. The row translates over a fixed action layer, so the row background must
- * stay opaque or the actions show through before you've swiped.
+ * Swipe is enabled by INPUT, not width — a touch-capable desktop gets it too.
+ * The row translates over a fixed action layer, so the row background must stay
+ * opaque or the action shows through before you've swiped.
+ *
+ * There is exactly ONE swipe, and it is rightward: add to / remove from the
+ * list. A left swipe is deliberately inert — the row will not even follow your
+ * thumb that way, so nothing suggests an action is hiding over there. Removing
+ * lots from the results on a flick was too destructive for a gesture this easy
+ * to make by accident while scrolling.
  */
 
 interface Props {
@@ -26,7 +32,6 @@ interface Props {
   cursor: boolean;
   onOpen: () => void;
   onToggleWatch: () => void;
-  onHide: () => void;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -51,16 +56,23 @@ export function LotRow({
   cursor,
   onOpen,
   onToggleWatch,
-  onHide,
 }: Props) {
-  const swipe = useRef({ startX: 0, dx: 0, active: false });
-  // A pointer down/move/up on the row also produces a click, so a committed
-  // swipe would open the detail overlay on top of the triage you just did.
-  const swallowClick = useRef(false);
+  const swipe = useRef({ startX: 0, dx: 0, active: false, moved: false });
+  /**
+   * A pointer down/move/up on the row also produces a click, so any DRAG would
+   * otherwise open the detail overlay when you let go — the swipe you just
+   * committed, a left drag that intentionally does nothing, a flick that
+   * scrolled the list.
+   *
+   * Held as a deadline rather than a boolean: a boolean is only cleared by the
+   * click that follows, and on touch that click does not always arrive, which
+   * leaves the flag set and eats your NEXT tap. A deadline expires on its own.
+   */
+  const swallowClicksUntil = useRef(0);
+  const SWALLOW_MS = 400;
   const shellRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const watchLabelRef = useRef<HTMLSpanElement>(null);
-  const hideLabelRef = useRef<HTMLSpanElement>(null);
   const cc = conditionColor(view.cond);
   const thumb = mobile ? 58 : 52;
   const starSize = coarse ? 44 : 34;
@@ -80,28 +92,30 @@ export function LotRow({
     const shell = shellRef.current;
     if (!row || !shell) return;
     row.style.transform = `translateX(${dx}px)`;
-    shell.style.background =
-      dx === 0 ? (cursor ? 'var(--lavbg)' : 'var(--bg)') : dx > 0 ? 'var(--lavbg)' : 'var(--s2)';
+    shell.style.background = dx > 0 ? 'var(--lavbg)' : cursor ? 'var(--lavbg)' : 'var(--bg)';
     if (watchLabelRef.current) watchLabelRef.current.style.opacity = dx > 0 ? '1' : '0';
-    if (hideLabelRef.current) hideLabelRef.current.style.opacity = dx < 0 ? '1' : '0';
   };
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (!coarse) return;
     const startX = e.clientX;
     const startY = e.clientY;
-    swipe.current = { startX, dx: 0, active: false };
+    swipe.current = { startX, dx: 0, active: false, moved: false };
 
     const onMove = (ev: globalThis.PointerEvent) => {
       const dxRaw = ev.clientX - startX;
       const dyRaw = ev.clientY - startY;
+      // Anything past tap slop, in any direction, is a drag and not a tap.
+      if (Math.abs(dxRaw) > 10 || Math.abs(dyRaw) > 10) swipe.current.moved = true;
       // Let a vertical drag scroll the list; only claim the gesture once it is
       // clearly horizontal. touch-action: pan-y keeps scrolling working meanwhile.
+      // Rightward only: a leftward drag never claims the gesture, so the list
+      // keeps scrolling under it and the row stays put.
       if (!swipe.current.active) {
-        if (Math.abs(dxRaw) < 10 || Math.abs(dxRaw) <= Math.abs(dyRaw)) return;
+        if (dxRaw < 10 || dxRaw <= Math.abs(dyRaw)) return;
         swipe.current.active = true;
       }
-      const next = Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, dxRaw));
+      const next = Math.max(0, Math.min(SWIPE_MAX, dxRaw));
       swipe.current.dx = next;
       paint(next);
     };
@@ -110,13 +124,12 @@ export function LotRow({
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onEnd);
       window.removeEventListener('pointercancel', onEnd);
-      const { active, dx: committed } = swipe.current;
-      swipe.current = { startX: 0, dx: 0, active: false };
+      const { active, moved, dx: committed } = swipe.current;
+      swipe.current = { startX: 0, dx: 0, active: false, moved: false };
       paint(0);
+      if (moved) swallowClicksUntil.current = performance.now() + SWALLOW_MS;
       if (!active) return;
-      swallowClick.current = true;
       if (committed > SWIPE_THRESHOLD) onToggleWatch();
-      else if (committed < -SWIPE_THRESHOLD) onHide();
     };
 
     window.addEventListener('pointermove', onMove);
@@ -145,7 +158,6 @@ export function LotRow({
           inset: 0,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           padding: '0 20px',
           fontFamily: MONO,
           fontWeight: 700,
@@ -153,8 +165,9 @@ export function LotRow({
           letterSpacing: '.1em',
         }}
       >
-        <span ref={watchLabelRef} style={{ color: 'var(--lavt)', opacity: 0 }}>★ WATCH</span>
-        <span ref={hideLabelRef} style={{ color: 'var(--dim3)', opacity: 0 }}>HIDE ✕</span>
+        <span ref={watchLabelRef} style={{ color: 'var(--lavt)', opacity: 0 }}>
+          {watched ? '☆ REMOVE' : '★ WATCH'}
+        </span>
       </div>
 
       <div
@@ -166,10 +179,7 @@ export function LotRow({
         aria-label="Show details"
         data-cursor={cursor ? 'true' : undefined}
         onClick={() => {
-          if (swallowClick.current) {
-            swallowClick.current = false;
-            return;
-          }
+          if (performance.now() < swallowClicksUntil.current) return;
           onOpen();
         }}
         onKeyDown={(e) => {

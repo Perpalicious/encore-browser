@@ -396,7 +396,7 @@ export function Header({
                 whiteSpace: 'nowrap',
               }}
             >
-              {coarse ? 'SWIPE → WATCH · SWIPE ← HIDE' : '← → MOVE · SPACE OPEN · W WATCH · / SEARCH'}
+              {coarse ? 'SWIPE → WATCH' : '← → MOVE · SPACE OPEN · W WATCH · / SEARCH'}
             </span>
             {jumpField}
             <div

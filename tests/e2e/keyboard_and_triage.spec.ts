@@ -83,33 +83,51 @@ test.describe('swipe triage', () => {
     await page.waitForTimeout(400);
   }
 
-  test('swiping right watches the lot, left hides it from the results', async ({ page }) => {
+  test('swiping right watches the lot, and again un-watches it', async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('[data-testid="lot-row"]', { timeout: 15000 });
     await page.waitForTimeout(400);
-
-    const before = await shownCount(page);
 
     // Right past the +70px threshold → watched, with a toast.
     await swipe(page, 110);
     await expect(page.locator('[data-testid="toast"]')).toBeVisible();
     await expect(page.locator('[data-testid="tab-watched"]')).toContainText('1');
 
-    // Left past −70px → hidden, so the result count drops by one.
-    const hiddenLot = await page.locator('[data-testid="lot-row"]').first().getAttribute('data-lot-number');
-    await swipe(page, -110);
-    await expect(page.locator('[data-testid="toast"]')).toBeVisible();
-    expect(await shownCount(page)).toBe(before - 1);
-    await expect(
-      page.locator(`[data-testid="lot-row"][data-lot-number="${hiddenLot}"]`)
-    ).toHaveCount(0);
+    // The same gesture is the undo — there is only one swipe, and it toggles.
+    await swipe(page, 110);
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('0');
+  });
 
-    // Hidden lots surface as a chip that restores them.
-    const chip = page.locator('[data-testid="chip-hidden"]');
-    await expect(chip).toBeVisible();
-    await chip.click();
+  test('swiping LEFT does nothing at all — no lot is ever removed by a gesture', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.waitForSelector('[data-testid="lot-row"]', { timeout: 15000 });
     await page.waitForTimeout(400);
+
+    const before = await shownCount(page);
+    const first = await page.locator('[data-testid="lot-row"]').first().getAttribute('data-lot-number');
+
+    await swipe(page, -110);
+    await swipe(page, -140);
+
+    // Same lots, same order, nothing watched, no toast fired.
     expect(await shownCount(page)).toBe(before);
+    await expect(page.locator('[data-testid="lot-row"]').first()).toHaveAttribute(
+      'data-lot-number',
+      first!
+    );
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('0');
+    await expect(page.locator('[data-testid="toast"]')).toHaveCount(0);
+
+    // And it does not fall through as a TAP either: a drag that commits
+    // nothing must not open the detail sheet on release.
+    await expect(page.locator('[data-testid="lot-detail"]')).toHaveCount(0);
+
+    // The click swallow expires on its own, so the next real tap still works.
+    await page.waitForTimeout(600);
+    await page.locator('[data-testid="lot-row"]').first().click();
+    await expect(page.locator('[data-testid="lot-detail"]')).toBeVisible();
   });
 
   test('a short swipe snaps back without committing', async ({ page }) => {

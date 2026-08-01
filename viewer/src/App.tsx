@@ -25,7 +25,6 @@ import {
   loadScrollTop,
   saveScrollTop,
   PERSIST_DEBOUNCE_MS,
-  HIDDEN_KEY,
   type ViewState,
 } from './lib/persist';
 import { useTheme } from './hooks/useTheme';
@@ -47,7 +46,6 @@ const initialScrollTop = loadScrollTop();
 export function App() {
   const [dark, toggleTheme] = useTheme();
   const [watched, toggleWatch] = usePersistedSet('encore_watched');
-  const [hidden, toggleHidden] = usePersistedSet(HIDDEN_KEY);
   // Layout follows width; overlay affordances and swipe follow input device, so
   // a tablet gets the desktop grid but sheets, big hit areas and swipe triage.
   const mobileLayout = useMobileLayout();
@@ -155,7 +153,6 @@ export function App() {
       categoryPath,
       batBucket,
       watched,
-      hidden,
       confidenceFilter,
       outlookFilter,
       potentialOnly,
@@ -169,7 +166,7 @@ export function App() {
       return sortLots(rows.filter((l) => matches.has(l.lot_number)), sortKey);
     }
     return sortLots(rows, sortKey);
-  }, [allLots, tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, hidden, confidenceFilter, outlookFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex]);
+  }, [allLots, tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, outlookFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex]);
 
   /** Persist the shareable state, debounced, to both the hash and localStorage. */
   useEffect(() => {
@@ -259,21 +256,13 @@ export function App() {
     [toggleWatch, watched, showToast]
   );
 
-  const onHide = useCallback(
-    (lotNumber: string) => {
-      toggleHidden(lotNumber);
-      showToast(hidden.has(lotNumber) ? 'Restored' : 'Hidden');
-    },
-    [toggleHidden, hidden, showToast]
-  );
-
   /**
    * Jump to lot — docs/design/README.md § "Sticky header", the `LOT` field.
    *
    * The auctioneer calls a number and you need that lot, so this never dead-ends
    * on "not in current results" the way the prototype does. If the lot exists
-   * but the active tab, filters or your hidden list are covering it, we get out
-   * of the way and say so in the toast.
+   * but the active tab or filters are covering it, we get out of the way and
+   * say so in the toast.
    */
   const jumpToLot = useCallback(
     (raw: string) => {
@@ -294,12 +283,11 @@ export function App() {
         setTab('all');
         setBatBucket(null);
         clearFilters();
-        if (hidden.has(target)) toggleHidden(target);
         showToast(`Filters cleared to reach ${target}`);
       }
       setPendingJump(target);
     },
-    [filtered, viewByLot, hidden, toggleHidden, clearFilters, showToast, tab, batBucket]
+    [filtered, viewByLot, clearFilters, showToast, tab, batBucket]
   );
 
   /**
@@ -395,18 +383,8 @@ export function App() {
         onRemove: () => setBatBucket(null),
       });
     }
-    if (hidden.size > 0) {
-      out.push({
-        id: 'hidden',
-        label: `${hidden.size} hidden`,
-        onRemove: () => {
-          for (const id of [...hidden]) toggleHidden(id);
-          showToast('Hidden lots restored');
-        },
-      });
-    }
     return out;
-  }, [categoryPath, dayFilter, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, hidden, tab, batBucket, toggleCondition, toggleHidden, showToast]);
+  }, [categoryPath, dayFilter, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, toggleCondition]);
 
   const closeDetail = useCallback(() => setExpandedId(null), []);
 
@@ -578,7 +556,6 @@ export function App() {
             watched={watched}
             onToggleExpand={toggleExpand}
             onToggleWatch={onToggleWatch}
-            onHide={onHide}
             onClearFilters={clearFilters}
             singleDay={dayFilter !== 'Both'}
             initialScrollTop={initialScrollTop}

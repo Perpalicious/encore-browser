@@ -23,6 +23,8 @@ data/raw/
 data/categorized/*
 !data/categorized/README.md
 !data/categorized/auction_703264_categorized.json
+# Prior weeks, moved out of the working folder (see "Data retention" in CLAUDE.md)
+data/archive/
 
 # Note: viewer/src/data/auction_bundle.json IS committed — GitHub Pages
 # deploys static bundles, so the data file ships in the repo. Regenerate

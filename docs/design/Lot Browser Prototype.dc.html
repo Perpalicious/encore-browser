@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"><style>
+:root{--bg:#0a0a0d;--surface:#0f0f13;--s2:#17171d;--s3:#1b1b22;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.05);--text:#f2f0f7;--dim:rgba(242,240,247,.62);--dim2:rgba(242,240,247,.5);--dim3:rgba(242,240,247,.42);--lav:#b3a4ff;--lavt:#c8bcff;--lavbg:rgba(179,164,255,.15);--lavbd:rgba(179,164,255,.35);--onlav:#0d0b16;--blusht:#ffb9d6;--blushbg:rgba(255,159,198,.12);--blushbd:rgba(255,159,198,.3);--c-new:#7fe6bd;--c-like:#a8d4ff;--c-good:#cfcadd;--c-fair:#ffcf8a;--c-heavy:#ff9d9d;--t0:#efedf5;--t1:#f4eef2;--t2:#eef2f6;--t3:#f2f1ec;--t4:#f0eef5;--t5:#f5eff1;--t6:#edf1f3;--t7:#f3f0ec;--ink:rgba(24,20,40,.16);--ink2:rgba(24,20,40,.45);--plate:rgba(248,247,252,.94);--plate0:rgba(248,247,252,0);--plink:#16141f;--sk:rgba(255,255,255,.05);--sk2:rgba(255,255,255,.09);--ov:rgba(6,5,10,.66);--sh:0 24px 60px rgba(0,0,0,.6)}
+[data-theme="light"]{--bg:#f6f3ec;--surface:#fffdf8;--s2:#efebe1;--s3:#e8e3d7;--line:rgba(28,24,20,.12);--line2:rgba(28,24,20,.07);--text:#1b1922;--dim:rgba(27,25,34,.76);--dim2:rgba(27,25,34,.63);--dim3:rgba(27,25,34,.53);--lav:#6b53d6;--lavt:#5942bb;--lavbg:rgba(107,83,214,.1);--lavbd:rgba(107,83,214,.3);--onlav:#fff;--blusht:#c2437c;--blushbg:rgba(217,79,140,.09);--blushbd:rgba(217,79,140,.28);--c-new:#1c8f68;--c-like:#2a72b0;--c-good:#6d6780;--c-fair:#a86c11;--c-heavy:#bd4247;--t0:#f1eff4;--t1:#f4eef1;--t2:#edf1f4;--t3:#f2f0ea;--t4:#f0eef4;--t5:#f4eff1;--t6:#ecf0f2;--t7:#f2efe9;--ink:rgba(24,20,40,.18);--ink2:rgba(24,20,40,.5);--plate:rgba(255,254,250,.95);--plate0:rgba(255,254,250,0);--plink:#1b1922;--sk:rgba(28,24,20,.05);--sk2:rgba(28,24,20,.09);--ov:rgba(40,34,28,.42);--sh:0 24px 60px rgba(60,50,35,.22)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--lav);text-decoration:none}a:hover{color:var(--lavt)}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+input{font:inherit;color:inherit;background:none;border:none;outline:none}
+@keyframes sk{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes slidein{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes sheetup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+*:focus-visible{outline:2px solid var(--lav);outline-offset:2px;border-radius:7px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--s3);border-radius:6px;border:3px solid var(--bg)}::-webkit-scrollbar-track{background:transparent}
+</style></helmet>
+
+<div data-theme="{{ theme }}" style="height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);overflow:hidden">
+
+<div style="flex:none;background:var(--surface);border-bottom:1px solid var(--line);position:relative;z-index:30">
+  <sc-if value="{{ ui.desktop }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;border-bottom:1px solid var(--line2)">
+    <div style="display:flex;align-items:baseline;gap:7px;flex:none"><span style="font:400 19px/1 'Instrument Serif',serif">Encore</span><span style="font:500 8.5px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:var(--dim3)">LOT BROWSER</span></div>
+    <div style="display:flex;align-items:center;gap:2px;margin-left:8px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+        <button onClick="{{ t.on }}" style="padding:7px 13px;border-radius:7px;background:{{ t.bg }};font-weight:{{ t.fw }};font-size:12.5px;line-height:1;color:{{ t.fg }};display:flex;align-items:center;gap:6px">{{ t.label }}<sc-if value="{{ t.badge }}" hint-placeholder-val="{{ true }}"><span style="font:500 9.5px/1 'JetBrains Mono',monospace;padding:3px 5px;border-radius:4px;background:var(--s3);color:var(--dim2)">{{ t.count }}</span></sc-if></button>
+      </sc-for>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:9px;height:34px;padding:0 6px 0 12px;border-radius:9px;background:var(--s2);border:1px solid var(--line);max-width:440px;margin-left:6px">
+      <span style="font:400 12px/1 'JetBrains Mono',monospace;color:var(--dim3)">⌕</span>
+      <input value="{{ q }}" onChange="{{ onQ }}" ref="{{ searchRef }}" placeholder="Search lots…   ( / )" style="flex:1;font-size:12.5px;min-width:0" />
+      <button onClick="{{ toggleFuzzy }}" style="font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;padding:5px 7px;border-radius:6px;background:{{ ui.fuzzyBg }};color:{{ ui.fuzzyFg }}">{{ ui.fuzzyLabel }}</button>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border-radius:8px;background:var(--s2);border:1px solid var(--line)">
+        <span style="font:500 8.5px/1 'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--dim3)">LOT</span>
+        <input value="{{ jump }}" onChange="{{ onJump }}" onKeyDown="{{ onJumpKey }}" placeholder="S-1200" style="width:62px;font:500 11.5px/1 'JetBrains Mono',monospace" />
+      </div>
+      <div style="display:flex;padding:2px;border-radius:8px;background:var(--s2);border:1px solid var(--line)">
+        <button onClick="{{ setGrid }}" style="padding:5px 10px;border-radius:6px;background:{{ ui.gridBg }};font-weight:{{ ui.gridFw }};font-size:11px;line-height:1;color:{{ ui.gridFg }}">Grid</button>
+        <button onClick="{{ setList }}" style="padding:5px 10px;border-radius:6px;background:{{ ui.listBg }};font-weight:{{ ui.listFw }};font-size:11px;line-height:1;color:{{ ui.listFg }}">List</button>
+      </div>
+      <button onClick="{{ toggleTheme }}" style="width:32px;height:32px;border-radius:8px;background:var(--s2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim2)">{{ ui.themeIcon }}</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ ui.mobile }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:8px 12px 0">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="flex:1;display:flex;align-items:center;gap:8px;height:36px;padding:0 11px;border-radius:9px;background:var(--s2);border:1px solid var(--line)">
+        <span style="font:400 12px/1 'JetBrains Mono',monospace;color:var(--dim3)">⌕</span>
+        <input value="{{ q }}" onChange="{{ onQ }}" ref="{{ searchRef }}" placeholder="Search lots…" style="flex:1;font-size:13px;min-width:0" />
+      </div>
+      <button onClick="{{ openFilters }}" style="height:36px;display:flex;align-items:center;gap:6px;padding:0 11px;border-radius:9px;background:{{ ui.fbBg }};border:1px solid {{ ui.fbBd }};font-size:11.5px;font-weight:500;color:{{ ui.fbFg }}">Filters<sc-if value="{{ ui.hasFilters }}" hint-placeholder-val="{{ true }}"><span style="font:600 9px/1 'JetBrains Mono',monospace;padding:3px 5px;border-radius:20px;background:var(--lav);color:var(--onlav)">{{ ui.filterCount }}</span></sc-if></button>
+      <button onClick="{{ toggleTheme }}" style="width:36px;height:36px;border-radius:9px;background:var(--s2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim2)">{{ ui.themeIcon }}</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+        <button onClick="{{ t.on }}" style="padding-bottom:9px;border-bottom:2px solid {{ t.ul }};font-weight:{{ t.fw }};font-size:13px;line-height:1;color:{{ t.fg2 }};display:flex;align-items:center;gap:6px">{{ t.label }}<sc-if value="{{ t.badge }}" hint-placeholder-val="{{ true }}"><span style="font:500 9px/1 'JetBrains Mono',monospace;padding:2px 5px;border-radius:4px;background:var(--s3);color:var(--dim2)">{{ t.count }}</span></sc-if></button>
+      </sc-for>
+      <span style="margin-left:auto;font:500 9.5px/1 'JetBrains Mono',monospace;color:var(--dim3);padding-bottom:9px">{{ ui.countShort }}</span>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ ui.desktop }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:center;gap:8px;height:44px;padding:0 16px">
+    <button onClick="{{ openCats }}" style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;background:{{ ui.catBg }};border:1px solid {{ ui.catBd }};font-size:11.5px;font-weight:500;color:{{ ui.catFg }}">{{ ui.catLabel }}<span style="color:var(--dim3)">⌄</span></button>
+    <button onClick="{{ cycleSort }}" style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;background:var(--s2);border:1px solid var(--line);font-size:11.5px;font-weight:500;color:var(--dim)">{{ ui.sortLabel }}<span style="color:var(--dim3)">⇅</span></button>
+    <button onClick="{{ openFilters }}" style="display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:8px;background:{{ ui.fbBg }};border:1px solid {{ ui.fbBd }};font-size:11.5px;font-weight:500;color:{{ ui.fbFg }}">Filters<sc-if value="{{ ui.hasFilters }}" hint-placeholder-val="{{ true }}"><span style="font:600 9.5px/1 'JetBrains Mono',monospace;padding:3px 5px;border-radius:20px;background:var(--lav);color:var(--onlav)">{{ ui.filterCount }}</span></sc-if></button>
+    <div style="width:1px;height:18px;background:var(--line);margin:0 3px"></div>
+    <div style="display:flex;align-items:center;gap:6px;overflow:hidden">
+      <sc-for list="{{ chips }}" as="c" hint-placeholder-count="0">
+        <button onClick="{{ c.on }}" style="display:flex;align-items:center;gap:6px;padding:5px 9px 5px 10px;border-radius:20px;background:var(--blushbg);border:1px solid var(--blushbd);font-size:11px;font-weight:500;color:var(--blusht);white-space:nowrap">{{ c.label }}<span style="opacity:.6">×</span></button>
+      </sc-for>
+      <sc-if value="{{ ui.hasFilters }}" hint-placeholder-val="{{ true }}"><button onClick="{{ clearAll }}" style="font:500 10.5px/1 'JetBrains Mono',monospace;color:var(--dim3);padding:4px 6px">CLEAR</button></sc-if>
+    </div>
+    <span style="margin-left:auto;font:500 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--dim3);white-space:nowrap">{{ ui.count }}</span>
+  </div>
+  </sc-if>
+</div>
+
+<sc-if value="{{ ui.needBucket }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px">
+  <div style="width:46px;height:46px;border-radius:14px;background:var(--lavbg);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--lav)">✦</div>
+  <div style="font:600 17px/1.3 'Instrument Sans',sans-serif">Pick a bucket</div>
+  <div style="font:400 13px/1.5 'Instrument Sans',sans-serif;color:var(--dim2);text-align:center;max-width:320px">Choose a group, then a bucket, to see Bat’s curated lots.</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:720px">
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+      <button onClick="{{ g.on }}" style="display:flex;flex-direction:column;gap:5px;align-items:flex-start;padding:11px 14px;border-radius:11px;background:{{ g.bg }};border:1px solid {{ g.bd }};min-width:150px"><span style="font-size:12.5px;font-weight:600;color:{{ g.fg }}">{{ g.name }}</span><span style="font:500 9.5px/1 'JetBrains Mono',monospace;color:var(--dim3)">{{ g.count }} LOTS</span></button>
+    </sc-for>
+  </div>
+  <sc-if value="{{ ui.hasGroup }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;max-width:760px;padding-top:6px;border-top:1px solid var(--line);margin-top:4px">
+    <sc-for list="{{ buckets }}" as="b" hint-placeholder-count="6">
+      <button onClick="{{ b.on }}" style="padding:8px 12px;border-radius:20px;background:var(--s2);border:1px solid var(--line);font-size:12px;font-weight:500;color:var(--dim)">{{ b.name }} <span style="font:500 9.5px 'JetBrains Mono',monospace;color:var(--dim3)">{{ b.count }}</span></button>
+    </sc-for>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ ui.showList }}" hint-placeholder-val="{{ true }}">
+<div style="flex:none;display:flex;align-items:center;gap:8px;padding:7px 14px;background:var(--bg);border-bottom:1px solid var(--line2);z-index:10">
+  <span style="font:500 8.5px/1 'JetBrains Mono',monospace;letter-spacing:.13em;color:var(--dim3)">{{ ui.groupLabel }}</span>
+  <sc-if value="{{ ui.mobile }}" hint-placeholder-val="{{ true }}">
+  <div style="margin-left:auto;display:flex;gap:6px">
+    <div style="display:flex;padding:2px;border-radius:8px;background:var(--s2);border:1px solid var(--line)">
+      <button onClick="{{ setRows }}" style="padding:5px 9px;border-radius:6px;background:{{ ui.rowsBg }};font-weight:{{ ui.rowsFw }};font-size:10.5px;line-height:1;color:{{ ui.rowsFg }}">Rows</button>
+      <button onClick="{{ setCards }}" style="padding:5px 9px;border-radius:6px;background:{{ ui.cardsBg }};font-weight:{{ ui.cardsFw }};font-size:10.5px;line-height:1;color:{{ ui.cardsFg }}">Cards</button>
+    </div>
+    <sc-if value="{{ ui.isCards }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;padding:2px;border-radius:8px;background:var(--s2);border:1px solid var(--line)">
+      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+        <button onClick="{{ s.on }}" style="width:22px;text-align:center;padding:5px 0;border-radius:6px;background:{{ s.bg }};font-family:'JetBrains Mono',monospace;font-weight:{{ s.fw }};font-size:10.5px;line-height:1;color:{{ s.fg }}">{{ s.n }}</button>
+      </sc-for>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+  <sc-if value="{{ ui.desktop }}" hint-placeholder-val="{{ true }}">
+  <span style="margin-left:auto;font:400 9.5px/1 'JetBrains Mono',monospace;color:var(--dim3)">{{ ui.hint }}</span>
+  </sc-if>
+</div>
+
+<div ref="{{ scrollRef }}" onScroll="{{ onScroll }}" style="flex:1;overflow-y:auto;overflow-x:hidden;position:relative;background:var(--bg)">
+  <sc-if value="{{ ui.loadRows }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <sc-for list="{{ skeletons }}" as="s" hint-placeholder-count="0">
+      <div style="display:flex;align-items:center;gap:12px;padding:0 13px;height:{{ vt.rowH }};border-bottom:1px solid var(--line2);animation:sk 1.4s ease-in-out infinite;animation-delay:{{ s.d }}">
+        <div style="width:{{ vt.thumb }};height:{{ vt.thumb }};border-radius:9px;background:var(--sk);flex:none"></div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px"><div style="height:9px;border-radius:4px;background:var(--sk2)"></div><div style="height:9px;width:46%;border-radius:4px;background:var(--sk)"></div></div>
+        <div style="width:58px;height:11px;border-radius:4px;background:var(--sk2);flex:none"></div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ ui.loadCards }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:{{ vt.colsCss }};gap:{{ vt.gapCss }};padding:{{ vt.padCss }}">
+    <sc-for list="{{ skeletons }}" as="s" hint-placeholder-count="18">
+      <div style="border-radius:11px;background:var(--surface);border:1px solid var(--line2);overflow:hidden;animation:sk 1.4s ease-in-out infinite;animation-delay:{{ s.d }}">
+        <div style="aspect-ratio:1/1;background:var(--sk)"></div>
+        <div style="padding:9px;display:flex;flex-direction:column;gap:7px"><div style="height:9px;border-radius:4px;background:var(--sk2)"></div><div style="height:9px;width:62%;border-radius:4px;background:var(--sk)"></div></div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ ui.empty }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:70px 30px;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div style="font:600 15px/1.3 'Instrument Sans',sans-serif">No lots match</div>
+    <div style="font:400 12.5px/1.5 'Instrument Sans',sans-serif;color:var(--dim2);text-align:center;max-width:300px">Loosen a filter or switch the search to fuzzy.</div>
+    <button onClick="{{ clearAll }}" style="margin-top:4px;padding:9px 15px;border-radius:9px;background:var(--lav);color:var(--onlav);font-size:12px;font-weight:600">Clear filters</button>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ ui.rendered }}" hint-placeholder-val="{{ true }}">
+  <div style="position:relative;height:{{ vt.totalH }};width:100%">
+    <div style="position:absolute;left:0;right:0;top:{{ vt.padTop }};display:grid;grid-template-columns:{{ vt.colsCss }};gap:{{ vt.gapCss }};padding:{{ vt.padCss }}">
+      <sc-for list="{{ win }}" as="l" hint-placeholder-count="24">
+
+        <sc-if value="{{ l.isCard }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ l.open }}" style="border-radius:11px;overflow:hidden;background:var(--surface);border:1px solid {{ l.bd }};cursor:pointer;box-shadow:{{ l.ring }}" style-hover="border-color:var(--lavbd)">
+          <div style="position:relative;aspect-ratio:1/1;background:{{ l.tint }};display:flex;align-items:center;justify-content:center;padding:{{ l.tilePad }}">
+            {{ l.imgEl }}
+            <sc-if value="{{ l.noImg }}" hint-placeholder-val="{{ true }}"><div style="width:56%;height:56%;border:1.5px solid var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center"><div style="width:26%;aspect-ratio:1;border-radius:50%;background:var(--ink)"></div></div></sc-if>
+            <div style="position:absolute;top:5px;left:6px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:8px;line-height:1;color:var(--ink2)">{{ l.day }}</div>
+            <sc-if value="{{ l.pick }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:5px;left:20px;width:6px;height:6px;border-radius:50%;background:#8b6bff;box-shadow:0 0 0 2px rgba(255,255,255,.7)"></div></sc-if>
+            <sc-if value="{{ l.tick }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;bottom:5px;left:6px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:8.5px;line-height:1;letter-spacing:.06em;padding:3px 5px;border-radius:4px;background:#8b6bff;color:#fff">▲ VALUE</div></sc-if>
+            <button onClick="{{ l.star }}" aria-label="{{ l.starLabel }}" aria-pressed="{{ l.watched }}" style="position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:8px;background:rgba(14,12,22,.45);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:13px;color:{{ l.starFg }}">{{ l.starIcon }}</button>
+            <sc-if value="{{ l.plate }}" hint-placeholder-val="{{ true }}">
+            <div style="position:absolute;left:0;right:0;bottom:0;padding:10px 5px 3px;background:linear-gradient(to top,var(--plate),var(--plate0));display:flex;align-items:flex-end;justify-content:space-between">
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;line-height:1;color:var(--plink);font-variant-numeric:tabular-nums">{{ l.resale }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8px;line-height:1;color:var(--ink2);font-variant-numeric:tabular-nums">{{ l.retail }}</span>
+            </div>
+            </sc-if>
+          </div>
+          <div style="height:2px;background:{{ l.cc }}"></div>
+          <div style="padding:{{ l.textPad }};display:flex;flex-direction:column;gap:4px">
+            <div style="font-weight:600;font-size:{{ l.titleFs }};line-height:1.28;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:{{ l.titleH }};text-wrap:pretty">{{ l.title }}</div>
+            <sc-if value="{{ l.showFig }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:5px">
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;line-height:1;letter-spacing:.05em;color:{{ l.cc }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ l.cond }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:{{ l.figFs }};line-height:1;color:var(--text);font-variant-numeric:tabular-nums">{{ l.resale }}</span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ l.showMeta }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <span style="font-size:9.5px;line-height:1.2;color:var(--dim3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ l.bucket }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1;color:var(--dim3);font-variant-numeric:tabular-nums">{{ l.retail }}</span>
+            </div>
+            </sc-if>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ l.isListRow }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;overflow:hidden;background:{{ l.swipeBg }};border-bottom:1px solid var(--line2)">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;letter-spacing:.1em"><span style="color:var(--lavt);opacity:{{ l.leftOp }}">★ WATCH</span><span style="color:var(--dim3);opacity:{{ l.rightOp }}">HIDE ✕</span></div>
+        <div onClick="{{ l.open }}" onPointerDown="{{ l.pd }}" onPointerMove="{{ l.pm }}" onPointerUp="{{ l.pu }}" onPointerCancel="{{ l.pu }}" style="position:relative;display:flex;align-items:center;padding:{{ l.rowPad }};cursor:pointer;background:{{ l.rowBg }};transform:translateX({{ l.tx }});touch-action:pan-y" style-hover="background:var(--lavbg)">
+          <div style="width:52px;height:52px;border-radius:8px;background:{{ l.tint }};display:flex;align-items:center;justify-content:center;flex:none;position:relative">
+            <div style="width:52%;height:52%;border:1.5px solid var(--ink);border-radius:5px"></div>
+            <sc-if value="{{ l.pick }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:4px;left:4px;width:6px;height:6px;border-radius:50%;background:#8b6bff;box-shadow:0 0 0 2px rgba(255,255,255,.65)"></div></sc-if>
+          </div>
+          <div style="flex:1;min-width:0;padding-left:12px;display:flex;flex-direction:column;gap:3px">
+            <div style="font-weight:600;font-size:13px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.title }}</div>
+            <div style="font-size:10.5px;line-height:1;color:var(--dim3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.bucket }}</div>
+          </div>
+          <div style="width:110px;display:flex;align-items:center;gap:6px;flex:none">
+            <div style="width:6px;height:6px;border-radius:50%;background:{{ l.cc }};flex:none"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9.5px;line-height:1;letter-spacing:.05em;color:{{ l.cc }}">{{ l.cond }}</span>
+          </div>
+          <div style="width:52px;flex:none;display:flex;justify-content:flex-end"><sc-if value="{{ l.tick }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:8.5px;line-height:1;padding:3px 5px;border-radius:4px;background:var(--lavbg);color:var(--lavt)">▲</span></sc-if></div>
+          <div style="width:78px;text-align:right;flex:none;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13px;line-height:1;font-variant-numeric:tabular-nums">{{ l.resale }}</div>
+          <div style="width:66px;text-align:right;flex:none;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1;color:var(--dim3);font-variant-numeric:tabular-nums">{{ l.retail }}</div>
+          <div style="width:56px;text-align:right;flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1;color:var(--dim3)">{{ l.lot }}</div>
+          <button onClick="{{ l.star }}" aria-label="{{ l.starLabel }}" aria-pressed="{{ l.watched }}" style="width:{{ l.starW }};text-align:right;flex:none;font-size:{{ l.starFs }};color:{{ l.starFg2 }}">{{ l.starIcon }}</button>
+        </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ l.isMobileRow }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;overflow:hidden;background:{{ l.swipeBg }};border-bottom:1px solid var(--line2)">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;letter-spacing:.1em">
+            <span style="color:var(--lavt);opacity:{{ l.leftOp }}">★ WATCH</span><span style="color:var(--dim3);opacity:{{ l.rightOp }}">HIDE ✕</span>
+          </div>
+          <div onClick="{{ l.open }}" onPointerDown="{{ l.pd }}" onPointerMove="{{ l.pm }}" onPointerUp="{{ l.pu }}" onPointerCancel="{{ l.pu }}" style="position:relative;display:flex;align-items:center;gap:11px;padding:9px 13px;background:var(--bg);transform:translateX({{ l.tx }});touch-action:pan-y">
+            <div style="width:58px;height:58px;border-radius:9px;background:{{ l.tint }};flex:none;display:flex;align-items:center;justify-content:center;position:relative">
+              <div style="width:52%;height:52%;border:1.5px solid var(--ink);border-radius:6px"></div>
+              <sc-if value="{{ l.pick }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:#8b6bff;box-shadow:0 0 0 2px rgba(255,255,255,.65)"></div></sc-if>
+            </div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+              <div style="font-weight:600;font-size:13.5px;line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ l.title }}</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:6px;height:6px;border-radius:50%;background:{{ l.cc }};flex:none"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9px;line-height:1;letter-spacing:.06em;color:{{ l.cc }}">{{ l.cond }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9px;line-height:1;color:var(--dim3)">{{ l.lot }}</span>
+                <sc-if value="{{ l.tick }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:8px;line-height:1;padding:2px 4px;border-radius:3px;background:var(--lavbg);color:var(--lavt)">▲</span></sc-if>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13.5px;line-height:1;font-variant-numeric:tabular-nums">{{ l.resale }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1;color:var(--dim3);font-variant-numeric:tabular-nums">{{ l.retail }}</span>
+            </div>
+            <button onClick="{{ l.star }}" aria-label="{{ l.starLabel }}" aria-pressed="{{ l.watched }}" style="width:26px;text-align:right;flex:none;font-size:15px;color:{{ l.starFg2 }}">{{ l.starIcon }}</button>
+          </div>
+        </div>
+        </sc-if>
+
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ ui.detail }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeDetail }}" style="position:fixed;inset:0;background:var(--ov);z-index:60;animation:fadein .14s ease-out"></div>
+<div style="position:fixed;z-index:61;background:var(--surface);box-shadow:var(--sh);display:flex;flex-direction:column;overflow:hidden;{{ ui.panelPos }}">
+  <div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto">
+    <div style="padding:14px 16px 0;display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1;font-weight:600;font-size:16px;line-height:1.3;text-wrap:pretty">{{ d.title }}</div>
+      <button onClick="{{ closeDetail }}" style="width:28px;height:28px;flex:none;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--dim2)">✕</button>
+    </div>
+    <div style="padding:12px 16px 0"><div style="width:100%;aspect-ratio:4/3;border-radius:11px;background:{{ d.tint }};display:flex;align-items:center;justify-content:center">{{ d.imgEl }}<sc-if value="{{ d.noImg }}" hint-placeholder-val="{{ true }}"><div style="width:44%;height:52%;border:1.5px solid var(--ink);border-radius:9px;display:flex;align-items:center;justify-content:center"><div style="width:24%;aspect-ratio:1;border-radius:50%;background:var(--ink)"></div></div></sc-if></div></div>
+    <div style="padding:12px 16px 0;display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9.5px;letter-spacing:.08em;color:{{ d.cc }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ d.cc }}"></span>{{ d.cond }}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim3)">{{ d.dayFull }} · LOT {{ d.lot }}</span>
+      <sc-if value="{{ d.tick }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:8.5px;letter-spacing:.08em;padding:3px 6px;border-radius:4px;background:#8b6bff;color:#fff">▲ TOP-DECILE SPREAD</span></sc-if>
+    </div>
+    <div style="padding:12px 16px 0">
+      <div style="display:flex;align-items:baseline;gap:16px;padding:11px 13px;border-radius:10px;background:var(--s2)">
+        <div><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:5px">RESALE</div><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;line-height:1;font-variant-numeric:tabular-nums">{{ d.range }}</div></div>
+        <div><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:5px">RETAIL</div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;line-height:1;color:var(--dim3);font-variant-numeric:tabular-nums">{{ d.retail }}</div></div>
+        <div style="margin-left:auto;display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9px;letter-spacing:.08em;padding:4px 7px;border-radius:5px;background:var(--s3);color:{{ d.confFg }}">{{ d.confLabel }}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9px;letter-spacing:.08em;padding:4px 7px;border-radius:5px;background:var(--s3);color:{{ d.outFg }}">{{ d.outLabel }}</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;gap:12px"><span style="width:66px;flex:none;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);padding-top:2px">CATEGORY</span><span style="font-size:12px;font-weight:500">{{ d.cat }}</span></div>
+      <div style="display:flex;gap:12px"><span style="width:66px;flex:none;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);padding-top:2px">SUB</span><span style="font-size:12px;color:var(--dim)">{{ d.sub }}</span></div>
+      <div style="display:flex;gap:12px"><span style="width:66px;flex:none;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);padding-top:2px">BUCKET</span><span style="font-size:12px;color:var(--dim)">{{ d.bucket }}</span></div>
+    </div>
+    <div style="padding:12px 16px 0"><div style="font-size:12px;line-height:1.6;color:var(--dim)">{{ d.note }}</div></div>
+    <sc-if value="{{ d.pick }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:12px 16px 0"><div style="padding:11px 13px;border-radius:10px;background:rgba(139,107,255,.1);border:1px solid rgba(139,107,255,.22)">
+      <div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9px;letter-spacing:.11em;color:var(--lavt);margin-bottom:6px">PERSONAL PICK · {{ d.matchLevel }}</div>
+      <div style="font-size:11.5px;line-height:1.55;color:var(--dim)">{{ d.matchNote }}</div>
+    </div></div>
+    </sc-if>
+    <div style="padding:14px 16px 18px;margin-top:auto;display:flex;align-items:center;gap:9px">
+      <div style="flex:1;padding:11px 0;text-align:center;border-radius:9px;background:var(--lav);color:var(--onlav);font-size:12.5px;font-weight:600">View on Encore ↗</div>
+      <button onClick="{{ d.star }}" style="padding:11px 13px;border-radius:9px;border:1px solid var(--line);font-size:12px;font-weight:500;color:{{ d.starFg }}">{{ d.starIcon }}</button>
+      <button onClick="{{ prevLot }}" style="width:34px;height:36px;border-radius:9px;border:1px solid var(--line);color:var(--dim2)">‹</button>
+      <button onClick="{{ nextLot }}" style="width:34px;height:36px;border-radius:9px;border:1px solid var(--line);color:var(--dim2)">›</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ui.filtersOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeFilters }}" style="position:fixed;inset:0;background:var(--ov);z-index:70;animation:fadein .14s ease-out"></div>
+<div style="position:fixed;z-index:71;background:var(--surface);box-shadow:var(--sh);display:flex;flex-direction:column;overflow:hidden;{{ ui.filterPos }}">
+  <div style="padding:14px 16px 20px;display:flex;flex-direction:column;gap:15px;flex:1;min-height:0;overflow-y:auto">
+    <div style="display:flex;align-items:center"><span style="font-weight:600;font-size:15px">Filters</span><button onClick="{{ clearAll }}" style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:11px;color:var(--lavt)">CLEAR</button></div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:8px">CONDITION</div><div style="display:flex;flex-wrap:wrap;gap:7px">
+      <sc-for list="{{ condOpts }}" as="c" hint-placeholder-count="5">
+        <button onClick="{{ c.on }}" style="padding:9px 13px;border-radius:9px;background:{{ c.bg }};border:1px solid {{ c.bd }};font-size:12.5px;font-weight:500;color:{{ c.fg }}">{{ c.label }}</button>
+      </sc-for>
+    </div></div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:8px">RESALE CONFIDENCE</div><div style="display:flex;gap:4px;padding:3px;border-radius:10px;background:var(--s2)">
+      <sc-for list="{{ confOpts }}" as="c" hint-placeholder-count="3">
+        <button onClick="{{ c.on }}" style="flex:1;padding:9px 0;border-radius:8px;background:{{ c.bg }};font-size:12.5px;font-weight:{{ c.fw }};color:{{ c.fg }}">{{ c.label }}</button>
+      </sc-for>
+    </div></div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:8px">OUTLOOK</div><div style="display:flex;gap:4px;padding:3px;border-radius:10px;background:var(--s2)">
+      <sc-for list="{{ outOpts }}" as="c" hint-placeholder-count="4">
+        <button onClick="{{ c.on }}" style="flex:1;padding:9px 0;border-radius:8px;background:{{ c.bg }};font-size:12.5px;font-weight:{{ c.fw }};color:{{ c.fg }}">{{ c.label }}</button>
+      </sc-for>
+    </div></div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:8px">DAY</div><div style="display:flex;gap:4px;padding:3px;border-radius:10px;background:var(--s2)">
+        <sc-for list="{{ dayOpts }}" as="c" hint-placeholder-count="3">
+          <button onClick="{{ c.on }}" style="flex:1;padding:9px 0;border-radius:8px;background:{{ c.bg }};font-size:12px;font-weight:{{ c.fw }};color:{{ c.fg }}">{{ c.label }}</button>
+        </sc-for>
+      </div></div>
+      <div style="flex:1"><div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:8.5px;letter-spacing:.13em;color:var(--dim3);margin-bottom:8px">SORT</div><button onClick="{{ cycleSort }}" style="width:100%;padding:12px;border-radius:10px;background:var(--s2);font-size:12px;font-weight:500;color:var(--dim);display:flex"><span>{{ ui.sortLabel }}</span><span style="margin-left:auto;color:var(--dim3)">⇅</span></button></div>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button onClick="{{ togglePicks }}" style="flex:1;padding:11px 0;border-radius:10px;background:{{ ui.picksBg }};border:1px solid {{ ui.picksBd }};font-size:12.5px;font-weight:500;color:{{ ui.picksFg }}">♥ Personal picks</button>
+      <button onClick="{{ toggleResales }}" style="flex:1;padding:11px 0;border-radius:10px;background:{{ ui.resBg }};border:1px solid {{ ui.resBd }};font-size:12.5px;font-weight:500;color:{{ ui.resFg }}">↗ Potential resales</button>
+    </div>
+    <button onClick="{{ closeFilters }}" style="padding:13px 0;border-radius:11px;background:var(--lav);color:var(--onlav);font-size:13.5px;font-weight:600">Show {{ ui.countPlain }} lots</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ui.catOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeCats }}" style="position:fixed;inset:0;z-index:70"></div>
+<div style="position:fixed;left:16px;top:104px;z-index:71;display:flex;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);overflow:hidden;max-height:60dvh">
+  <div style="width:210px;overflow-y:auto;padding:6px;border-right:1px solid var(--line2)">
+    <button onClick="{{ allCats }}" style="width:100%;text-align:left;padding:8px 10px;border-radius:7px;font-size:12px;font-weight:500;color:var(--dim)">All categories</button>
+    <sc-for list="{{ cats }}" as="c" hint-placeholder-count="10">
+      <button onClick="{{ c.on }}" style="width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border-radius:7px;background:{{ c.bg }};font-size:12px;font-weight:500;color:{{ c.fg }}"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim3)">{{ c.count }}</span></button>
+    </sc-for>
+  </div>
+  <div style="width:210px;overflow-y:auto;padding:6px">
+    <sc-for list="{{ subs }}" as="s" hint-placeholder-count="5">
+      <button onClick="{{ s.on }}" style="width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border-radius:7px;background:{{ s.bg }};font-size:12px;font-weight:500;color:{{ s.fg }}"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim3)">{{ s.count }}</span></button>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<div class="sr" aria-live="polite" role="status">{{ ui.live }}</div>
+
+<sc-if value="{{ ui.toast }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;padding:10px 16px;border-radius:22px;background:var(--s3);border:1px solid var(--line);box-shadow:var(--sh);font-size:12.5px;font-weight:500;animation:sheetup .16s ease-out">{{ ui.toastMsg }}</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;lotCount&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6000,&quot;min&quot;:500,&quot;max&quot;:30000,&quot;step&quot;:500,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;defaultCols&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;2&quot;,&quot;3&quot;,&quot;4&quot;],&quot;default&quot;:&quot;3&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mobile&quot;}}">
+const CONDS = ['New', 'Like New', 'Good', 'Fair', 'Heavily Used'];
+const CC = { 'New': 'var(--c-new)', 'Like New': 'var(--c-like)', 'Good': 'var(--c-good)', 'Fair': 'var(--c-fair)', 'Heavily Used': 'var(--c-heavy)' };
+const CW = [0.14, 0.26, 0.31, 0.19, 0.10];
+const CMUL = { 'New': 0.55, 'Like New': 0.46, 'Good': 0.36, 'Fair': 0.24, 'Heavily Used': 0.13 };
+const GROUPS = {
+  'Electronics & gaming': ['Electronics', 'Mechanical keyboards', 'Smart home', 'Smart locks', 'Video games & VR'],
+  'Tools & garage': ['Batteries & chargers', 'Extension cords & power strips', 'Garage & tool organization', 'Power tools', 'Tie-downs'],
+  'Outdoor & garden': ['BBQ accessories', 'Garden hose', 'Gardening tools', 'Lawn equipment'],
+  'Kitchen': ['Kitchen appliances', 'Kitchen utensils & gadgets'],
+  'Home & bath': ['Bath towels', 'Laundry baskets', 'Storage & organisation'],
+  'Games & toys': ['Board games', 'Building sets', 'Sporting goods']
+};
+const P = [
+  ['Piklohas Large Bamboo Cutting Boards, Set of 4', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen utensils & gadgets', 72],
+  ['Keurig K-Supreme Coffee Maker, Black', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen appliances', 111],
+  ['Lifewit Double Laundry Hamper with Lid, Beige', 'Home Goods & Decor', 'Storage', 'Laundry baskets', 45],
+  ['Pokémon TCG: Q1 2026 Mini Portfolio', 'Toys', 'Collectible Cards', 'Board games', 30],
+  ['V-Moda BoomPro Mic for Gaming & Chat', 'Computers & Electronics', 'Audio', 'Electronics', 41],
+  ['PlayStation 5 DualSense Edge Stick Module', 'Computers & Electronics', 'Gaming', 'Video games & VR', 25],
+  ['A1 Home Collections Organic Towels, 4-Pack', 'Home Goods & Decor', 'Bed & Bath', 'Bath towels', 36],
+  ['Starfrit Mini Waffle Maker, 4" Surface', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen appliances', 19],
+  ['Omron Iron Upper Arm BP Monitor, 17" Cuff', 'Computers & Electronics', 'Phones & Accessories', 'Electronics', 58],
+  ['Keen Utility Womens CSA Seattle Boots, 7.5', 'Fashion', 'Footwear', null, 123],
+  ['Nine West Womens WNFlax Pump, 5M', 'Fashion', 'Footwear', null, 93],
+  ['Greenworks 14-Inch 9 Amp Corded Mower MO09B01', 'Lawn & Garden', 'Power Equipment', 'Lawn equipment', 209],
+  ['Outerman Hammock Chair with Cushions, 440 lb', 'Lawn & Garden', 'Outdoor Living', null, 66],
+  ['Magnavox 24" Roku Television, 720p, Black', 'Computers & Electronics', 'TV & Video', 'Electronics', 136],
+  ['Silipull Golf Putting Mat, Indoor 30 × 8.27"', 'Sporting Goods', 'Golf', 'Sporting goods', 43],
+  ['LEGO Technic Bugatti Bolide Racing Car 42151', 'Toys', 'Building Sets', 'Building sets', 57],
+  ['Anker 737 Power Bank, 24,000 mAh', 'Computers & Electronics', 'Phones & Accessories', 'Batteries & chargers', 99],
+  ['Ryobi 18V One+ Brushless Impact Driver', 'Business & Industrial', 'Power Tools', 'Power tools', 129],
+  ['Keychron K8 Pro Wireless Mechanical Keyboard', 'Computers & Electronics', 'Computers', 'Mechanical keyboards', 109],
+  ['Yale Assure Lock 2 Touchscreen Deadbolt', 'Home Goods & Decor', 'Storage', 'Smart locks', 189],
+  ['Philips Hue White & Color A19 4-Pack', 'Home Goods & Decor', 'Decor', 'Smart home', 155],
+  ['Flexzilla 5/8" × 50 ft Garden Hose', 'Lawn & Garden', 'Watering', 'Garden hose', 44],
+  ['Weber Original Kettle Grill Cover, 22"', 'Lawn & Garden', 'Outdoor Living', 'BBQ accessories', 32],
+  ['Fiskars Bypass Pruning Shears, Steel', 'Lawn & Garden', 'Hand Tools', 'Gardening tools', 18],
+  ['Gorilla Heavy Duty Double-Sided Tape, 2-Pack', 'Business & Industrial', 'Hardware', null, 21],
+  ['Rubbermaid FastTrack Garage Rail Kit', 'Business & Industrial', 'Storage', 'Garage & tool organization', 78],
+  ['Belkin 12-Outlet Surge Protector, 8 ft', 'Computers & Electronics', 'Computers', 'Extension cords & power strips', 39],
+  ['Keeper 06121 Ratchet Tie-Down, 4-Pack', 'Business & Industrial', 'Hardware', 'Tie-downs', 34],
+  ['Ninja Foodi 6-in-1 Air Fryer, 8 qt', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen appliances', 179],
+  ['OXO Good Grips 3-Piece Mixing Bowl Set', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen utensils & gadgets', 49],
+  ['Sterilite 66 qt Clear Storage Tote, 4-Pack', 'Home Goods & Decor', 'Storage', 'Storage & organisation', 62],
+  ['Catan 5th Edition Board Game', 'Toys', 'Board Games', 'Board games', 55],
+  ['Bose QuietComfort Earbuds II, Black', 'Computers & Electronics', 'Audio', 'Electronics', 249],
+  ['Logitech MX Master 3S Wireless Mouse', 'Computers & Electronics', 'Computers', 'Electronics', 99],
+  ['Instant Pot Duo Plus 6 qt Pressure Cooker', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen appliances', 129],
+  ['Coleman Sundome 4-Person Tent', 'Sporting Goods', 'Outdoor Recreation', 'Sporting goods', 89],
+  ['Bowflex SelectTech 552 Adjustable Dumbbell', 'Sporting Goods', 'Fitness', 'Sporting goods', 429],
+  ['Schwinn Bike Floor Pump with Gauge', 'Sporting Goods', 'Cycling', 'Sporting goods', 29],
+  ['Graco Pack ’n Play Portable Playard', 'Kid & Baby Essentials', 'Gear', null, 89],
+  ['Munchkin Bottle Drying Rack, White', 'Kid & Baby Essentials', 'Feeding', null, 17],
+  ['Ashley Signature Accent Chair, Charcoal', 'Furniture', 'Seating', null, 289],
+  ['Zinus Modern Studio 6" Platform Bed Frame', 'Furniture', 'Storage', null, 145],
+  ['Meta Quest 3 Elite Strap with Battery', 'Computers & Electronics', 'Gaming', 'Video games & VR', 129],
+  ['DeWalt 20V MAX Battery 2-Pack, 5.0 Ah', 'Business & Industrial', 'Power Tools', 'Batteries & chargers', 199],
+  ['Milwaukee Packout Two-Drawer Tool Box', 'Business & Industrial', 'Storage', 'Garage & tool organization', 249],
+  ['Cuisinart 12-Cup Programmable Coffeemaker', 'Home Goods & Decor', 'Kitchen / Housewares', 'Kitchen appliances', 89],
+  ['Hydro Flask 32 oz Wide Mouth Bottle', 'Sporting Goods', 'Outdoor Recreation', 'Sporting goods', 45],
+  ['Nintendo Switch Pro Controller, Black', 'Computers & Electronics', 'Gaming', 'Video games & VR', 69],
+  ['Levoit Core 300S Smart Air Purifier', 'Home Goods & Decor', 'Decor', 'Smart home', 99],
+  ['Carhartt Firm Duck Insulated Bib Overalls', 'Fashion', 'Apparel', null, 139]
+];
+const NOTES = [
+  'Best suited to Facebook Marketplace; cleanliness, wear and completeness are the main caveats.',
+  'Moves quickly on eBay when complete and boxed; check for missing accessories before bidding.',
+  'Local pickup only in practice — the freight cost eats the margin on a shipped sale.',
+  'Steady demand year-round; expect a slow sale but a reliable one at the mid estimate.',
+  'Seasonal: holds the high estimate in spring, drops toward the low estimate after August.'
+];
+const MATCH = [
+  'Adds a specific capability Bat could use or test without duplicating a core appliance.',
+  'Sits squarely in a bucket Bat has bought from repeatedly and rates highly.',
+  'Complements gear already on the shelf rather than replacing it.'
+];
+function rnd(s) { let x = s; return function () { x = (x * 1664525 + 1013904223) % 4294967296; return x / 4294967296; }; }
+const CONFS = ['Low', 'Medium', 'High'];
+const OUTS = ['Poor', 'Fair', 'Good', 'Strong'];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.scrollRef = React.createRef();
+    this.searchRef = React.createRef();
+    this.state = {
+      tab: 'all', q: '', fuzzy: true, cat: null, sub: null, sort: 'lot',
+      conds: [], conf: 'all', out: 'all', picks: false, resales: false, day: 'both',
+      view: 'grid', mView: 'cards', cols: 3, theme: 'dark',
+      group: null, bucket: null, watched: {}, hidden: {},
+      sel: -1, cursor: 0, filtersOpen: false, catOpen: false, jump: '',
+      loading: true, scrollTop: 0, vh: 700, vw: 1280, swipeId: null, swipeDx: 0, toast: '',
+      coarse: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+    };
+    this._imgFail = {};
+    if (props.defaultCols) this.state.cols = +props.defaultCols;
+    const pf = this.loadPrefs();
+    ['tab','q','fuzzy','cat','sub','sort','conds','conf','out','picks','resales','day','view','mView','cols','theme','group','bucket'].forEach(function (k) { if (pf[k] !== undefined && pf[k] !== null) this.state[k] = pf[k]; }, this);
+    if (pf.watched) this.state.watched = pf.watched;
+    if (pf.hidden) this.state.hidden = pf.hidden;
+    this._restoreTop = pf.scrollTop || 0;
+    this.lots = this.gen(+(props.lotCount || 6000));
+  }
+  loadPrefs() {
+    let p = null;
+    try { const h = location.hash.replace(/^#s=/, ''); if (h && h !== location.hash) p = JSON.parse(decodeURIComponent(h)); } catch (e) { p = null; }
+    if (!p) { try { p = JSON.parse(localStorage.getItem('encore.lotbrowser.v1') || 'null'); } catch (e) { p = null; } }
+    return p || {};
+  }
+  savePrefs() {
+    const self = this;
+    clearTimeout(this._sv);
+    this._sv = setTimeout(function () {
+      const s = self.state;
+      const p = { tab: s.tab, q: s.q, fuzzy: s.fuzzy, cat: s.cat, sub: s.sub, sort: s.sort, conds: s.conds, conf: s.conf, out: s.out, picks: s.picks, resales: s.resales, day: s.day, view: s.view, mView: s.mView, cols: s.cols, theme: s.theme, group: s.group, bucket: s.bucket };
+      try { history.replaceState(null, '', '#s=' + encodeURIComponent(JSON.stringify(p))); } catch (e) {}
+      p.watched = s.watched; p.hidden = s.hidden; p.scrollTop = Math.round(s.scrollTop);
+      try { localStorage.setItem('encore.lotbrowser.v1', JSON.stringify(p)); } catch (e) {}
+    }, 350);
+  }
+  setState(p, cb) {
+    const self = this;
+    super.setState(p, function () { self.savePrefs(); if (cb) cb(); });
+  }
+  gen(n) {
+    const r = rnd(20260801), out = [];
+    for (let i = 0; i < n; i++) {
+      const p = P[Math.floor(r() * P.length)];
+      let u = r(), ci = 0, acc = 0;
+      for (let k = 0; k < CW.length; k++) { acc += CW[k]; if (u <= acc) { ci = k; break; } }
+      const cond = CONDS[ci];
+      const retail = Math.max(6, Math.round(p[4] * (0.72 + r() * 0.6)));
+      const mid = Math.max(2, Math.round(retail * CMUL[cond] * (0.78 + r() * 0.5)));
+      const day = i < n * 0.52 ? 'S' : 'M';
+      const num = day === 'S' ? i + 1 : i - Math.floor(n * 0.52) + 1;
+      out.push({
+        i: i, title: p[0], cat: p[1], sub: p[2], bucket: p[3], retail: retail,
+        lo: Math.max(1, Math.round(mid * 0.76)), hi: Math.round(mid * 1.24), mid: mid,
+        cond: cond, day: day, lot: day + '-' + num,
+        conf: CONFS[Math.min(2, Math.floor(r() * 3))], out: OUTS[Math.min(3, Math.floor(r() * 4))],
+        pick: r() < 0.13, note: NOTES[Math.floor(r() * NOTES.length)], match: MATCH[Math.floor(r() * MATCH.length)],
+        tint: 'var(--t' + (i % 8) + ')', ratio: mid / retail, img: null,
+        tl: p[0].toLowerCase(), tk: p[0].toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+      });
+    }
+    const sorted = out.map(function (o) { return o.ratio; }).sort(function (a, b) { return b - a; });
+    const thr = sorted[Math.floor(sorted.length * 0.1)];
+    out.forEach(function (o) { o.tick = o.ratio >= thr; });
+    return out;
+  }
+  componentDidMount() {
+    const self = this;
+    setTimeout(function () {
+      self.setState({ loading: false });
+      if (self._restoreTop) requestAnimationFrame(function () {
+        if (self.scrollRef.current) { self.scrollRef.current.scrollTop = self._restoreTop; self.setState({ scrollTop: self._restoreTop }); }
+      });
+    }, 480);
+    this.measure();
+    this._ro = new ResizeObserver(function () { self.measure(); });
+    if (this.scrollRef.current) this._ro.observe(this.scrollRef.current);
+    window.addEventListener('resize', this._rz = function () { self.measure(); });
+    document.addEventListener('keydown', this._kd = function (e) { self.onKey(e); });
+    if (typeof matchMedia === 'function') {
+      this._mq = matchMedia('(pointer: coarse)');
+      this._mqh = function (e) { self.setState({ coarse: e.matches }); };
+      if (this._mq.addEventListener) this._mq.addEventListener('change', this._mqh);
+    }
+  }
+  componentWillUnmount() {
+    if (this._mq && this._mq.removeEventListener) this._mq.removeEventListener('change', this._mqh);
+    if (this._ro) this._ro.disconnect();
+    window.removeEventListener('resize', this._rz);
+    document.removeEventListener('keydown', this._kd);
+  }
+  measure() {
+    const el = this.scrollRef.current;
+    const vw = window.innerWidth;
+    if (el) { const r = el.getBoundingClientRect(); this.setState({ vh: r.height, vw: vw }); }
+    else this.setState({ vw: vw });
+  }
+  toast(m) { const self = this; this.setState({ toast: m }); clearTimeout(this._tt); this._tt = setTimeout(function () { self.setState({ toast: '' }); }, 1500); }
+  onKey(e) {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input') { if (e.key === 'Escape') e.target.blur(); return; }
+    const rows = this.result();
+    if (e.key === '/') { e.preventDefault(); if (this.searchRef.current) this.searchRef.current.focus(); return; }
+    if (e.key === 'Escape') { this.setState({ sel: -1, filtersOpen: false, catOpen: false }); return; }
+    const g0 = this.geom();
+    if (e.key === 'ArrowRight' || e.key === 'l') { e.preventDefault(); this.moveCursor(1, rows); return; }
+    if (e.key === 'ArrowLeft' || e.key === 'h') { e.preventDefault(); this.moveCursor(-1, rows); return; }
+    if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); this.moveCursor(g0.cols, rows); return; }
+    if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); this.moveCursor(-g0.cols, rows); return; }
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.setState({ sel: this.state.cursor }); return; }
+    if (e.key === 'w') { const l = rows[this.state.cursor]; if (l) this.star(l.i); return; }
+    if (e.key === 'f') { this.setState({ filtersOpen: !this.state.filtersOpen }); }
+  }
+  moveCursor(d, rows) {
+    const g = this.geom();
+    const c = Math.max(0, Math.min(rows.length - 1, this.state.cursor + d));
+    const st = { cursor: c };
+    if (this.state.sel >= 0) st.sel = c;
+    this.setState(st);
+    const el = this.scrollRef.current;
+    if (el) {
+      const row = Math.floor(c / g.cols), top = row * g.rowH, bot = top + g.rowH;
+      if (top < el.scrollTop) el.scrollTop = top - 8;
+      else if (bot > el.scrollTop + this.state.vh) el.scrollTop = bot - this.state.vh + 8;
+    }
+  }
+  star(id) {
+    const w = Object.assign({}, this.state.watched);
+    if (w[id]) delete w[id]; else w[id] = 1;
+    this.setState({ watched: w });
+  }
+  subseq(t, q) { let j = 0; for (let i = 0; i < t.length && j < q.length; i++) if (t[i] === q[j]) j++; return j >= q.length; }
+  score(l, qt, full) {
+    const pos = l.tl.indexOf(full);
+    if (pos >= 0) return 1200 - Math.min(pos, 200);
+    const tk = l.tk;
+    let total = 0;
+    for (let i = 0; i < qt.length; i++) {
+      const q = qt[i], num = /[0-9]/.test(q);
+      let best = -1;
+      for (let j = 0; j < tk.length; j++) {
+        const w = tk[j];
+        if (w === q) { best = Math.max(best, 100 - Math.min(j, 20)); continue; }
+        if (num) { if (w.indexOf(q) >= 0) best = Math.max(best, 60); continue; }
+        if (w.indexOf(q) === 0) { best = Math.max(best, 70 - Math.min(j, 20)); continue; }
+        if (q.length >= 4 && w.indexOf(q) > 0) best = Math.max(best, 30);
+      }
+      if (best < 0) {
+        if (!num && qt.length === 1 && q.length >= 4 && this.subseq(l.tl, q)) best = 4;
+        else return -1;
+      }
+      total += best;
+    }
+    return total;
+  }
+  key() {
+    const s = this.state;
+    return [s.tab, s.q, s.fuzzy, s.cat, s.sub, s.sort, s.conds.join(), s.conf, s.out, s.picks, s.resales, s.day, s.group, s.bucket, Object.keys(s.watched).length, Object.keys(s.hidden).length].join('|');
+  }
+  result() {
+    const k = this.key();
+    if (this._k === k) return this._r;
+    const s = this.state, q = s.q.trim().toLowerCase();
+    const qt = q ? q.split(/\s+/).filter(Boolean) : null;
+    const self = this;
+    let a = this.lots.filter(function (l) {
+      if (s.hidden[l.i]) return false;
+      if (s.tab === 'watched' && !s.watched[l.i]) return false;
+      if (s.tab === 'bats') { if (!s.bucket || l.bucket !== s.bucket) return false; }
+      if (s.day !== 'both' && l.day !== (s.day === 'sun' ? 'S' : 'M')) return false;
+      if (s.cat && l.cat !== s.cat) return false;
+      if (s.sub && l.sub !== s.sub) return false;
+      if (s.conds.length && s.conds.indexOf(l.cond) < 0) return false;
+      if (s.conf === 'med' && l.conf === 'Low') return false;
+      if (s.conf === 'high' && l.conf !== 'High') return false;
+      if (s.out !== 'all' && l.out !== s.out) return false;
+      if (s.picks && !l.pick) return false;
+      if (s.resales && !l.tick) return false;
+      if (q) {
+        if (!s.fuzzy) { if (l.tl.indexOf(q) < 0) return false; l._s = 0; }
+        else { const sc = self.score(l, qt, q); if (sc < 0) return false; l._s = sc; }
+      }
+      return true;
+    });
+    if (q && s.fuzzy && s.sort === 'lot') a = a.slice().sort(function (x, y) { return (y._s - x._s) || (x.i - y.i); });
+    else if (s.sort === 'resale') a = a.slice().sort(function (x, y) { return y.mid - x.mid; });
+    else if (s.sort === 'retail') a = a.slice().sort(function (x, y) { return y.retail - x.retail; });
+    this._k = k; this._r = a;
+    return a;
+  }
+  geom() {
+    const s = this.state, mobile = s.vw < 760;
+    const listMode = mobile ? s.mView === 'rows' : s.view === 'list';
+    const w = (this.scrollRef.current ? this.scrollRef.current.clientWidth : s.vw) || s.vw;
+    if (listMode) return { cols: 1, rowH: mobile ? 78 : (s.coarse ? 78 : 67), gap: 0, padX: 0, colW: w, mode: mobile ? 'mrow' : 'lrow' };
+    const gap = mobile ? (s.cols === 4 ? 6 : s.cols === 3 ? 8 : 10) : 12;
+    const padX = mobile ? gap : 16;
+    const cols = mobile ? s.cols : Math.max(2, Math.min(9, Math.floor((w - padX * 2 + gap) / (196 + gap))));
+    const colW = (w - padX * 2 - gap * (cols - 1)) / cols;
+    const textH = mobile && s.cols === 4 ? 33 : (mobile && s.cols === 3 ? 48 : 63);
+    return { cols: cols, rowH: colW + 2 + textH + gap, gap: gap, padX: padX, colW: colW, mode: 'card' };
+  }
+  renderVals() {
+    const self = this, s = this.state;
+    const mobile = s.vw < 760, desktop = !mobile;
+    const rows = this.result();
+    const g = this.geom();
+    const total = Math.ceil(rows.length / g.cols);
+    const first = Math.max(0, Math.floor(s.scrollTop / g.rowH) - 2);
+    const last = Math.min(total, Math.ceil((s.scrollTop + s.vh) / g.rowH) + 2);
+    const win = [];
+    const touch = mobile || s.coarse;
+    const plate = mobile && g.mode === 'card' && s.cols === 4;
+    const titleFs = g.mode === 'card' ? (mobile ? (s.cols === 4 ? '10px' : s.cols === 3 ? '11px' : '12.5px') : '12.5px') : '13px';
+    const titleH = g.mode === 'card' ? (mobile ? (s.cols === 4 ? '25px' : s.cols === 3 ? '28px' : '33px') : '33px') : 'auto';
+    for (let i = first * g.cols; i < Math.min(rows.length, last * g.cols); i++) {
+      const l = rows[i];
+      const w = !!s.watched[l.i];
+      win.push({
+        title: l.title, cond: l.cond.toUpperCase(), cc: CC[l.cond], tint: l.tint, day: l.day,
+        resale: '$' + l.mid, retail: '$' + l.retail, bucket: l.bucket || l.sub, lot: l.lot,
+        pick: l.pick, tick: l.tick && !plate, isCard: g.mode === 'card', isListRow: g.mode === 'lrow', isMobileRow: g.mode === 'mrow',
+        plate: plate, showFig: !plate, showMeta: g.mode === 'card' && (!mobile || s.cols === 2),
+        titleFs: titleFs, titleH: titleH, figFs: mobile && s.cols === 3 ? '11.5px' : '12.5px',
+        tilePad: g.colW < 100 ? '8px' : g.colW < 150 ? '11px' : '16px',
+        textPad: mobile && s.cols === 4 ? '5px 6px 6px' : mobile && s.cols === 3 ? '6px 7px 7px' : '8px 9px 9px',
+        bd: i === s.cursor ? 'var(--lav)' : 'var(--line)',
+        ring: i === s.cursor ? '0 0 0 2px var(--lavbd)' : 'none',
+        rowBg: i === s.cursor ? 'var(--lavbg)' : 'var(--bg)',
+        rowPad: touch ? '11px 12px' : '7px 10px',
+        starW: touch ? '44px' : '34px', starFs: touch ? '16px' : '13px',
+        watched: w, starLabel: (w ? 'Remove from list: ' : 'Add to list: ') + l.title,
+        noImg: !l.img || !!self._imgFail[l.i],
+        imgEl: (l.img && !self._imgFail[l.i]) ? React.createElement('img', { src: l.img, alt: l.title, loading: 'lazy', decoding: 'async', onError: function () { self._imgFail[l.i] = 1; self.forceUpdate(); }, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' } }) : null,
+        starIcon: w ? '★' : '☆', starFg: w ? '#ffd166' : 'rgba(255,255,255,.8)', starFg2: w ? '#f0a500' : 'var(--dim3)',
+        tx: (s.swipeId === l.i ? s.swipeDx : 0) + 'px',
+        swipeBg: s.swipeId === l.i ? (s.swipeDx > 0 ? 'var(--lavbg)' : 'var(--s2)') : 'var(--bg)',
+        leftOp: s.swipeId === l.i && s.swipeDx > 0 ? 1 : 0, rightOp: s.swipeId === l.i && s.swipeDx < 0 ? 1 : 0,
+        open: function () { self.setState({ sel: i, cursor: i }); },
+        star: function (e) { e.stopPropagation(); self.star(l.i); },
+        pd: function (e) { if (!touch) return; self._sx = e.clientX; self.setState({ swipeId: l.i, swipeDx: 0 }); },
+        pm: function (e) { if (self.state.swipeId !== l.i || self._sx == null) return; const dx = e.clientX - self._sx; if (Math.abs(dx) > 3) self.setState({ swipeDx: Math.max(-140, Math.min(140, dx)) }); },
+        pu: function () {
+          const dx = self.state.swipeDx; self._sx = null;
+          if (dx > 70) { self.star(l.i); self.toast(self.state.watched[l.i] ? 'Removed from list' : 'Added to list'); }
+          else if (dx < -70) { const h = Object.assign({}, self.state.hidden); h[l.i] = 1; self.setState({ hidden: h }); self.toast('Hidden'); }
+          self.setState({ swipeId: null, swipeDx: 0 });
+        }
+      });
+    }
+    const nWatch = Object.keys(s.watched).length;
+    const tabDef = [['all', 'All', false], ['bats', '✦ Bat’s List', false], ['watched', 'Watched', true]];
+    const tabs = tabDef.map(function (t) {
+      const on = s.tab === t[0];
+      return {
+        label: t[1], badge: t[2], count: nWatch, on: function () { self.setState({ tab: t[0], sel: -1, cursor: 0, scrollTop: 0 }); if (self.scrollRef.current) self.scrollRef.current.scrollTop = 0; },
+        bg: on ? 'var(--lavbg)' : 'transparent', fg: on ? 'var(--lavt)' : 'var(--dim2)', fg2: on ? 'var(--text)' : 'var(--dim2)',
+        fw: on ? '600' : '500', ul: on ? 'var(--lav)' : 'transparent'
+      };
+    });
+    const counts = {};
+    this.lots.forEach(function (l) { counts[l.cat] = (counts[l.cat] || 0) + 1; });
+    const cats = Object.keys(counts).sort().map(function (c) {
+      return { name: c, count: counts[c], bg: s.cat === c ? 'var(--lavbg)' : 'transparent', fg: s.cat === c ? 'var(--lavt)' : 'var(--dim)', on: function () { self.setState({ cat: c, sub: null }); } };
+    });
+    const subCounts = {};
+    this.lots.forEach(function (l) { if (l.cat === s.cat) subCounts[l.sub] = (subCounts[l.sub] || 0) + 1; });
+    const subs = Object.keys(subCounts).sort().map(function (c) {
+      return { name: c, count: subCounts[c], bg: s.sub === c ? 'var(--lavbg)' : 'transparent', fg: s.sub === c ? 'var(--lavt)' : 'var(--dim)', on: function () { self.setState({ sub: c, catOpen: false }); } };
+    });
+    const bCounts = {};
+    this.lots.forEach(function (l) { if (l.bucket) bCounts[l.bucket] = (bCounts[l.bucket] || 0) + 1; });
+    const groups = Object.keys(GROUPS).map(function (gn) {
+      let c = 0; GROUPS[gn].forEach(function (b) { c += bCounts[b] || 0; });
+      const on = s.group === gn;
+      return { name: gn, count: c, bg: on ? 'var(--lavbg)' : 'var(--s2)', bd: on ? 'var(--lavbd)' : 'var(--line)', fg: on ? 'var(--lavt)' : 'var(--text)', on: function () { self.setState({ group: gn, bucket: null }); } };
+    });
+    const buckets = (s.group ? GROUPS[s.group] : []).map(function (b) {
+      return { name: b, count: bCounts[b] || 0, on: function () { self.setState({ bucket: b }); } };
+    });
+    const chips = [];
+    if (s.cat) chips.push({ label: s.sub || s.cat, on: function () { self.setState({ cat: null, sub: null }); } });
+    s.conds.forEach(function (c) { chips.push({ label: c, on: function () { self.setState({ conds: s.conds.filter(function (x) { return x !== c; }) }); } }); });
+    if (s.conf !== 'all') chips.push({ label: s.conf === 'med' ? 'Med+ confidence' : 'High confidence', on: function () { self.setState({ conf: 'all' }); } });
+    if (s.out !== 'all') chips.push({ label: s.out + ' outlook', on: function () { self.setState({ out: 'all' }); } });
+    if (s.day !== 'both') chips.push({ label: s.day === 'sun' ? 'Sunday' : 'Monday', on: function () { self.setState({ day: 'both' }); } });
+    if (s.picks) chips.push({ label: 'Personal picks', on: function () { self.setState({ picks: false }); } });
+    if (s.resales) chips.push({ label: 'Potential resales', on: function () { self.setState({ resales: false }); } });
+    const seg = function (active) { return { bg: active ? 'var(--lavbg)' : 'transparent', fg: active ? 'var(--lavt)' : 'var(--dim2)', fw: active ? '600' : '500' }; };
+    const condOpts = CONDS.map(function (c) {
+      const on = s.conds.indexOf(c) >= 0;
+      return { label: c, bg: on ? 'var(--lavbg)' : 'var(--s2)', bd: on ? 'var(--lavbd)' : 'var(--line)', fg: on ? 'var(--lavt)' : 'var(--dim2)', on: function () { self.setState({ conds: on ? s.conds.filter(function (x) { return x !== c; }) : s.conds.concat([c]) }); } };
+    });
+    const confOpts = [['all', 'All'], ['med', 'Med+'], ['high', 'High']].map(function (o) {
+      return Object.assign({ label: o[1], on: function () { self.setState({ conf: o[0] }); } }, seg(s.conf === o[0]));
+    });
+    const outOpts = [['all', 'All']].concat(OUTS.map(function (o) { return [o, o]; })).map(function (o) {
+      return Object.assign({ label: o[1], on: function () { self.setState({ out: o[0] }); } }, seg(s.out === o[0]));
+    });
+    const dayOpts = [['sun', 'Sun'], ['mon', 'Mon'], ['both', 'Both']].map(function (o) {
+      return Object.assign({ label: o[1], on: function () { self.setState({ day: o[0] }); } }, seg(s.day === o[0]));
+    });
+    const steps = [2, 3, 4].map(function (n) {
+      const on = s.cols === n;
+      return { n: n, bg: on ? 'var(--s3)' : 'transparent', fg: on ? 'var(--text)' : 'var(--dim3)', fw: on ? '600' : '500', on: function () { self.setState({ cols: n }); } };
+    });
+    const sortLabels = { lot: 'Sort: Lot number', resale: 'Sort: Resale', retail: 'Sort: Retail' };
+    const firstVis = rows[Math.min(rows.length - 1, Math.max(0, first * g.cols))];
+    const lastVis = rows[Math.min(rows.length - 1, last * g.cols - 1)];
+    const nFilters = chips.length;
+    const d = s.sel >= 0 && rows[s.sel] ? rows[s.sel] : null;
+    const dv = d ? {
+      title: d.title, cond: d.cond.toUpperCase(), cc: CC[d.cond], tint: d.tint, lot: d.lot,
+      dayFull: d.day === 'S' ? 'SUNDAY' : 'MONDAY', range: '$' + d.lo + '–' + d.hi, retail: '$' + d.retail,
+      confLabel: d.conf.toUpperCase() + ' CONFIDENCE', outLabel: d.out.toUpperCase() + ' OUTLOOK',
+      confFg: d.conf === 'High' ? 'var(--c-new)' : d.conf === 'Medium' ? 'var(--c-like)' : 'var(--dim2)',
+      outFg: d.out === 'Strong' || d.out === 'Good' ? 'var(--c-new)' : d.out === 'Fair' ? 'var(--c-fair)' : 'var(--c-heavy)',
+      cat: d.cat, sub: d.sub, bucket: d.bucket || '—', note: d.note, pick: d.pick, tick: d.tick,
+      imgEl: (d.img && !self._imgFail[d.i]) ? React.createElement('img', { src: d.img, alt: d.title, decoding: 'async', style: { maxWidth: '86%', maxHeight: '86%', objectFit: 'contain', display: 'block' } }) : null,
+      noImg: !d.img || !!self._imgFail[d.i],
+      matchLevel: d.pick ? (d.tick ? 'STRONG MATCH' : 'MODERATE MATCH') : '', matchNote: d.match,
+      starIcon: s.watched[d.i] ? '★ Watching' : '☆ Watch', starFg: s.watched[d.i] ? '#f0a500' : 'var(--dim)',
+      star: function () { self.star(d.i); }
+    } : {};
+    return {
+      theme: s.theme, q: s.q, jump: s.jump, tabs: tabs, cats: cats, subs: subs, groups: groups, buckets: buckets,
+      chips: chips, condOpts: condOpts, confOpts: confOpts, outOpts: outOpts, dayOpts: dayOpts, steps: steps,
+      win: win, d: dv,
+      skeletons: Array.from({ length: g.mode === 'card' ? Math.min(36, g.cols * (Math.ceil(s.vh / g.rowH) + 1)) : Math.ceil(s.vh / g.rowH) + 2 }, function (_, i) { return { d: (i % 6) * 90 + 'ms' }; }),
+      vt: {
+        totalH: total * g.rowH + 'px', padTop: first * g.rowH + 'px',
+        colsCss: g.cols === 1 ? '1fr' : 'repeat(' + g.cols + ',1fr)',
+        rowH: g.rowH + 'px', thumb: g.mode === 'mrow' ? '58px' : '52px',
+        gapCss: g.gap + 'px', padCss: '0 ' + g.padX + 'px'
+      },
+      ui: {
+        desktop: desktop, mobile: mobile, loading: s.loading,
+        loadCards: s.loading && g.mode === 'card', loadRows: s.loading && g.mode !== 'card',
+        showList: !(s.tab === 'bats' && !s.bucket), needBucket: s.tab === 'bats' && !s.bucket, hasGroup: !!s.group,
+        empty: !s.loading && rows.length === 0, rendered: !s.loading && rows.length > 0,
+        count: rows.length.toLocaleString() + ' / ' + this.lots.length.toLocaleString() + ' LOTS',
+        countShort: rows.length.toLocaleString(), countPlain: rows.length.toLocaleString(),
+        groupLabel: firstVis ? (firstVis.day === 'S' ? 'SUNDAY' : 'MONDAY') + ' · ' + firstVis.lot + ' → ' + (lastVis ? lastVis.lot : firstVis.lot) : '—',
+        hint: s.coarse ? 'SWIPE → WATCH · SWIPE ← HIDE' : '← → NEXT LOT · ↑ ↓ ROW · SPACE PEEK · W WATCH · / SEARCH',
+        fuzzyLabel: s.fuzzy ? 'FUZZY' : 'EXACT', fuzzyBg: s.fuzzy ? 'var(--lavbg)' : 'var(--s3)', fuzzyFg: s.fuzzy ? 'var(--lavt)' : 'var(--dim2)',
+        gridBg: s.view === 'grid' ? 'var(--s3)' : 'transparent', gridFg: s.view === 'grid' ? 'var(--text)' : 'var(--dim3)', gridFw: s.view === 'grid' ? '600' : '500',
+        listBg: s.view === 'list' ? 'var(--s3)' : 'transparent', listFg: s.view === 'list' ? 'var(--text)' : 'var(--dim3)', listFw: s.view === 'list' ? '600' : '500',
+        rowsBg: s.mView === 'rows' ? 'var(--s3)' : 'transparent', rowsFg: s.mView === 'rows' ? 'var(--text)' : 'var(--dim3)', rowsFw: s.mView === 'rows' ? '600' : '500',
+        cardsBg: s.mView === 'cards' ? 'var(--s3)' : 'transparent', cardsFg: s.mView === 'cards' ? 'var(--text)' : 'var(--dim3)', cardsFw: s.mView === 'cards' ? '600' : '500',
+        isCards: s.mView === 'cards',
+        catLabel: s.sub || s.cat || 'All categories', catBg: s.cat ? 'var(--lavbg)' : 'var(--s2)', catBd: s.cat ? 'var(--lavbd)' : 'var(--line)', catFg: s.cat ? 'var(--lavt)' : 'var(--dim)',
+        sortLabel: sortLabels[s.sort],
+        hasFilters: nFilters > 0, filterCount: nFilters,
+        fbBg: nFilters ? 'var(--lavbg)' : 'var(--s2)', fbBd: nFilters ? 'var(--lavbd)' : 'var(--line)', fbFg: nFilters ? 'var(--lavt)' : 'var(--dim)',
+        picksBg: s.picks ? 'var(--blushbg)' : 'var(--s2)', picksBd: s.picks ? 'var(--blushbd)' : 'var(--line)', picksFg: s.picks ? 'var(--blusht)' : 'var(--dim2)',
+        resBg: s.resales ? 'var(--blushbg)' : 'var(--s2)', resBd: s.resales ? 'var(--blushbd)' : 'var(--line)', resFg: s.resales ? 'var(--blusht)' : 'var(--dim2)',
+        themeIcon: s.theme === 'dark' ? '☾' : '☀',
+        detail: !!d, filtersOpen: s.filtersOpen, catOpen: s.catOpen,
+        panelPos: (mobile || s.coarse) ? 'left:0;right:0;bottom:0;height:88dvh;border-radius:18px 18px 0 0;animation:sheetup .18s ease-out' : 'top:0;right:0;bottom:0;width:430px;border-left:1px solid var(--line);animation:slidein .16s ease-out',
+        filterPos: (mobile || s.coarse) ? 'left:0;right:0;bottom:0;max-height:86dvh;border-radius:18px 18px 0 0;animation:sheetup .18s ease-out' : 'top:100px;right:16px;width:420px;max-height:78dvh;border:1px solid var(--line);border-radius:14px;animation:fadein .14s ease-out',
+        live: rows.length.toLocaleString() + ' lots match the current filters',
+        toast: !!s.toast, toastMsg: s.toast
+      },
+      scrollRef: this.scrollRef, searchRef: this.searchRef,
+      onScroll: function (e) { const t = e.target.scrollTop; if (Math.abs(t - self.state.scrollTop) > 4) self.setState({ scrollTop: t }); },
+      onQ: function (e) { self.setState({ q: e.target.value, scrollTop: 0, cursor: 0 }); if (self.scrollRef.current) self.scrollRef.current.scrollTop = 0; },
+      onJump: function (e) { self.setState({ jump: e.target.value }); },
+      onJumpKey: function (e) {
+        if (e.key !== 'Enter') return;
+        const v = self.state.jump.trim().toUpperCase();
+        const idx = rows.findIndex(function (l) { return l.lot === v || l.lot === 'S-' + v.replace(/[^0-9]/g, ''); });
+        if (idx >= 0 && self.scrollRef.current) { self.scrollRef.current.scrollTop = Math.floor(idx / g.cols) * g.rowH; self.setState({ cursor: idx }); }
+        else self.toast('Lot not in current results');
+      },
+      toggleFuzzy: function () { self.setState({ fuzzy: !s.fuzzy }); },
+      toggleTheme: function () { self.setState({ theme: s.theme === 'dark' ? 'light' : 'dark' }); },
+      setGrid: function () { self.setState({ view: 'grid' }); },
+      setList: function () { self.setState({ view: 'list' }); },
+      setRows: function () { self.setState({ mView: 'rows' }); },
+      setCards: function () { self.setState({ mView: 'cards' }); },
+      cycleSort: function () { self.setState({ sort: s.sort === 'lot' ? 'resale' : s.sort === 'resale' ? 'retail' : 'lot' }); },
+      openFilters: function () { self.setState({ filtersOpen: true }); },
+      closeFilters: function () { self.setState({ filtersOpen: false }); },
+      openCats: function () { self.setState({ catOpen: !s.catOpen }); },
+      closeCats: function () { self.setState({ catOpen: false }); },
+      allCats: function () { self.setState({ cat: null, sub: null, catOpen: false }); },
+      togglePicks: function () { self.setState({ picks: !s.picks }); },
+      toggleResales: function () { self.setState({ resales: !s.resales }); },
+      clearAll: function () { self.setState({ cat: null, sub: null, conds: [], conf: 'all', out: 'all', picks: false, resales: false, day: 'both', q: '' }); },
+      closeDetail: function () { self.setState({ sel: -1 }); },
+      prevLot: function () { self.setState({ sel: Math.max(0, s.sel - 1), cursor: Math.max(0, s.sel - 1) }); },
+      nextLot: function () { self.setState({ sel: Math.min(rows.length - 1, s.sel + 1), cursor: Math.min(rows.length - 1, s.sel + 1) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

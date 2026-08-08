@@ -40,6 +40,9 @@ interface Props {
   categoryLabel: string;
   categoryActive: boolean;
   onOpenCategory: () => void;
+  /** Rail, Bat's List tab only: the current bucket, null until one is picked. */
+  bucketLabel: string | null;
+  onOpenBucket: () => void;
   sortKey: SortKey;
   onCycleSort: () => void;
   onOpenFilters: () => void;
@@ -103,6 +106,8 @@ export function Header({
   categoryLabel,
   categoryActive,
   onOpenCategory,
+  bucketLabel,
+  onOpenBucket,
   sortKey,
   onCycleSort,
   onOpenFilters,
@@ -451,24 +456,25 @@ export function Header({
         }}
         className="no-scrollbar"
       >
-        <button
-          type="button"
-          data-testid="category-button"
-          onClick={onOpenCategory}
-          style={{
-            ...railButton,
-            background: categoryActive ? 'var(--lavbg)' : 'var(--s2)',
-            borderColor: categoryActive ? 'var(--lavbd)' : 'var(--line)',
-            color: categoryActive ? 'var(--lavt)' : 'var(--dim)',
-          }}
-        >
-          <span
-            style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-          >
-            {categoryLabel}
-          </span>
-          <span style={{ flex: 'none', color: 'var(--dim3)' }}>⌄</span>
-        </button>
+        {/* First rail slot. On Bat's List it is the BUCKET switcher, not the
+            category button — category is inert on that tab (filterLots's bat
+            branch never applies it), and switching buckets is the thing you
+            actually do there. */}
+        {tab === 'bat' ? (
+          <RailDropButton
+            testId="bucket-button"
+            label={bucketLabel === null ? 'Pick a bucket' : `✦ ${bucketLabel}`}
+            active={bucketLabel !== null}
+            onClick={onOpenBucket}
+          />
+        ) : (
+          <RailDropButton
+            testId="category-button"
+            label={categoryLabel}
+            active={categoryActive}
+            onClick={onOpenCategory}
+          />
+        )}
 
         <button
           type="button"
@@ -534,6 +540,38 @@ export function Header({
         {!mobile && count}
       </div>
     </header>
+  );
+}
+
+/** A rail button that opens a drill-down: label, ellipsis, chevron. */
+function RailDropButton({
+  testId,
+  label,
+  active,
+  onClick,
+}: {
+  testId: string;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      onClick={onClick}
+      style={{
+        ...railButton,
+        background: active ? 'var(--lavbg)' : 'var(--s2)',
+        borderColor: active ? 'var(--lavbd)' : 'var(--line)',
+        color: active ? 'var(--lavt)' : 'var(--dim)',
+      }}
+    >
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label}
+      </span>
+      <span style={{ flex: 'none', color: 'var(--dim3)' }}>⌄</span>
+    </button>
   );
 }
 

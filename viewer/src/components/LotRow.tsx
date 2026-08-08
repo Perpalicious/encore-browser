@@ -1,7 +1,8 @@
-import { useRef, type CSSProperties, type PointerEvent } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import type { LotView } from '../lib/lotView';
 import { conditionColor } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
+import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
 
 /**
@@ -14,19 +15,17 @@ import { TileImage } from './pills/TileImage';
  *
  * Swipe is enabled by INPUT, not width — a touch-capable desktop gets it too.
  * The row translates over a fixed action layer, so the row background must stay
- * opaque or the action shows through before you've swiped.
- *
- * There is exactly ONE swipe, and it is rightward: add to / remove from the
- * list. A left swipe is deliberately inert — the row will not even follow your
- * thumb that way, so nothing suggests an action is hiding over there. Removing
- * lots from the results on a flick was too destructive for a gesture this easy
- * to make by accident while scrolling.
+ * opaque or the action shows through before you've swiped. The gesture itself
+ * lives in useSwipeToWatch, shared with the grid card.
  */
 
 interface Props {
   view: LotView;
   mobile: boolean;
+  /** Coarse pointer: taller rows, bigger hit areas. */
   coarse: boolean;
+  /** Touch-capable: the swipe gesture is live. */
+  touch: boolean;
   height: number;
   watched: boolean;
   cursor: boolean;
@@ -35,10 +34,6 @@ interface Props {
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
-
-/** Past this many px the gesture commits on release. */
-const SWIPE_THRESHOLD = 70;
-const SWIPE_MAX = 140;
 
 const microFigure: CSSProperties = {
   fontFamily: MONO,
@@ -51,25 +46,13 @@ export function LotRow({
   view,
   mobile,
   coarse,
+  touch,
   height,
   watched,
   cursor,
   onOpen,
   onToggleWatch,
 }: Props) {
-  const swipe = useRef({ startX: 0, dx: 0, active: false, moved: false });
-  /**
-   * A pointer down/move/up on the row also produces a click, so any DRAG would
-   * otherwise open the detail overlay when you let go — the swipe you just
-   * committed, a left drag that intentionally does nothing, a flick that
-   * scrolled the list.
-   *
-   * Held as a deadline rather than a boolean: a boolean is only cleared by the
-   * click that follows, and on touch that click does not always arrive, which
-   * leaves the flag set and eats your NEXT tap. A deadline expires on its own.
-   */
-  const swallowClicksUntil = useRef(0);
-  const SWALLOW_MS = 400;
   const shellRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const watchLabelRef = useRef<HTMLSpanElement>(null);
@@ -77,16 +60,6 @@ export function LotRow({
   const thumb = mobile ? 58 : 52;
   const starSize = coarse ? 44 : 34;
 
-  /**
-   * The drag is driven IMPERATIVELY: window listeners for the life of the
-   * gesture, and the transform written straight to the DOM node.
-   *
-   * Re-rendering the row on every frame is what broke this. React re-creating
-   * the row's element mid-drag makes Chromium fire `pointercancel` — the
-   * gesture died one frame in, snapped back, and committed nothing. Not
-   * touching React state until the gesture ends removes the whole class of
-   * problem, and drops a render per frame while dragging.
-   */
   const paint = (dx: number) => {
     const row = rowRef.current;
     const shell = shellRef.current;
@@ -96,46 +69,7 @@ export function LotRow({
     if (watchLabelRef.current) watchLabelRef.current.style.opacity = dx > 0 ? '1' : '0';
   };
 
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (!coarse) return;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    swipe.current = { startX, dx: 0, active: false, moved: false };
-
-    const onMove = (ev: globalThis.PointerEvent) => {
-      const dxRaw = ev.clientX - startX;
-      const dyRaw = ev.clientY - startY;
-      // Anything past tap slop, in any direction, is a drag and not a tap.
-      if (Math.abs(dxRaw) > 10 || Math.abs(dyRaw) > 10) swipe.current.moved = true;
-      // Let a vertical drag scroll the list; only claim the gesture once it is
-      // clearly horizontal. touch-action: pan-y keeps scrolling working meanwhile.
-      // Rightward only: a leftward drag never claims the gesture, so the list
-      // keeps scrolling under it and the row stays put.
-      if (!swipe.current.active) {
-        if (dxRaw < 10 || dxRaw <= Math.abs(dyRaw)) return;
-        swipe.current.active = true;
-      }
-      const next = Math.max(0, Math.min(SWIPE_MAX, dxRaw));
-      swipe.current.dx = next;
-      paint(next);
-    };
-
-    const onEnd = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onEnd);
-      window.removeEventListener('pointercancel', onEnd);
-      const { active, moved, dx: committed } = swipe.current;
-      swipe.current = { startX: 0, dx: 0, active: false, moved: false };
-      paint(0);
-      if (moved) swallowClicksUntil.current = performance.now() + SWALLOW_MS;
-      if (!active) return;
-      if (committed > SWIPE_THRESHOLD) onToggleWatch();
-    };
-
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onEnd);
-    window.addEventListener('pointercancel', onEnd);
-  };
+  const swipe = useSwipeToWatch({ enabled: touch, onPaint: paint, onCommit: onToggleWatch });
 
   const rowBackground = cursor ? 'var(--lavbg)' : 'var(--bg)';
 
@@ -179,7 +113,7 @@ export function LotRow({
         aria-label="Show details"
         data-cursor={cursor ? 'true' : undefined}
         onClick={() => {
-          if (performance.now() < swallowClicksUntil.current) return;
+          if (swipe.shouldSwallowClick()) return;
           onOpen();
         }}
         onKeyDown={(e) => {
@@ -188,7 +122,7 @@ export function LotRow({
             onOpen();
           }
         }}
-        onPointerDown={onPointerDown}
+        onPointerDown={swipe.onPointerDown}
         className="lot-row"
         style={{
           position: 'relative',
@@ -205,8 +139,8 @@ export function LotRow({
           // whole thing as a selection gesture — pointermove stops reaching us
           // and the NEXT swipe silently does nothing. Desktop keeps selectable
           // text, since nothing there drags.
-          userSelect: coarse ? 'none' : undefined,
-          WebkitUserSelect: coarse ? 'none' : undefined,
+          userSelect: touch ? 'none' : undefined,
+          WebkitUserSelect: touch ? 'none' : undefined,
         }}
       >
         <div
@@ -219,7 +153,7 @@ export function LotRow({
             position: 'relative',
           }}
         >
-          <TileImage src={view.img} alt={view.title} pad={4} tint={view.tint} />
+          <TileImage src={view.img} alt={view.title} pad={4} tint={view.tint} href={view.url} />
           {view.pick && (
             <span
               data-testid="personal-badge"

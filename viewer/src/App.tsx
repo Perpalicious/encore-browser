@@ -30,10 +30,11 @@ import {
 import { useTheme } from './hooks/useTheme';
 import { usePersistedSet } from './hooks/usePersistedSet';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
-import { useMobileLayout, useCoarsePointer } from './hooks/useMediaQuery';
+import { useMobileLayout, useCoarsePointer, useTouchCapable } from './hooks/useMediaQuery';
 import { Header, type ActiveChip } from './components/Header';
 import { FiltersOverlay } from './components/FiltersOverlay';
 import { CategoryPopover } from './components/CategoryPopover';
+import { BucketPopover } from './components/BucketPopover';
 import { LotGrid, type LotGridHandle } from './components/LotGrid';
 import { LotDetail } from './components/LotDetail';
 import { BatEmptyState } from './components/BatEmptyState';
@@ -50,6 +51,9 @@ export function App() {
   // a tablet gets the desktop grid but sheets, big hit areas and swipe triage.
   const mobileLayout = useMobileLayout();
   const coarsePointer = useCoarsePointer();
+  // Swipe is gated on the permissive signal, sizing on the strict one — see
+  // the note in useMediaQuery.
+  const touchCapable = useTouchCapable();
   const [toastMessage, showToast] = useToast();
 
   /**
@@ -100,6 +104,7 @@ export function App() {
   // The rail's two overlays. Both are modal.
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const [bucketOpen, setBucketOpen] = useState(false);
   // A lot number we owe a scroll to. Held as state rather than acted on
   // immediately because reaching it may mean clearing filters first, and the
   // result set that decides its index is a render behind that.
@@ -388,7 +393,7 @@ export function App() {
 
   const closeDetail = useCallback(() => setExpandedId(null), []);
 
-  const anyOverlayOpen = filtersOpen || catOpen || expandedId !== null;
+  const anyOverlayOpen = filtersOpen || catOpen || bucketOpen || expandedId !== null;
 
   /**
    * Keyboard navigation — docs/design/README.md § "Keyboard".
@@ -413,6 +418,7 @@ export function App() {
         if (typing) (target as HTMLInputElement).blur();
         else if (filtersOpen) setFiltersOpen(false);
         else if (catOpen) setCatOpen(false);
+        else if (bucketOpen) setBucketOpen(false);
         else if (expandedId !== null) closeDetail();
         return;
       }
@@ -479,7 +485,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mobileLayout, filtered, cursor, expandedId, filtersOpen, catOpen, anyOverlayOpen, closeDetail, toggleExpand, onToggleWatch]);
+  }, [mobileLayout, filtered, cursor, expandedId, filtersOpen, catOpen, bucketOpen, anyOverlayOpen, closeDetail, toggleExpand, onToggleWatch]);
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
@@ -514,6 +520,8 @@ export function App() {
         categoryLabel={categoryLabel}
         categoryActive={categoryPath.length > 0}
         onOpenCategory={() => setCatOpen(true)}
+        bucketLabel={batBucket}
+        onOpenBucket={() => setBucketOpen(true)}
         sortKey={sortKey}
         onCycleSort={cycleSort}
         onOpenFilters={() => setFiltersOpen(true)}
@@ -546,6 +554,7 @@ export function App() {
             view={view}
             mobile={mobileLayout}
             coarse={coarsePointer}
+            touch={touchCapable}
             mobileView={mobileView}
             mobileCols={mobileCols}
             onMobileViewChange={setMobileView}
@@ -577,6 +586,18 @@ export function App() {
           selected={categoryPath}
           onChange={setCategoryPath}
           onClose={() => setCatOpen(false)}
+          sheet={sheet}
+        />
+      )}
+
+      {bucketOpen && (
+        <BucketPopover
+          groups={batNav}
+          group={batGroup}
+          bucket={batBucket}
+          onGroupChange={setBatGroup}
+          onBucketChange={setBatBucket}
+          onClose={() => setBucketOpen(false)}
           sheet={sheet}
         />
       )}

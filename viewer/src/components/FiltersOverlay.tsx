@@ -262,7 +262,8 @@ export function FiltersOverlay({
           <Section label="DENSITY">
             {/* No desktop density in the handoff — columns are computed — but
                 this app has always had the control, and it still means
-                something: it picks the target column width the grid packs to. */}
+                something: it picks both the target column width the grid packs
+                to and the column ceiling (6 standard, 8 compact). */}
             <Segmented
               options={DENSITY_OPTIONS}
               value={density}

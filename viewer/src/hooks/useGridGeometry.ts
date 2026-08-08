@@ -14,7 +14,9 @@ import type { Density, MobileCols } from '../lib/types';
  *
  * The density control survives the redesign by choosing the target column
  * width: standard is the handoff's 196px (~6 columns at 1440), compact packs to
- * 150px (~8 columns). On mobile the 2/3/4 stepper sets the count directly.
+ * 150px (~8 columns). Each density also has a hard column ceiling, so a wide
+ * monitor gets bigger cards rather than more of them. On mobile the 2/3/4
+ * stepper sets the count directly.
  */
 
 /** What the grid is laying out. Row heights differ per mode. */
@@ -22,7 +24,7 @@ export type LayoutMode = 'card' | 'lrow' | 'mrow';
 
 export interface GridGeometry {
   mode: LayoutMode;
-  /** Columns. 1 in row modes, clamped to 2–9 in card modes. */
+  /** Columns. 1 in row modes; in card modes 2–6 standard, 2–8 compact. */
   cols: number;
   /** Exact column width in px. */
   colW: number;
@@ -63,7 +65,16 @@ export const LIST_ROW_H = 67;
 export const TOUCH_ROW_H = 78;
 
 const MIN_COLS = 2;
-const MAX_COLS = 9;
+
+/**
+ * Column ceiling. Without one, a wide monitor just keeps adding columns —
+ * a 2140px window laid out 9, and at that point the card is too small to read
+ * a title from across a desk. Standard tops out at 6; compact is the
+ * "more per screen" mode, so it is allowed 8.
+ */
+function maxCols(density: Density): number {
+  return density === 'compact' ? 8 : 6;
+}
 
 export interface GeometryOptions {
   density: Density;
@@ -125,7 +136,10 @@ export function computeGeometry(
     cols = mobileCols;
   } else {
     const target = targetColWidth(density);
-    cols = Math.max(MIN_COLS, Math.min(MAX_COLS, Math.floor((inner + gap) / (target + gap))));
+    cols = Math.max(
+      MIN_COLS,
+      Math.min(maxCols(density), Math.floor((inner + gap) / (target + gap)))
+    );
   }
   const colW = Math.max(1, (inner - gap * (cols - 1)) / cols);
   const textH = textBlockHeight(mobile, mobileCols);

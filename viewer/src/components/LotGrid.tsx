@@ -41,6 +41,8 @@ interface Props {
   view: ViewMode;
   mobile: boolean;
   coarse: boolean;
+  /** Touch-capable: swipe is live on both cards and rows. */
+  touch: boolean;
   mobileView: MobileView;
   mobileCols: MobileCols;
   onMobileViewChange: (v: MobileView) => void;
@@ -96,6 +98,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
     view,
     mobile,
     coarse,
+    touch,
     mobileView,
     mobileCols,
     onMobileViewChange,
@@ -245,6 +248,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   colW={colW}
                   mobileCols={mobile ? mobileCols : undefined}
                   textH={textBlockHeight(mobile, mobileCols)}
+                  touch={touch}
                   expanded={lot.lot_number === expandedId}
                   cursor={isCursor}
                   onToggleExpand={open}
@@ -257,6 +261,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   view={v}
                   mobile={mobile}
                   coarse={coarse}
+                  touch={touch}
                   height={rowH}
                   watched={watched.has(lot.lot_number)}
                   cursor={isCursor || lot.lot_number === expandedId}

@@ -161,8 +161,12 @@ test.describe('swipe triage on an emulated phone', () => {
     hasTouch: PIXEL_5.hasTouch,
   });
 
-  async function drag(page: import('@playwright/test').Page, dx: number) {
-    const row = page.locator('[data-testid="lot-row"]').first();
+  async function drag(
+    page: import('@playwright/test').Page,
+    dx: number,
+    selector = '[data-testid="lot-row"]'
+  ) {
+    const row = page.locator(selector).first();
     const box = (await row.boundingBox())!;
     const y = box.y + box.height / 2;
     const startX = box.x + box.width / 2;
@@ -187,6 +191,40 @@ test.describe('swipe triage on an emulated phone', () => {
     await page.waitForTimeout(600);
 
     await drag(page, 130);
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('1');
+  });
+
+  test('CARDS swipe too — an iPad gets the grid, not the rows', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('[data-testid="lot-row"]', { timeout: 15000 });
+    // Switch to cards, which is the view a tablet lands in by default (it is
+    // wider than 760px, so it never sees the mobile rows at all).
+    await page.locator('[data-testid="mview-cards"]').click();
+    await page.waitForTimeout(500);
+
+    await drag(page, 130, '[data-testid="lot-card"]');
+    await expect(page.locator('[data-testid="toast"]')).toBeVisible();
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('1');
+
+    // Same gesture undoes it, and no overlay opened on release.
+    await page.waitForTimeout(1600);
+    await drag(page, 130, '[data-testid="lot-card"]');
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('0');
+    await expect(page.locator('[data-testid="lot-detail"]')).toHaveCount(0);
+  });
+
+  test('a card left drag is inert and does not poison the next card swipe', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('[data-testid="lot-row"]', { timeout: 15000 });
+    await page.locator('[data-testid="mview-cards"]').click();
+    await page.waitForTimeout(500);
+
+    await drag(page, -130, '[data-testid="lot-card"]');
+    await expect(page.locator('[data-testid="tab-watched"]')).toContainText('0');
+    await expect(page.locator('[data-testid="lot-detail"]')).toHaveCount(0);
+
+    await page.waitForTimeout(600);
+    await drag(page, 130, '[data-testid="lot-card"]');
     await expect(page.locator('[data-testid="tab-watched"]')).toContainText('1');
   });
 });

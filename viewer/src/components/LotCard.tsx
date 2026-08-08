@@ -1,9 +1,10 @@
-import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
+import { useRef, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
 import type { MobileCols } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
 import { TITLE_H, FIGURE_ROW_H, META_ROW_H } from '../hooks/useGridGeometry';
+import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
 
 /**
@@ -17,6 +18,11 @@ import { TileImage } from './pills/TileImage';
  * Height is FIXED, and the virtualiser depends on that: the title clamps to two
  * lines with a min-height, and the text block is a constant TEXT_H tall. See
  * the note in LotGrid before making anything here grow.
+ *
+ * On a touch device the card also swipes right to watch, exactly like a list
+ * row — an iPad is wider than 760px, so it gets this grid rather than the rows,
+ * and the gesture has to exist where the user actually is. The swipe shell is
+ * mounted ONLY on touch, so the desktop DOM is unchanged.
  */
 
 interface Props {
@@ -33,6 +39,8 @@ interface Props {
   mobileCols?: MobileCols;
   /** Height of the text block, from the geometry hook. */
   textH: number;
+  /** Touch-capable: the swipe gesture is live. */
+  touch?: boolean;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -72,6 +80,7 @@ export function LotCard({
   colW,
   mobileCols,
   textH,
+  touch = false,
 }: Props) {
   const cc = conditionColor(view.cond);
   // At 4-up the title can no longer carry the lot, so the photo does: the
@@ -84,6 +93,18 @@ export function LotCard({
   const figFs = mobileCols === 3 ? '11.5px' : '12.5px';
   const textPad =
     mobileCols === 4 ? '5px 6px 6px' : mobileCols === 3 ? '6px 7px 7px' : '8px 9px 9px';
+
+  const shellRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
+  const watchLabelRef = useRef<HTMLSpanElement>(null);
+
+  const paint = (dx: number) => {
+    if (cardRef.current) cardRef.current.style.transform = `translateX(${dx}px)`;
+    if (shellRef.current) shellRef.current.style.background = dx > 0 ? 'var(--lavbg)' : '';
+    if (watchLabelRef.current) watchLabelRef.current.style.opacity = dx > 0 ? '1' : '0';
+  };
+
+  const swipe = useSwipeToWatch({ enabled: touch, onPaint: paint, onCommit: onToggleWatch });
 
   const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -98,8 +119,9 @@ export function LotCard({
     onToggleWatch();
   };
 
-  return (
+  const card = (
     <article
+      ref={cardRef}
       data-testid="lot-card"
       data-lot-number={view.lot}
       className="lot-card"
@@ -107,13 +129,36 @@ export function LotCard({
       tabIndex={0}
       aria-expanded={expanded}
       aria-label={expanded ? 'Hide details' : 'Show details'}
-      onClick={onToggleExpand}
+      onClick={() => {
+        if (swipe.shouldSwallowClick()) return;
+        onToggleExpand();
+      }}
       onKeyDown={onKeyDown}
+      onPointerDown={swipe.onPointerDown}
       data-expanded={expanded ? 'true' : undefined}
       data-cursor={cursor ? 'true' : undefined}
+      style={
+        touch
+          ? {
+              // Same trap as the list row: without user-select:none a
+              // horizontal drag starts a text selection, the browser takes the
+              // gesture, and the NEXT swipe silently does nothing.
+              touchAction: 'pan-y',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              height: '100%',
+            }
+          : undefined
+      }
     >
       <div style={{ position: 'relative' }}>
-        <TileImage src={view.img} alt={view.title} pad={tilePadding(colW)} tint={view.tint} />
+        <TileImage
+          src={view.img}
+          alt={view.title}
+          pad={tilePadding(colW)}
+          tint={view.tint}
+          href={view.url}
+        />
 
         {/* Day letter — which of the two auctions this lot belongs to. */}
         <span
@@ -347,5 +392,41 @@ export function LotCard({
         )}
       </div>
     </article>
+  );
+
+  if (!touch) return card;
+
+  // Swipe shell — the card translates off a fixed action layer, exactly like a
+  // list row. Only mounted on touch, so nothing about the desktop grid moves.
+  return (
+    <div
+      ref={shellRef}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 11,
+        height: '100%',
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 14px',
+          fontFamily: MONO,
+          fontWeight: 700,
+          fontSize: '9.5px',
+          letterSpacing: '.1em',
+        }}
+      >
+        <span ref={watchLabelRef} style={{ color: 'var(--lavt)', opacity: 0 }}>
+          {watched ? '\u2606 REMOVE' : '\u2605 WATCH'}
+        </span>
+      </div>
+      {card}
+    </div>
   );
 }

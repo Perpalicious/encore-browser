@@ -177,10 +177,17 @@ A 7px/14px strip below the header, `background: var(--bg)`, `border-bottom: 1px 
 `display: grid`, `gap: 12px`, `padding: 0 16px`. Column count is computed, not breakpointed:
 
 ```
-cols = clamp(2, 9, floor((containerWidth - 32 + 12) / (196 + 12)))
+cols = clamp(2, MAX, floor((containerWidth - 32 + 12) / (196 + 12)))
 colW = (containerWidth - 32 - 12 * (cols - 1)) / cols
 rowH = colW + 2 + 63 + 12          // image + lid + text block + gap
 ```
+
+> **Deviation from this spec, decided 2026-08-08.** The spec's ceiling of 9 is
+> too high for a wide monitor: at 2140px it laid out 9 columns and the cards
+> got too small to scan. `MAX` is now per-density — **6** in standard, **8** in
+> compact — so a wider window gives bigger cards rather than more of them, and
+> the density toggle still buys real extra density. See `maxCols()` in
+> `viewer/src/hooks/useGridGeometry.ts`, asserted in its unit test.
 
 ≈ 6 columns and ~30 lots visible at 1440×900.
 

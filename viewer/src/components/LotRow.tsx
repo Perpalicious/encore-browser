@@ -1,6 +1,6 @@
 import { useRef, type CSSProperties } from 'react';
 import type { LotView } from '../lib/lotView';
-import { conditionColor } from '../lib/lotView';
+import { conditionColor, closeLabel } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
 import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
@@ -31,6 +31,8 @@ interface Props {
   cursor: boolean;
   onOpen: () => void;
   onToggleWatch: () => void;
+  /** Clock for the ENDED state; undefined when the bundle carries no times. */
+  now?: number;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -52,11 +54,13 @@ export function LotRow({
   cursor,
   onOpen,
   onToggleWatch,
+  now,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const watchLabelRef = useRef<HTMLSpanElement>(null);
   const cc = conditionColor(view.cond);
+  const ended = now !== undefined && view.closeMs !== null && view.closeMs <= now;
   const thumb = mobile ? 58 : 52;
   const starSize = coarse ? 44 : 34;
 
@@ -133,6 +137,7 @@ export function LotRow({
           padding: mobile ? '9px 13px' : coarse ? '11px 12px' : '7px 10px',
           cursor: 'pointer',
           background: rowBackground,
+          opacity: ended ? 0.55 : undefined,
           touchAction: 'pan-y',
           // Only where swipe is live. A horizontal drag across a row otherwise
           // starts a native text selection, and the browser then treats the
@@ -196,6 +201,18 @@ export function LotRow({
                 <span style={{ ...microFigure, fontSize: '9px', color: 'var(--dim3)' }}>
                   {view.lot}
                 </span>
+                {view.closeMs !== null && (
+                  <span
+                    data-testid="close-time"
+                    style={{
+                      ...microFigure,
+                      fontSize: '9px',
+                      color: ended ? 'var(--c-heavy)' : 'var(--dim3)',
+                    }}
+                  >
+                    {ended ? 'ENDED' : closeLabel(view.closeMs)}
+                  </span>
+                )}
                 {view.tick && <ValueTick />}
               </div>
             </div>
@@ -272,6 +289,21 @@ export function LotRow({
                 </span>
               )}
             </div>
+            {view.closeMs !== null && (
+              <div
+                data-testid="close-time"
+                style={{
+                  width: 52,
+                  flex: 'none',
+                  textAlign: 'right',
+                  ...microFigure,
+                  fontSize: '10px',
+                  color: ended ? 'var(--c-heavy)' : 'var(--dim3)',
+                }}
+              >
+                {ended ? 'ENDED' : closeLabel(view.closeMs)}
+              </div>
+            )}
             <div
               style={{
                 width: 56,

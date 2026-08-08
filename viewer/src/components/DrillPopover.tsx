@@ -9,9 +9,13 @@ import { useEffect, type CSSProperties } from 'react';
  * see how much is behind a choice before committing to it.
  *
  * Two things use this shape: categories → sub-categories, and Bat's List
- * groups → buckets. They are the same interaction over different trees, so
- * they share the shell and differ only in what they are fed and what their
- * test ids are called.
+ * groups → buckets → subtypes. They are the same interaction over different
+ * trees, so they share the shell and differ only in what they are fed and what
+ * their test ids are called.
+ *
+ * An optional THIRD pane exists for the Bat's List subtypes. On desktop all
+ * three fit side by side; in sheet mode only the last two render, because
+ * three 130px columns on a phone truncate every label into uselessness.
  */
 
 export interface DrillItem {
@@ -39,6 +43,8 @@ interface Props {
   clearTestId: string;
   left: DrillPane;
   right: DrillPane;
+  /** Optional third level. Omitted entirely when the data has none. */
+  third?: DrillPane;
   /** Bottom sheet instead of an anchored popover. */
   sheet: boolean;
   onClose: () => void;
@@ -55,6 +61,7 @@ export function DrillPopover({
   clearTestId,
   left,
   right,
+  third,
   sheet,
   onClose,
 }: Props) {
@@ -134,9 +141,21 @@ export function DrillPopover({
         </button>
 
         <div style={{ display: 'flex', minHeight: 0 }}>
-          <Pane {...left} sheet={sheet} />
-          <div style={{ width: 1, background: 'var(--line2)', flex: 'none' }} />
+          {/* In sheet mode the first pane is dropped once a third exists, so a
+              phone never shows three truncated columns. */}
+          {!(sheet && third) && (
+            <>
+              <Pane {...left} sheet={sheet} />
+              <div style={{ width: 1, background: 'var(--line2)', flex: 'none' }} />
+            </>
+          )}
           <Pane {...right} sheet={sheet} />
+          {third && (
+            <>
+              <div style={{ width: 1, background: 'var(--line2)', flex: 'none' }} />
+              <Pane {...third} sheet={sheet} />
+            </>
+          )}
         </div>
       </div>
     </>

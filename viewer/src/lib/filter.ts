@@ -9,7 +9,7 @@ import type {
 import { pathHasPrefix } from './categoryTree';
 import { confidencePasses, isPotentialResale } from './resale';
 import { isPersonalPick } from './personal';
-import { dayLetter } from './lotView';
+import { dayLetter, closeMs } from './lotView';
 
 /**
  * Match a lot against the day filter.
@@ -41,23 +41,32 @@ export function filterLots(
     dayFilter,
     categoryPath,
     batBucket,
+    batSubtype,
     watched,
     confidenceFilter = 'all',
     outlookFilter = 'all',
     potentialOnly = false,
     personalOnly = false,
     conditions,
+    hideEnded = false,
+    now,
   }: {
     tab: Tab;
     dayFilter: DayFilter;
     categoryPath: string[];
     batBucket: string | null;
+    batSubtype?: string | null;
     watched: Set<string>;
     confidenceFilter?: ConfidenceFilter;
     outlookFilter?: OutlookFilter;
     potentialOnly?: boolean;
     personalOnly?: boolean;
     conditions?: Set<Condition>;
+    /** Drop lots whose closing time has already passed. */
+    hideEnded?: boolean;
+    /** The clock `hideEnded` is measured against — passed in, never read from
+     *  Date.now() here, so the filter stays a pure function of its inputs. */
+    now?: number;
   }
 ): Lot[] {
   let rows = lots.slice();
@@ -69,6 +78,8 @@ export function filterLots(
     // drives the view and no items are shown (no thousands-of-items flood).
     if (batBucket === null) return [];
     rows = rows.filter((l) => l.is_bat && l.bat_buckets.includes(batBucket));
+    // The subtype is the free-form level under the bucket.
+    if (batSubtype) rows = rows.filter((l) => l.bat_subtype === batSubtype);
     if (dayFilter !== 'Both') rows = rows.filter((l) => dayMatches(l, dayFilter));
   } else {
     if (dayFilter !== 'Both') rows = rows.filter((l) => dayMatches(l, dayFilter));
@@ -95,6 +106,16 @@ export function filterLots(
   // among them. Lots with no condition are excluded while the filter is active.
   if (conditions && conditions.size > 0) {
     rows = rows.filter((l) => l.condition !== null && conditions.has(l.condition));
+  }
+
+  // Ended lots leave last, so every other filter still counts them — the
+  // result count should shrink because the auction moved on, not because a
+  // category filter and the clock interacted.
+  if (hideEnded && now !== undefined) {
+    rows = rows.filter((l) => {
+      const ms = closeMs(l);
+      return ms === null || ms > now;
+    });
   }
 
   return rows;

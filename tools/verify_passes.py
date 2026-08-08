@@ -101,6 +101,33 @@ def main(auction_id: str) -> None:
         for p in problems:
             print(f"{'':12s}   - {p}")
 
+        # Bat's List subtypes are the drill-down's third level. They are
+        # optional (an older file has none), so this reports rather than fails
+        # — but a pass that ignored the instruction, or that invented a new
+        # phrasing per lot, is only visible here. Both are cheap to catch now
+        # and expensive to notice after the bundle is built.
+        if label == "categorized":
+            flagged = [r for r in items if r.get("is_bats_list")]
+            if flagged:
+                subtypes = [
+                    " ".join(str(r["bats_subtype"]).split()).lower()
+                    for r in flagged
+                    if r.get("bats_subtype")
+                ]
+                pct = 100 * len(subtypes) / len(flagged)
+                distinct = len(set(subtypes))
+                print(
+                    f"{'':12s}   subtypes: {len(subtypes)}/{len(flagged)} flagged lots "
+                    f"({pct:.0f}%), {distinct} distinct"
+                )
+                if not subtypes:
+                    print(f"{'':12s}   - no bats_subtype at all; the drill-down keeps two levels")
+                elif distinct > max(40, len(subtypes) // 4):
+                    print(
+                        f"{'':12s}   - {distinct} distinct subtypes for {len(subtypes)} lots "
+                        f"reads as per-lot phrasing rather than reused wording"
+                    )
+
     print()
     if failed:
         sys.exit("VERIFY FAILED — do not build. Fix the files above and re-run.")

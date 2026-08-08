@@ -35,6 +35,10 @@ interface Props {
   sortKey: SortKey;
   onSortChange: (s: SortKey) => void;
   density: Density;
+  /** False on a bundle with no closing times: the controls are omitted. */
+  hasCloseTimes: boolean;
+  hideEnded: boolean;
+  onHideEndedToggle: () => void;
   onDensityChange: (d: Density) => void;
   personalOnly: boolean;
   onPersonalToggle: () => void;
@@ -70,6 +74,9 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: 'retail-desc', label: 'Retail high → low' },
 ];
 
+/** Only offered once the bundle actually carries closing times. */
+const CLOSE_SORT: { id: SortKey; label: string } = { id: 'close-asc', label: 'Closing soonest' };
+
 export function FiltersOverlay({
   sheet,
   resultCount,
@@ -85,6 +92,9 @@ export function FiltersOverlay({
   sortKey,
   onSortChange,
   density,
+  hasCloseTimes,
+  hideEnded,
+  onHideEndedToggle,
   onDensityChange,
   personalOnly,
   onPersonalToggle,
@@ -249,7 +259,7 @@ export function FiltersOverlay({
                     fontWeight: 500,
                   }}
                 >
-                  {SORT_OPTIONS.map((o) => (
+                  {(hasCloseTimes ? [SORT_OPTIONS[0], CLOSE_SORT, ...SORT_OPTIONS.slice(1)] : SORT_OPTIONS).map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.label}
                     </option>
@@ -273,6 +283,14 @@ export function FiltersOverlay({
           </Section>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+            {hasCloseTimes && (
+              <Toggle
+                testId="hide-ended-toggle"
+                label="⏱ Hide ended"
+                on={hideEnded}
+                onClick={onHideEndedToggle}
+              />
+            )}
             <Toggle
               testId="personal-picks-toggle"
               label="♥ Personal picks"

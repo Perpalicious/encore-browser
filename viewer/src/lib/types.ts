@@ -18,7 +18,7 @@ export type MobileCols = 2 | 3 | 4;
  *  - 'resale-desc' / 'resale-asc': by resale mean (low/high midpoint)
  *  - 'retail-desc': by estimated retail price
  */
-export type SortKey = 'lot' | 'resale-desc' | 'resale-asc' | 'retail-desc';
+export type SortKey = 'lot' | 'resale-desc' | 'resale-asc' | 'retail-desc' | 'close-asc';
 
 /** Condition values in canonical (best → worst) order for filter chips. */
 export const CONDITION_ORDER: Condition[] = [
@@ -50,6 +50,14 @@ export const OUTLOOK_ORDER: ResaleOutlook[] = ['poor', 'fair', 'good'];
 
 export interface Lot {
   day: string;
+  /**
+   * ISO-8601 with a real UTC offset, e.g. '2026-08-09T13:04:00-04:00'.
+   * Optional: bundles built before the field was carried through the pipeline
+   * have none, which is why every closing-time affordance is feature-detected.
+   */
+  close_at?: string | null;
+  /** Free-form level under the Bat's List bucket, e.g. 'scrub brushes'. */
+  bat_subtype?: string | null;
   lot_number: string;
   title: string;
   description: string;

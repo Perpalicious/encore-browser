@@ -147,3 +147,79 @@ describe('LotCard watch state', () => {
   });
 });
 
+
+/** Render with the extra props the auction-day features need. */
+function renderCardWith(
+  l: Lot,
+  extra: { now?: number; singleDay?: boolean } = {}
+): string {
+  const [view] = buildLotViews([l]);
+  return renderToStaticMarkup(
+    <LotCard
+      view={view}
+      colW={196}
+      textH={83}
+      expanded={false}
+      onToggleExpand={noop}
+      watched={false}
+      onToggleWatch={noop}
+      {...extra}
+    />
+  );
+}
+
+describe('LotCard day chip', () => {
+  it('marks a Sunday lot S and a Monday lot M', () => {
+    expect(renderCardWith(lot({ lot_number: 'S-1204' }))).toContain('day-chip-S');
+    expect(renderCardWith(lot({ lot_number: 'M-1204' }))).toContain('day-chip-M');
+  });
+
+  it('uses a different pastel per day, so the two read apart at a glance', () => {
+    expect(renderCardWith(lot({ lot_number: 'S-1' }))).toContain('--lavbg');
+    expect(renderCardWith(lot({ lot_number: 'M-1' }))).toContain('--blushbg');
+  });
+
+  it('is dropped when a single day is already filtered', () => {
+    const html = renderCardWith(lot({ lot_number: 'S-1204' }), { singleDay: true });
+    expect(html).not.toContain('day-chip');
+  });
+
+  it('is labelled, since a bare letter is not self-explanatory', () => {
+    expect(renderCardWith(lot({ lot_number: 'S-1' }))).toContain('Sunday auction');
+  });
+});
+
+describe('LotCard closing time', () => {
+  const soon = new Date(2026, 7, 9, 13, 4).toISOString();
+  const now = new Date(2026, 7, 9, 12, 0).getTime();
+
+  it('shows the time beside the condition', () => {
+    const html = renderCardWith(lot({ lot_number: 'S-1', close_at: soon }), { now });
+    expect(html).toContain('close-time');
+    expect(html).toContain('1:04p');
+  });
+
+  it('says ENDED once the time has passed', () => {
+    const past = new Date(2026, 7, 9, 14, 0).getTime();
+    const html = renderCardWith(lot({ lot_number: 'S-1', close_at: soon }), { now: past });
+    expect(html).toContain('ENDED');
+    expect(html).not.toContain('1:04p');
+    // Dimmed rather than removed, so you can see where the auction has got to.
+    expect(html).toContain('opacity:0.55');
+  });
+
+  it('renders nothing time-related on a bundle without close_at', () => {
+    // This is the live site's state until the next pipeline run.
+    const html = renderCardWith(lot({ lot_number: 'S-1' }), { now });
+    expect(html).not.toContain('close-time');
+    expect(html).not.toContain('ENDED');
+    expect(html).not.toContain('opacity:0.55');
+  });
+
+  it('renders no time when the app passes no clock', () => {
+    const html = renderCardWith(lot({ lot_number: 'S-1', close_at: soon }));
+    // The time itself still shows; only the ENDED comparison needs a clock.
+    expect(html).toContain('1:04p');
+    expect(html).not.toContain('ENDED');
+  });
+});

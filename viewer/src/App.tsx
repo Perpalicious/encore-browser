@@ -31,6 +31,7 @@ import { useTheme } from './hooks/useTheme';
 import { usePersistedSet } from './hooks/usePersistedSet';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { useMobileLayout, useCoarsePointer, useTouchCapable } from './hooks/useMediaQuery';
+import { useNow } from './hooks/useNow';
 import { Header, type ActiveChip } from './components/Header';
 import { FiltersOverlay } from './components/FiltersOverlay';
 import { CategoryPopover } from './components/CategoryPopover';
@@ -95,6 +96,8 @@ export function App() {
   // rather than flood the grid with thousands of lots).
   const [batGroup, setBatGroup] = useState<string | null>(null);
   const [batBucket, setBatBucket] = useState<string | null>(initial.bucket);
+  const [batSubtype, setBatSubtype] = useState<string | null>(initial.subtype);
+  const [hideEnded, setHideEnded] = useState(initial.ended);
   const [sortKey, setSortKey] = useState<SortKey>(initial.sort);
   const [conditions, setConditions] = useState<Set<Condition>>(new Set(initial.conds));
   // At most one lot is selected at a time; it opens the detail overlay.
@@ -115,6 +118,16 @@ export function App() {
   const scrollTopRef = useRef(initialScrollTop);
 
   const allLots = useMemo(() => bundle?.lots ?? [], [bundle]);
+
+  /**
+   * Closing times arrive with the weekly pipeline run, and older bundles have
+   * none. Everything time-related is gated on this: no times on cards, no
+   * "Closing soonest" sort, no Hide-ended toggle, and no ticking clock. The
+   * alternative — shipping a dead sort option and an inert toggle whenever the
+   * data lags the code — is worse than the one-line check.
+   */
+  const hasCloseTimes = useMemo(() => allLots.some((l) => Boolean(l.close_at)), [allLots]);
+  const now = useNow(hasCloseTimes);
 
   // The presentation mapping runs ONCE over the whole bundle — `tick` is a
   // top-decile threshold and has to see every lot, not whatever a filter left
@@ -149,6 +162,7 @@ export function App() {
     (potentialOnly ? 1 : 0) +
     (personalOnly ? 1 : 0) +
     (conditions.size > 0 ? 1 : 0) +
+    (hasCloseTimes && hideEnded ? 1 : 0) +
     (density !== 'standard' ? 1 : 0);
 
   const filtered = useMemo(() => {
@@ -157,12 +171,15 @@ export function App() {
       dayFilter,
       categoryPath,
       batBucket,
+      batSubtype,
       watched,
       confidenceFilter,
       outlookFilter,
       potentialOnly,
       personalOnly,
       conditions,
+      hideEnded: hasCloseTimes && hideEnded,
+      now,
     });
     // Search narrows WITHIN the structural filters — it never bypasses the
     // active tab / category / day. Intersect matches with `rows`.
@@ -171,7 +188,7 @@ export function App() {
       return sortLots(rows.filter((l) => matches.has(l.lot_number)), sortKey);
     }
     return sortLots(rows, sortKey);
-  }, [allLots, tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, watched, confidenceFilter, outlookFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex]);
+  }, [allLots, tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, batSubtype, watched, confidenceFilter, outlookFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex, hasCloseTimes, hideEnded, now]);
 
   /** Persist the shareable state, debounced, to both the hash and localStorage. */
   useEffect(() => {
@@ -192,10 +209,12 @@ export function App() {
       cols: mobileCols,
       density,
       bucket: batBucket,
+      subtype: batSubtype,
+      ended: hideEnded,
     };
     const t = setTimeout(() => saveViewState(state), PERSIST_DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [tab, query, fuzzy, categoryPath, sortKey, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, dayFilter, view, mobileView, mobileCols, density, batBucket]);
+  }, [tab, query, fuzzy, categoryPath, sortKey, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, dayFilter, view, mobileView, mobileCols, density, batBucket, batSubtype, hideEnded]);
 
   /** Scroll position is yours alone — localStorage only, never the hash. */
   useEffect(() => {
@@ -250,6 +269,7 @@ export function App() {
     setPotentialOnly(false);
     setPersonalOnly(false);
     setConditions(new Set());
+    setHideEnded(false);
     // Tab, density, and sort order are intentionally preserved.
   }, []);
 
@@ -324,7 +344,9 @@ export function App() {
   // The rail's sort button cycles rather than opening a menu; the explicit
   // four-way select lives in the filters overlay.
   const cycleSort = () => {
-    const CYCLE: SortKey[] = ['lot', 'resale-desc', 'retail-desc'];
+    const CYCLE: SortKey[] = hasCloseTimes
+      ? ['lot', 'close-asc', 'resale-desc', 'retail-desc']
+      : ['lot', 'resale-desc', 'retail-desc'];
     const i = CYCLE.indexOf(sortKey);
     setSortKey(CYCLE[(i + 1) % CYCLE.length]);
   };
@@ -378,6 +400,16 @@ export function App() {
     if (query !== '') {
       out.push({ id: 'query', label: `“${query}”`, onRemove: () => setQuery('') });
     }
+    if (tab === 'bat' && batSubtype !== null) {
+      out.push({
+        id: 'subtype',
+        label: batSubtype,
+        onRemove: () => setBatSubtype(null),
+      });
+    }
+    if (hasCloseTimes && hideEnded) {
+      out.push({ id: 'ended', label: 'Hiding ended', onRemove: () => setHideEnded(false) });
+    }
     if (tab === 'bat' && batBucket !== null) {
       // Once a bucket is picked the picker is replaced by its lots, so this
       // chip is the way back to it — the old dropdown could be re-opened in
@@ -385,11 +417,14 @@ export function App() {
       out.push({
         id: 'bucket',
         label: `✦ ${batBucket}`,
-        onRemove: () => setBatBucket(null),
+        onRemove: () => {
+          setBatBucket(null);
+          setBatSubtype(null);
+        },
       });
     }
     return out;
-  }, [categoryPath, dayFilter, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, toggleCondition]);
+  }, [categoryPath, dayFilter, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, batSubtype, hasCloseTimes, hideEnded, toggleCondition]);
 
   const closeDetail = useCallback(() => setExpandedId(null), []);
 
@@ -555,6 +590,7 @@ export function App() {
             mobile={mobileLayout}
             coarse={coarsePointer}
             touch={touchCapable}
+            now={hasCloseTimes ? now : undefined}
             mobileView={mobileView}
             mobileCols={mobileCols}
             onMobileViewChange={setMobileView}
@@ -595,8 +631,10 @@ export function App() {
           groups={batNav}
           group={batGroup}
           bucket={batBucket}
+          subtype={batSubtype}
           onGroupChange={setBatGroup}
           onBucketChange={setBatBucket}
+          onSubtypeChange={setBatSubtype}
           onClose={() => setBucketOpen(false)}
           sheet={sheet}
         />
@@ -619,6 +657,9 @@ export function App() {
           onSortChange={setSortKey}
           density={density}
           onDensityChange={setDensity}
+          hasCloseTimes={hasCloseTimes}
+          hideEnded={hideEnded}
+          onHideEndedToggle={() => setHideEnded((v) => !v)}
           personalOnly={personalOnly}
           onPersonalToggle={() => setPersonalOnly((v) => !v)}
           potentialOnly={potentialOnly}

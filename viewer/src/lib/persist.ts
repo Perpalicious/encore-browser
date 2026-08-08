@@ -50,6 +50,10 @@ export interface ViewState {
   cols: MobileCols;
   density: Density;
   bucket: string | null;
+  /** Free-form Bat's List level under `bucket`. */
+  subtype: string | null;
+  /** Hide lots whose closing time has passed. */
+  ended: boolean;
 }
 
 export const DEFAULT_VIEW_STATE: ViewState = {
@@ -69,10 +73,12 @@ export const DEFAULT_VIEW_STATE: ViewState = {
   cols: 3,
   density: 'standard',
   bucket: null,
+  subtype: null,
+  ended: false,
 };
 
 const TABS: Tab[] = ['all', 'bat', 'watched'];
-const SORTS: SortKey[] = ['lot', 'resale-desc', 'resale-asc', 'retail-desc'];
+const SORTS: SortKey[] = ['lot', 'resale-desc', 'resale-asc', 'retail-desc', 'close-asc'];
 const CONFS: ConfidenceFilter[] = ['all', 'high', 'medium-plus'];
 const OUTS: OutlookFilter[] = ['all', 'poor', 'fair', 'good'];
 const DAYS: DayFilter[] = ['Sunday', 'Monday', 'Both'];
@@ -114,6 +120,8 @@ export function parseViewState(raw: unknown): ViewState {
     cols: (cols === 2 || cols === 3 || cols === 4 ? cols : DEFAULT_VIEW_STATE.cols) as MobileCols,
     density: oneOf(r.density, DENSITIES, DEFAULT_VIEW_STATE.density),
     bucket: typeof r.bucket === 'string' ? r.bucket : null,
+    subtype: typeof r.subtype === 'string' ? r.subtype : null,
+    ended: r.ended === true,
   };
 }
 

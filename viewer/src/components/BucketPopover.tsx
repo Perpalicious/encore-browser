@@ -17,8 +17,10 @@ interface Props {
   groups: GroupNode[];
   group: string | null;
   bucket: string | null;
+  subtype: string | null;
   onGroupChange: (g: string | null) => void;
   onBucketChange: (b: string | null) => void;
+  onSubtypeChange: (s: string | null) => void;
   onClose: () => void;
   sheet: boolean;
 }
@@ -27,8 +29,10 @@ export function BucketPopover({
   groups,
   group,
   bucket,
+  subtype,
   onGroupChange,
   onBucketChange,
+  onSubtypeChange,
   onClose,
   sheet,
 }: Props) {
@@ -38,6 +42,10 @@ export function BucketPopover({
   const owning = bucket ? groups.find((g) => g.buckets.some((b) => b.name === bucket)) : undefined;
   const activeName = group ?? owning?.name ?? null;
   const active = groups.find((g) => g.name === activeName) ?? null;
+  // The third level only exists once the flagging pass emits subtypes, so a
+  // bundle built before that keeps exactly the two panes it has today.
+  const activeBucket = bucket ? active?.buckets.find((b) => b.name === bucket) : undefined;
+  const subtypes = activeBucket?.subtypes ?? [];
 
   return (
     <DrillPopover
@@ -46,7 +54,10 @@ export function BucketPopover({
       clearLabel="All buckets"
       clearTestId="bucket-all"
       clearActive={bucket === null}
-      onClear={() => onBucketChange(null)}
+      onClear={() => {
+        onBucketChange(null);
+        onSubtypeChange(null);
+      }}
       sheet={sheet}
       onClose={onClose}
       left={{
@@ -63,9 +74,25 @@ export function BucketPopover({
         onPick: (name) => {
           onGroupChange(activeName);
           onBucketChange(name);
-          onClose();
+          // Switching bucket drops a subtype that belonged to the old one.
+          if (name !== bucket) onSubtypeChange(null);
+          if (subtypes.length === 0 || name !== bucket) onClose();
         },
       }}
+      third={
+        subtypes.length > 0
+          ? {
+              testId: 'subtype-level',
+              items: subtypes,
+              activeName: subtype,
+              empty: 'Pick a bucket',
+              onPick: (name) => {
+                onSubtypeChange(name === subtype ? null : name);
+                onClose();
+              },
+            }
+          : undefined
+      }
     />
   );
 }

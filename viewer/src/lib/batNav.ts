@@ -2,9 +2,20 @@ import type { Lot } from './types';
 
 export const UNGROUPED = 'Other';
 
+export interface SubtypeNode {
+  name: string;
+  count: number; // distinct lots in this bucket carrying this subtype
+}
+
 export interface BucketNode {
   name: string;
   count: number; // distinct lots in this bucket
+  /**
+   * The free-form level under the bucket, largest first. Empty for a bundle
+   * built before the flagging pass emitted `bat_subtype`, which is what the
+   * viewer feature-detects on to keep the drill-down at two panes.
+   */
+  subtypes: SubtypeNode[];
 }
 
 export interface GroupNode {
@@ -30,6 +41,9 @@ export function buildBatNav(
   // group -> set of lot_numbers (distinct), and group -> bucket -> set
   const groupLots = new Map<string, Set<string>>();
   const groupBucketLots = new Map<string, Map<string, Set<string>>>();
+  // group -> bucket -> subtype -> set. Same single pass; a lot in two buckets
+  // contributes its subtype to each, exactly like the bucket counts above.
+  const groupBucketSubtypeLots = new Map<string, Map<string, Map<string, Set<string>>>>();
 
   for (const lot of lots) {
     if (!lot.is_bat) continue;
@@ -43,6 +57,16 @@ export function buildBatNav(
       const buckets = groupBucketLots.get(group)!;
       if (!buckets.has(bucket)) buckets.set(bucket, new Set());
       buckets.get(bucket)!.add(lot.lot_number);
+
+      const subtype = lot.bat_subtype || null;
+      if (subtype) {
+        if (!groupBucketSubtypeLots.has(group)) groupBucketSubtypeLots.set(group, new Map());
+        const byBucket = groupBucketSubtypeLots.get(group)!;
+        if (!byBucket.has(bucket)) byBucket.set(bucket, new Map());
+        const bySubtype = byBucket.get(bucket)!;
+        if (!bySubtype.has(subtype)) bySubtype.set(subtype, new Set());
+        bySubtype.get(subtype)!.add(lot.lot_number);
+      }
     }
   }
 
@@ -58,8 +82,17 @@ export function buildBatNav(
 
   return ordered.map((group) => {
     const bucketMap = groupBucketLots.get(group)!;
+    const subtypeMap = groupBucketSubtypeLots.get(group);
     const buckets: BucketNode[] = [...bucketMap.entries()]
-      .map(([name, lotSet]) => ({ name, count: lotSet.size }))
+      .map(([name, lotSet]) => ({
+        name,
+        count: lotSet.size,
+        // Largest first: subtypes are free-form, so the useful ones are the
+        // ones the pass reused, and a long tail of one-offs sorts itself out.
+        subtypes: [...(subtypeMap?.get(name)?.entries() ?? [])]
+          .map(([sub, subLots]) => ({ name: sub, count: subLots.size }))
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
     return {
       name: group,

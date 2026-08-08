@@ -124,3 +124,76 @@ describe('buildBatNav', () => {
     expect(byName['Kitchen & dining'].buckets.find((b) => b.name === 'Kitchen appliances')!.count).toBe(2);
   });
 });
+
+/**
+ * Subtypes — the free-form level under a fixed bucket, which is what makes
+ * "Cleaning supplies & tools" navigable instead of a bin holding both Lysol
+ * and scrub brushes.
+ */
+describe('subtypes', () => {
+  function sub(lot_number: string, bucket: string, bat_subtype: string | null): Lot {
+    return { ...lot(lot_number, [bucket]), bat_subtype };
+  }
+
+  const CLEANING = { 'Cleaning supplies & tools': 'Cleaning & storage' };
+
+  it('counts distinct lots per subtype, largest first', () => {
+    const nav = buildBatNav(
+      [
+        sub('S-1', 'Cleaning supplies & tools', 'detergents'),
+        sub('S-2', 'Cleaning supplies & tools', 'detergents'),
+        sub('S-3', 'Cleaning supplies & tools', 'detergents'),
+        sub('S-4', 'Cleaning supplies & tools', 'scrub brushes'),
+        sub('S-5', 'Cleaning supplies & tools', 'scrub brushes'),
+        sub('S-6', 'Cleaning supplies & tools', 'mops & brooms'),
+      ],
+      CLEANING,
+      ['Cleaning & storage']
+    );
+    const bucket = nav[0].buckets[0];
+    expect(bucket.count).toBe(6);
+    expect(bucket.subtypes).toEqual([
+      { name: 'detergents', count: 3 },
+      { name: 'scrub brushes', count: 2 },
+      { name: 'mops & brooms', count: 1 },
+    ]);
+  });
+
+  it('is empty for a bundle built before the flagging pass emitted them', () => {
+    const nav = buildBatNav(
+      [sub('S-1', 'Cleaning supplies & tools', null), lot('S-2', ['Cleaning supplies & tools'])],
+      CLEANING,
+      ['Cleaning & storage']
+    );
+    // The viewer feature-detects on exactly this to keep two panes.
+    expect(nav[0].buckets[0].subtypes).toEqual([]);
+    expect(nav[0].buckets[0].count).toBe(2);
+  });
+
+  it('keeps a partially-tagged bucket usable', () => {
+    const nav = buildBatNav(
+      [
+        sub('S-1', 'Cleaning supplies & tools', 'detergents'),
+        lot('S-2', ['Cleaning supplies & tools']),
+      ],
+      CLEANING,
+      ['Cleaning & storage']
+    );
+    expect(nav[0].buckets[0].count).toBe(2);
+    expect(nav[0].buckets[0].subtypes).toEqual([{ name: 'detergents', count: 1 }]);
+  });
+
+  it('scopes a subtype to its bucket, not to the whole group', () => {
+    const nav = buildBatNav(
+      [
+        sub('S-1', 'Cleaning supplies & tools', 'refills'),
+        sub('S-2', 'Storage bins & totes', 'refills'),
+      ],
+      { 'Cleaning supplies & tools': 'Cleaning & storage', 'Storage bins & totes': 'Cleaning & storage' },
+      ['Cleaning & storage']
+    );
+    const [cleaning, storage] = nav[0].buckets;
+    expect(cleaning.subtypes).toEqual([{ name: 'refills', count: 1 }]);
+    expect(storage.subtypes).toEqual([{ name: 'refills', count: 1 }]);
+  });
+});

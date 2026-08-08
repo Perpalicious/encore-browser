@@ -108,7 +108,8 @@ Save as: `data/categorized/auction_<ID>_categorized.json`
 > {
 >   "lot_number": "S-1a",
 >   "is_bats_list": true,
->   "bats_buckets": ["Power tools"]
+>   "bats_buckets": ["Power tools"],
+>   "bats_subtype": "impact drivers"
 > }
 > ```
 >
@@ -122,11 +123,19 @@ Save as: `data/categorized/auction_<ID>_categorized.json`
 >   Never invent a bucket name.
 > - A lot may match more than one bucket. List all that apply. `is_bats_list`
 >   is `true` if and only if `bats_buckets` is non-empty.
+> - `bats_subtype` is a free-form 1-3 word label describing **what the item
+>   actually is**, one level finer than the bucket — `"scrub brushes"`,
+>   `"detergents"` and `"mops & brooms"` inside `"Cleaning supplies & tools"`;
+>   `"impact drivers"` and `"circular saws"` inside `"Power tools"`. Lowercase.
+>   **Reuse the same wording across the whole run** rather than inventing a new
+>   phrasing per lot — these become navigation, so `"scrub brushes"` on forty
+>   lots is useful and forty near-synonyms are not. Omit the key (or use
+>   `null`) whenever `is_bats_list` is `false`.
 > - Use `model` to identify items whose title is a bare SKU or an ambiguous
 >   brand word — it is often the difference between correctly bucketing a lot
 >   and missing it. Do not let a wrong `category` talk you out of a match the
 >   title and model clearly support.
-> - Use these three keys and no others. In particular do **not** include a
+> - Use these four keys and no others. In particular do **not** include a
 >   `bats_category`, `bats_subcategory`, `category`, `subcategory`, or
 >   `confidence` key.
 > - Output a raw JSON array only — no markdown fences, no commentary.
@@ -153,6 +162,20 @@ Save as: `data/categorized/auction_<ID>_categorized.json`
 - **`category`/`subcategory` from the agent are discarded** by
   `build/merge.py:138`; HiBid's native tree is the source of truth. Asking for
   them wastes tokens and output budget.
+- **`bats_subtype` must not be named `bats_subcategory`.** The two read alike,
+  but `build/transform.py:17` detects "Shape B" purely by the presence of
+  `bats_category` — and Shape B reads buckets from
+  `bats_category`/`bats_subcategory` while ignoring `bats_buckets` entirely.
+  The subtype key is deliberately named differently so it can never trip that
+  detection.
+- **The subtype is what makes Bat's List navigable at the item level.** It is
+  the same mechanism that makes pass 3's `personal_tags` feel better organised
+  than the 45 fixed buckets: wording that fits the item, instead of a coarse
+  bin. `build/transform.py` lowercases and collapses whitespace so
+  "Scrub Brushes" and "scrub  brushes" become one node, but it cannot merge
+  genuine synonyms — that is why the prompt insists on consistent wording.
+  `tools/verify_passes.py` reports subtype coverage so a pass that ignored the
+  instruction is visible before you build.
 - **`confidence` is deliberately not requested.** The `Lot` schema still has a
   `confidence` field and `build/transform.py:188` defaults it to `"low"` when
   absent, but nothing in the viewer ever reads it — only `resale_confidence`

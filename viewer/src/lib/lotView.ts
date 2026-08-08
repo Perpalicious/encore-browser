@@ -44,6 +44,10 @@ export interface LotView {
   cond: Condition | null;
   /** 'S' | 'M', derived from the lot-number prefix. */
   day: DayLetter;
+  /** close_at as epoch ms, or null when the bundle carries no time. */
+  closeMs: number | null;
+  /** Free-form Bat's List level under `bucket`, e.g. 'scrub brushes'. */
+  subtype: string | null;
   /** resale_confidence — lowercase 'low' | 'medium' | 'high'. */
   conf: Confidence | null;
   /**
@@ -77,6 +81,44 @@ export const TICK_PERCENTILE = 0.9;
 /** 0 and null both mean "no figure" in this bundle. */
 function positive(value: number | null | undefined): number | null {
   return typeof value === 'number' && value > 0 ? value : null;
+}
+
+/**
+ * `close_at` as epoch milliseconds.
+ *
+ * A timestamp rather than a formatted string on purpose: this mapping runs
+ * once over the whole bundle, but whether a lot has ENDED changes while you
+ * are looking at it, so the comparison has to happen at render against a
+ * ticking clock (see hooks/useNow.ts).
+ */
+export function closeMs(lot: Lot): number | null {
+  if (!lot.close_at) return null;
+  const ms = Date.parse(lot.close_at);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * The compact card form: '1:04p'. Deliberately short — it sits beside the
+ * condition word in a 13px row, and the date is redundant when the auction
+ * runs on one or two known days (the S/M chip carries which).
+ */
+export function closeLabel(ms: number): string {
+  const d = new Date(ms);
+  let h = d.getHours();
+  const suffix = h < 12 ? 'a' : 'p';
+  h = h % 12 || 12;
+  return `${h}:${String(d.getMinutes()).padStart(2, '0')}${suffix}`;
+}
+
+/** The detail overlay's long form: 'Sun 9 Aug, 1:04 PM'. */
+export function closeLabelLong(ms: number): string {
+  return new Date(ms).toLocaleString('en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 /**
@@ -147,6 +189,8 @@ export function buildLotViews(lots: Lot[]): LotView[] {
       tick: false, // filled in below, once the threshold is known
       cond: src.condition,
       day: dayLetter(src),
+      closeMs: closeMs(src),
+      subtype: src.bat_subtype || null,
       conf: src.resale_confidence,
       out: src.resale_outlook,
       pick: src.personal_match === true,

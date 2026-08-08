@@ -65,6 +65,7 @@ const SORT_LABEL: Record<SortKey, string> = {
   'resale-desc': 'Resale ↓',
   'resale-asc': 'Resale ↑',
   'retail-desc': 'Retail ↓',
+  'close-asc': 'Closing soonest',
 };
 
 const TABS: { id: Tab; label: string; testId: string }[] = [

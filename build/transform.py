@@ -32,6 +32,22 @@ def _bucket_confidence(value: float | None) -> str:
     return "high"
 
 
+def _normalise_subtype(value: object) -> str | None:
+    """
+    Normalise the flagging pass's free-form `bats_subtype`.
+
+    The pass is asked for 1-3 lowercase words and to reuse wording across the
+    run, but it is free text, so "Scrub Brushes", "scrub  brushes" and
+    "scrub brushes " must collapse to one node in the drill-down rather than
+    three. Anything empty becomes None so the viewer can treat "no subtype" as
+    a single condition.
+    """
+    if not isinstance(value, str):
+        return None
+    cleaned = " ".join(value.split()).lower()
+    return cleaned or None
+
+
 def _derive_day_from_close_at(close_at: str | None) -> str:
     """Derive weekday name from an ISO-8601 close_at string."""
     if not close_at:
@@ -172,6 +188,10 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         "category_path": category_path,
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
+        "bat_subtype": _normalise_subtype(item.get("bats_subtype")),
+        # Kept, not just used to derive `day`: the viewer shows the closing
+        # time per lot and marks a lot ENDED once it passes.
+        "close_at": item.get("close_at") or None,
         "confidence": _bucket_confidence(item.get("predicted_confidence")),
         **_resale_passthrough(item),
         **_personal_passthrough(item),
@@ -214,6 +234,8 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "category_path": category_path,
         "is_bat": bool(item.get("is_bats_list", False)),
         "bat_buckets": bat_buckets,
+        "bat_subtype": _normalise_subtype(item.get("bats_subtype")),
+        "close_at": item.get("close_at") or None,
         "confidence": confidence,
         **_resale_passthrough(item),
         **_personal_passthrough(item),

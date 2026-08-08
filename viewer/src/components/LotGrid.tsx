@@ -43,6 +43,8 @@ interface Props {
   coarse: boolean;
   /** Touch-capable: swipe is live on both cards and rows. */
   touch: boolean;
+  /** Ticking clock for ENDED; undefined when the bundle carries no times. */
+  now?: number;
   mobileView: MobileView;
   mobileCols: MobileCols;
   onMobileViewChange: (v: MobileView) => void;
@@ -99,6 +101,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
     mobile,
     coarse,
     touch,
+    now,
     mobileView,
     mobileCols,
     onMobileViewChange,
@@ -249,6 +252,8 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   mobileCols={mobile ? mobileCols : undefined}
                   textH={textBlockHeight(mobile, mobileCols)}
                   touch={touch}
+                  now={now}
+                  singleDay={singleDay}
                   expanded={lot.lot_number === expandedId}
                   cursor={isCursor}
                   onToggleExpand={open}
@@ -262,6 +267,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   mobile={mobile}
                   coarse={coarse}
                   touch={touch}
+                  now={now}
                   height={rowH}
                   watched={watched.has(lot.lot_number)}
                   cursor={isCursor || lot.lot_number === expandedId}
@@ -314,7 +320,15 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
     >
       {/* The day is redundant once a single day is filtered. */}
       {!singleDay && (
-        <span style={{ color: 'var(--dim2)' }}>
+        <span
+          data-testid="group-bar-day"
+          style={{
+            padding: '2px 6px',
+            borderRadius: 4,
+            background: firstVisible.day === 'M' ? 'var(--blushbg)' : 'var(--lavbg)',
+            color: firstVisible.day === 'M' ? 'var(--blusht)' : 'var(--lavt)',
+          }}
+        >
           {firstVisible.day === 'M' ? 'MONDAY' : 'SUNDAY'}
         </span>
       )}

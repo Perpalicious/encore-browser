@@ -1,6 +1,6 @@
 import { useEffect, type CSSProperties } from 'react';
 import type { LotView } from '../lib/lotView';
-import { conditionColor } from '../lib/lotView';
+import { conditionColor, closeLabelLong } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
 import { TileImage } from './pills/TileImage';
 
@@ -236,6 +236,14 @@ export function LotDetail({
             <span style={{ fontFamily: MONO, fontSize: '9.5px', color: 'var(--dim3)' }}>
               {view.day === 'M' ? 'MONDAY' : 'SUNDAY'} · LOT {view.lot}
             </span>
+            {view.closeMs !== null && (
+              <span
+                data-testid="close-time"
+                style={{ fontFamily: MONO, fontSize: '9.5px', color: 'var(--dim3)' }}
+              >
+                {view.closeMs <= Date.now() ? 'ENDED' : 'CLOSES'} {closeLabelLong(view.closeMs)}
+              </span>
+            )}
             {view.tick && (
               <span
                 data-testid="top-decile-badge"

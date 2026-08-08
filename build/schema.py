@@ -24,6 +24,18 @@ class Lot(BaseModel):
     bat_buckets: list[str]
     confidence: Literal["low", "medium", "high"]
 
+    # --- Closing time (from the scraper, may be missing) --------------------
+    # ISO-8601 with an explicit UTC offset, parsed from HiBid's timeLeftTitle
+    # by scraper/parser.py. None on older bundles and on any lot whose
+    # timeLeftTitle could not be parsed.
+    close_at: Optional[str] = None
+
+    # --- Bat's List subtype (optional, from the flagging pass) --------------
+    # Free-form 1-3 words under the fixed bucket, e.g. "scrub brushes" inside
+    # "Cleaning supplies & tools". Normalised in transform. None when the lot
+    # is unflagged or the pass predates the key.
+    bat_subtype: Optional[str] = None
+
     # --- Estimated retail (from the scraper, may be missing) ----------------
     # The lot's estimated retail price as listed by HiBid. None when the
     # scraper could not extract one.

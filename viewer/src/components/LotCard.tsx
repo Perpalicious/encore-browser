@@ -1,7 +1,7 @@
 import { useRef, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
 import type { MobileCols } from '../lib/types';
 import type { LotView } from '../lib/lotView';
-import { conditionColor } from '../lib/lotView';
+import { conditionColor, closeLabel } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
 import { TITLE_H, FIGURE_ROW_H, META_ROW_H } from '../hooks/useGridGeometry';
 import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
@@ -41,6 +41,10 @@ interface Props {
   textH: number;
   /** Touch-capable: the swipe gesture is live. */
   touch?: boolean;
+  /** Clock for the ENDED state; undefined when the bundle carries no times. */
+  now?: number;
+  /** True when one day is filtered, which makes the S/M chip redundant. */
+  singleDay?: boolean;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -81,8 +85,14 @@ export function LotCard({
   mobileCols,
   textH,
   touch = false,
+  now,
+  singleDay = false,
 }: Props) {
   const cc = conditionColor(view.cond);
+  // A lot is ENDED once its closing time passes. Compared at render against a
+  // ticking clock rather than baked into the view, because lots close while
+  // you are looking at the page.
+  const ended = now !== undefined && view.closeMs !== null && view.closeMs <= now;
   // At 4-up the title can no longer carry the lot, so the photo does: the
   // figures move onto the image in a gradient plate, and the value tick is
   // suppressed to keep the tile readable. At 3-up the bucket line is dropped.
@@ -140,6 +150,7 @@ export function LotCard({
       style={
         touch
           ? {
+              opacity: ended ? 0.55 : undefined,
               // Same trap as the list row: without user-select:none a
               // horizontal drag starts a text selection, the browser takes the
               // gesture, and the NEXT swipe silently does nothing.
@@ -148,7 +159,9 @@ export function LotCard({
               WebkitUserSelect: 'none',
               height: '100%',
             }
-          : undefined
+          : ended
+            ? { opacity: 0.55 }
+            : undefined
       }
     >
       <div style={{ position: 'relative' }}>
@@ -160,23 +173,6 @@ export function LotCard({
           href={view.url}
         />
 
-        {/* Day letter — which of the two auctions this lot belongs to. */}
-        <span
-          aria-hidden
-          style={{
-            position: 'absolute',
-            top: 5,
-            left: 6,
-            fontFamily: MONO,
-            fontWeight: 700,
-            fontSize: '8px',
-            lineHeight: 1,
-            color: 'var(--ink2)',
-          }}
-        >
-          {view.day}
-        </span>
-
         {/* Personal match — was a full chip row, now costs zero layout. */}
         {view.pick && (
           <span
@@ -186,7 +182,7 @@ export function LotCard({
             style={{
               position: 'absolute',
               top: 5,
-              left: 20,
+              left: 6,
               width: 6,
               height: 6,
               borderRadius: '50%',
@@ -342,18 +338,32 @@ export function LotCard({
         >
           <span
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              minWidth: 0,
               fontFamily: MONO,
               fontWeight: 500,
               fontSize: '8.5px',
               lineHeight: 1,
               letterSpacing: '.05em',
-              color: cc,
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
           >
-            {view.cond ? view.cond.toUpperCase() : ''}
+            <span
+              style={{ color: cc, overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {view.cond ? view.cond.toUpperCase() : ''}
+            </span>
+            {view.closeMs !== null && (
+              <span
+                data-testid="close-time"
+                style={{ flex: 'none', color: ended ? 'var(--c-heavy)' : 'var(--dim3)' }}
+              >
+                {ended ? 'ENDED' : closeLabel(view.closeMs)}
+              </span>
+            )}
           </span>
           {view.mid !== null && (
             <span data-testid="resale-summary" style={{ ...figureStyle, fontSize: figFs }}>
@@ -375,17 +385,20 @@ export function LotCard({
             gap: 6,
           }}
         >
-          <span
-            style={{
-              fontSize: '9.5px',
-              lineHeight: 1.2,
-              color: 'var(--dim3)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {view.bucket ?? view.sub}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+            {!singleDay && <DayChip day={view.day} />}
+            <span
+              style={{
+                fontSize: '9.5px',
+                lineHeight: 1.2,
+                color: 'var(--dim3)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {view.bucket ?? view.sub}
+            </span>
           </span>
           {view.retail !== null && <span style={subFigureStyle}>{formatMoney(view.retail)}</span>}
         </div>
@@ -428,5 +441,40 @@ export function LotCard({
       </div>
       {card}
     </div>
+  );
+}
+
+/**
+ * Which of the two auctions this lot belongs to.
+ *
+ * It used to be an 8px letter on the photo, where it went unnoticed. Here it
+ * sits in the text block with the bucket and retail, as a filled box — the two
+ * accent pastels the app already defines, so it stays clear of the condition
+ * ramp that owns the lid and the condition word one row above.
+ */
+function DayChip({ day }: { day: 'S' | 'M' }) {
+  const sunday = day === 'S';
+  return (
+    <span
+      data-testid={`day-chip-${day}`}
+      title={sunday ? 'Sunday auction' : 'Monday auction'}
+      style={{
+        flex: 'none',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 13,
+        height: 13,
+        borderRadius: 4,
+        fontFamily: MONO,
+        fontWeight: 700,
+        fontSize: '8px',
+        lineHeight: 1,
+        background: sunday ? 'var(--lavbg)' : 'var(--blushbg)',
+        color: sunday ? 'var(--lavt)' : 'var(--blusht)',
+      }}
+    >
+      {day}
+    </span>
   );
 }

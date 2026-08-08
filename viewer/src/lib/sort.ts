@@ -1,5 +1,6 @@
 import type { Lot, SortKey } from './types';
 import { resaleMean } from './resale';
+import { closeMs } from './lotView';
 
 /** Default order: Bat's List first, Sunday before Monday, then lot number. */
 function defaultCompare(a: Lot, b: Lot): number {
@@ -8,6 +9,21 @@ function defaultCompare(a: Lot, b: Lot): number {
   // 2. Sunday before Monday
   if (a.day !== b.day) return a.day === 'Sunday' ? -1 : 1;
   // 3. lot_number ascending
+  return a.lot_number.localeCompare(b.lot_number);
+}
+
+/**
+ * Closing time, ascending — the auction-day order. Lots with no time sort to
+ * the end rather than the front, so a partially-timed bundle still leads with
+ * the lots you can act on.
+ */
+function compareClose(a: Lot, b: Lot): number {
+  const ca = closeMs(a);
+  const cb = closeMs(b);
+  if (ca === null && cb === null) return a.lot_number.localeCompare(b.lot_number);
+  if (ca === null) return 1;
+  if (cb === null) return -1;
+  if (ca !== cb) return ca - cb;
   return a.lot_number.localeCompare(b.lot_number);
 }
 
@@ -26,6 +42,7 @@ function sortValue(lot: Lot, key: SortKey): number | null {
  */
 export function sortLots(lots: Lot[], sortKey: SortKey = 'lot'): Lot[] {
   if (sortKey === 'lot') return lots.slice().sort(defaultCompare);
+  if (sortKey === 'close-asc') return lots.slice().sort(compareClose);
 
   const ascending = sortKey === 'resale-asc';
   return lots.slice().sort((a, b) => {

@@ -68,18 +68,17 @@ interests:
       games, hammocks, and patio furniture.
 
   - name: "Kids' toys & games"
-    buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Board games"]
+    buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Board games",
+              "Dolls & plush"]
     tags: ["kids_interest", "family_activity"]
     description: >
       Toys and games for kids roughly ages 8-11, plus board games the whole
       household plays. Collectible and blind-box toys included.
-    # The five toy buckets are narrow (Barbies, Lego, Surprise toys,
-    # Hatchimals, Board games). Nothing holds a generic doll or plush, which
-    # was the largest single group of picks the shortlist used to drop.
-    seeds: ["doll", "plush", "stuffed animal", "toy ", "toys", "figurine",
-            "action figure", "playset", "play set", "craft kit", "art set",
-            "kids ", "children", "toddler", "squishmallow", "disney",
-            "frozen ", "paw patrol", "bluey", "ride on"]
+    # "Dolls & plush" now covers dolls/plush/figures. These seeds catch the
+    # remaining edges — craft and activity toys with no bucket of their own.
+    seeds: ["toy ", "toys", "craft kit", "art set", "kids ", "children",
+            "toddler", "frozen ", "ride on", "colouring", "coloring book",
+            "sticker", "science kit", "building set"]
 
   - name: "PC & desk setup"
     buckets: ["Keyboards & PC peripherals", "Electronics", "Video games & VR"]
@@ -99,21 +98,20 @@ interests:
 
   - name: "Garage & workshop"
     buckets:
-      ["Power tools", "Garage & tool organization", "Adhesives & tape",
-       "Batteries & chargers", "Extension cords & power strips", "Tie-downs"]
+      ["Power tools", "Hand tools", "Garage & tool organization",
+       "Adhesives & tape", "Batteries & chargers",
+       "Extension cords & power strips", "Tie-downs"]
     tags: ["garage_workshop", "tooling", "garage_organization",
            "charging_and_power", "yard_and_garage"]
     description: >
       An actively used workshop — power and hand tools, tool storage and
       organisation, fasteners and adhesives, tool batteries and chargers,
       cords, and tie-downs for hauling.
-    # "Power tools" covers powered tools only; no bucket holds a hand chisel,
-    # a socket set, or a box of fasteners.
-    seeds: ["chisel", "hand tool", "wrench", "socket", "pliers", "hammer",
-            "screwdriver", "utility knife", "clamp", "vise", "level ",
-            "tape measure", "bolt", "nut and bolt", "screw", "fastener",
-            "washer", "anchor", "cable tie", "zip tie", "hardware kit",
-            "work glove", "safety glass", "tool set"]
+    # "Hand tools" now covers the tools and fasteners themselves. These are
+    # the workshop consumables and PPE that still have no bucket.
+    seeds: ["work glove", "safety glass", "safety goggle", "ear protection",
+            "dust mask", "respirator", "shop towel", "wd-40", "lubricant",
+            "sandpaper", "abrasive", "drop sheet"]
 
   - name: "3D printing"
     buckets: ["3D printing supplies"]
@@ -146,13 +144,15 @@ interests:
        "Kitchen utensils & gadgets", "Glassware & drinkware", "Dinnerware",
        "Shatterproof / outdoor dishware",
        "Specialty cooking & baking ingredients", "Kitchen storage & organization",
-       "Starbucks coffee"]
+       "Starbucks coffee", "Coffee & espresso"]
     tags: ["premium_kitchen"]
     description: >
       A well-equipped kitchen that rewards quality — recognisable-brand
       appliances, cookware, cutlery and tools. Quality is the whole point
       here: generic no-brand single pieces are explicitly not wanted, and
       several buckets encode that gate in their own descriptions.
+      Coffee is a standing consumable — beans are ground at home for iced
+      coffee, so whole bean and ground both count, pre-ground included.
 
   - name: "Cleaning"
     buckets: ["Cleaning supplies & tools"]

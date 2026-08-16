@@ -175,6 +175,30 @@ buckets:
             "glue gun", "soldering", "rotary hammer", "planer", "router bit",
             "spray gun", "paint sprayer", "wood router", "router table"]
 
+  - name: "Hand tools"
+    group: "Tools & garage"
+    description: >
+      Non-powered hand tools and workshop hardware — chisels, wrenches and
+      socket sets, pliers, hammers, screwdrivers, clamps and vises, levels,
+      tape measures, utility knives, and hand saws. Also fasteners and
+      consumable hardware bought in bulk: bolts, nuts, screws, washers,
+      anchors, cable ties. Branded or generic. (Anything powered goes under
+      "Power tools"; storage for tools goes under "Garage & tool
+      organization".)
+    examples: ["Irwin", "Stanley", "Knipex", "Channellock", "Estwing", "Bahco"]
+    subtypes: ["chisels", "wrenches & sockets", "pliers", "hammers",
+               "screwdrivers", "clamps & vises", "measuring tools",
+               "hand saws", "fasteners", "tool sets"]
+    seeds: ["chisel", "hand tool", "wrench", "socket set", "ratchet set",
+            "pliers", "hammer", "screwdriver", "utility knife", "clamp",
+            "vise", "level ", "tape measure", "hand saw", "hacksaw",
+            "allen key", "hex key", "torque", "bolt", "nut and bolt", "screw",
+            "fastener", "washer set", "wall anchor", "cable tie", "zip tie",
+            "hardware kit", "tool set", "irwin", "knipex", "channellock",
+            "estwing", "stanley tool"]
+    exclude: ["power tool", "cordless drill", "impact driver"]
+    seed_exempt: ["Stanley", "Bahco"]  # Stanley is also a drinkware brand here
+
   - name: "Tie-downs"
     group: "Tools & garage"
     description: >
@@ -503,6 +527,24 @@ buckets:
     subtypes: ["eggs", "colleggtibles", "playsets"]
     seeds: ["hatchimal", "colleggtible"]
 
+  - name: "Dolls & plush"
+    group: "Toys & games"
+    description: >
+      Dolls, plush and soft toys outside the named brand buckets — fashion and
+      baby dolls, doll clothes and accessories, stuffed animals and plush,
+      squishmallows, action figures, figurines, and character playsets.
+      Branded or generic. (Barbie goes under "Barbies", LOL/Na Na Na under
+      "Surprise toys", Hatchimals under "Hatchimals".)
+    examples: ["Squishmallows", "Disney", "Paw Patrol", "Bluey", "Melissa & Doug"]
+    subtypes: ["dolls", "doll clothes", "plush & stuffed animals",
+               "action figures", "figurines", "character playsets"]
+    seeds: ["doll", "plush", "stuffed animal", "stuffed toy", "squishmallow",
+            "action figure", "figurine", "playset", "play set", "soft toy",
+            "paw patrol", "bluey", "melissa & doug", "melissa and doug",
+            "styling head", "baby doll", "fashion doll"]
+    exclude: ["barbie", "lol surprise", "na na na surprise", "hatchimal"]
+    seed_exempt: ["Disney"]  # spans every category in these auctions
+
   - name: "Board games"
     group: "Toys & games"
     description: >
@@ -626,6 +668,27 @@ buckets:
       K-cups/pods, and instant coffee.
     subtypes: ["whole bean", "ground coffee", "k-cups", "instant coffee"]
     seeds: ["starbucks"]
+
+  - name: "Coffee & espresso"
+    group: "Kitchen & dining"
+    description: >
+      Coffee to actually drink, from any recognisable roaster — whole bean,
+      ground, K-cups and pods, instant, and espresso. Whole bean and ground
+      matter most (beans get ground at home for iced coffee); pods are still
+      worth flagging. Also reusable pod filters and grinders.
+      (Starbucks-branded coffee has its own bucket. Coffee MAKERS go under
+      "Kitchen appliances".)
+    examples: ["Lavazza", "Kicking Horse", "Illy", "Death Wish", "Peet's", "Tim Hortons"]
+    subtypes: ["whole bean", "ground coffee", "k-cups", "pods", "instant coffee",
+               "espresso", "grinders"]
+    seeds: ["whole bean", "ground coffee", "k-cup", "k cup", "keurig pod",
+            "coffee pod", "nespresso pod", "instant coffee", "espresso bean",
+            "coffee bean", "coffee grinder", "burr grinder", "reusable k cup",
+            "lavazza", "kicking horse", "illy ", "death wish", "peet",
+            "tim hortons", "folgers", "maxwell house", "mccafe", "nescafe",
+            "wolfgang puck", "coffee 1", "coffee 2", "roast coffee"]
+    exclude: ["starbucks", "coffee maker", "coffee machine", "coffee table",
+              "coffee mug"]
 
   - name: "Kitchen storage & organization"
     group: "Kitchen & dining"

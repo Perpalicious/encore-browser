@@ -32,23 +32,42 @@ class TestLoadBucketGroups:
         assert len(order) >= 8  # the curated file defines at least the 8 documented groups
 
     def test_bucket_count_and_integrity(self):
-        """The curated file holds exactly 45 buckets, every one grouped, no
-        duplicate names. Guards accidental drops/dupes when buckets evolve."""
+        """The curated file holds exactly 48 buckets, every one grouped, no
+        duplicate names. Guards accidental drops/dupes when buckets evolve.
+
+        Bump this deliberately when a bucket is added or removed — a stale
+        count here is the only thing that catches an accidental drop."""
         mapping, _ = load_bucket_groups(BUCKETS_YAML)
         # load_bucket_groups dedupes into a dict, so re-read raw to catch dupes.
         import yaml
 
         raw = yaml.safe_load(BUCKETS_YAML.read_text(encoding="utf-8"))
         names = [b["name"] for b in raw["buckets"]]
-        assert len(names) == 45
+        assert len(names) == 48
         assert len(names) == len(set(names)), "duplicate bucket names"
         assert all(b.get("group") for b in raw["buckets"]), "a bucket is missing its group"
-        assert len(mapping) == 45
+        assert len(mapping) == 48
 
     def test_new_outdoor_furniture_bucket(self):
         """The 'Outdoor furniture & hammocks' bucket exists in Outdoor & garden."""
         mapping, _ = load_bucket_groups(BUCKETS_YAML)
         assert mapping["Outdoor furniture & hammocks"] == "Outdoor & garden"
+
+    def test_keyboards_bucket_renamed_and_broadened(self):
+        """"Mechanical keyboards" asked a question titles cannot answer — you
+        cannot tell mechanical from membrane from "KLIM CHROMA WIRELESS GAMING
+        KEYBOARD RGB" — so it hedged into Electronics or nothing."""
+        mapping, _ = load_bucket_groups(BUCKETS_YAML)
+        assert mapping["Keyboards & PC peripherals"] == "Electronics & gaming"
+        assert "Mechanical keyboards" not in mapping
+
+    def test_buckets_added_for_previously_unbucketed_picks(self):
+        """Hand tools, dolls/plush and non-Starbucks coffee had no bucket, so
+        picks in those areas landed nowhere in the viewer's nav."""
+        mapping, _ = load_bucket_groups(BUCKETS_YAML)
+        assert mapping["Hand tools"] == "Tools & garage"
+        assert mapping["Dolls & plush"] == "Toys & games"
+        assert mapping["Coffee & espresso"] == "Kitchen & dining"
 
 
 class TestResolveBucketGroups:

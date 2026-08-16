@@ -443,9 +443,38 @@ def run_backtest(
         print("No accepted (lot, bucket) pairs found in the previous file.")
         return 1
 
+    # The join is lot_number -> THIS run's slim file, and the seeds are then
+    # matched against that lot's title. So the two files must describe the same
+    # lots. Pair them correctly and unmatched_lots is exactly 0: the categorized
+    # file is built from _base.json, which carries a row for every lot.
+    #
+    # Pair them across weeks and the numbers are noise, not a low score --
+    # lot_numbers are recycled, so ~80-94% of them still "match" while pointing
+    # at completely different products. That misread costs an afternoon: it
+    # looks identical to a catastrophic seed regression (measured 2026-08-16:
+    # 33.4% lot recall cross-week vs 98.0% correctly paired, same seeds).
+    stale_frac = unmatched_lots / len(prev) if prev else 0.0
+    if stale_frac > 0.01:
+        print(
+            f"Backtest ABORTED: {unmatched_lots} of {len(prev)} rows in {prev_path}\n"
+            f"  have a lot_number absent from this run's slim file "
+            f"({100*stale_frac:.0f}% -- expected 0%).\n\n"
+            f"  These two files are from different weeks. lot_numbers are reused\n"
+            f"  week to week, so the rows that DO match line up last week's labels\n"
+            f"  with this week's products and the recall table is meaningless.\n\n"
+            f"  Backtest replays seeds over the week the labels came from. Point it\n"
+            f"  at that week's slimmed file, which lives beside the labels:\n"
+            f"      cp {prev_path.parent}/auction_<ID>_for_agent.json \\\n"
+            f"         data/categorized/auction_bt_for_agent.json\n"
+            f"      python3 tools/prefilter.py bt --backtest {prev_path}\n"
+            f"      rm data/categorized/auction_bt_for_agent.json",
+            file=sys.stderr,
+        )
+        return 1
+
     print(f"Backtest against {prev_path}")
     if unmatched_lots:
-        print(f"  {unmatched_lots} rows had a lot_number not in this slim file (different week)")
+        print(f"  {unmatched_lots} rows had a lot_number not in this slim file")
     print(f"\n  {'bucket':45s} {'recall':>8s}  hit/total")
     for name in sorted(per_bucket, key=lambda n: (per_bucket[n][0] / max(per_bucket[n][1], 1), n)):
         hit, total = per_bucket[name]

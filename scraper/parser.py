@@ -23,8 +23,9 @@ The field map is:
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 from .condition import parse_condition
 
@@ -32,12 +33,16 @@ from .condition import parse_condition
 # Timezone helpers
 # ---------------------------------------------------------------------------
 
-# Assumption: HiBid sends "EST" or "EDT" in timeLeftTitle.
-# We treat months March–October as EDT (UTC-4) and November–February as EST (UTC-5).
-# (Real US DST boundary is 2nd Sunday in March / 1st Sunday in November, but
-# month-based approximation is sufficient for display-only close_at field.)
-_TZ_EDT = timezone(timedelta(hours=-4))
-_TZ_EST = timezone(timedelta(hours=-5))
+# HiBid's timezone label is NOT trustworthy: it hardcodes "EST" year-round.
+# Observed 2026-08-16 (a date squarely inside daylight time):
+#     "Internet Bidding closes at: 8/16/2026 1:00:01 PM EST"
+# The wall-clock number is correct Eastern local time — it matches what the
+# HiBid catalog page shows — so only the label is wrong. Honouring it literally
+# stamped -05:00 on summer lots and pushed every displayed closing time an hour
+# off. We therefore ignore the label entirely and resolve the offset from the
+# date itself in America/New_York, which applies the real DST boundaries
+# (2nd Sunday in March / 1st Sunday in November) rather than approximating.
+_TZ_EASTERN = ZoneInfo("America/New_York")
 
 # Pattern: "5/24/2026 12:00:00 PM EST" or "5/24/2026 12:00:00 PM EDT"
 _CLOSE_TIME_RE = re.compile(
@@ -53,6 +58,10 @@ def _parse_close_at(time_left_title: Optional[str]) -> Optional[str]:
     Parse a timeLeftTitle like "5/24/2026 12:00:00 PM EST" into an ISO 8601
     string with explicit UTC offset.
 
+    The trailing zone label is matched only so the timestamp can be located in
+    the sentence; its value is deliberately discarded (see _TZ_EASTERN above —
+    HiBid says "EST" in August). The wall-clock number is Eastern local time.
+
     Returns None if the input is missing or unparseable.
     """
     if not time_left_title:
@@ -61,22 +70,12 @@ def _parse_close_at(time_left_title: Optional[str]) -> Optional[str]:
     if not m:
         return None
     dt_str = m.group("dt").strip()
-    tz_label = m.group("tz").upper()
     try:
         naive_dt = datetime.strptime(dt_str, _DT_FORMAT)
     except ValueError:
         return None
 
-    # Month-based DST heuristic (Mar–Oct = EDT = -04:00; else EST = -05:00)
-    if tz_label == "EDT":
-        tz = _TZ_EDT
-    elif tz_label == "EST":
-        tz = _TZ_EST
-    else:
-        # Fall back: use month
-        tz = _TZ_EDT if 3 <= naive_dt.month <= 10 else _TZ_EST
-
-    aware_dt = naive_dt.replace(tzinfo=tz)
+    aware_dt = naive_dt.replace(tzinfo=_TZ_EASTERN)
     return aware_dt.isoformat()
 
 

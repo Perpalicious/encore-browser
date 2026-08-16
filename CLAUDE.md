@@ -128,15 +128,29 @@ flagged; storage bins scored 4 of 36. See the docstring in
 `tools/prefilter.py`.
 
 Measure recall before trusting a seed edit — this costs nothing and needs no
-ChatGPT run:
+ChatGPT run. **The backtest replays seeds over the week the labels came from,
+so it needs that week's slimmed file — NOT this week's `<ID>`:**
 ```bash
-python3 tools/prefilter.py <ID> --backtest data/archive/<LAST_RUN_DATE>/auction_combined_categorized.json
+cp data/archive/<LAST_RUN_DATE>/auction_combined_for_agent.json \
+   data/categorized/auction_bt_for_agent.json
+python3 tools/prefilter.py bt --backtest data/archive/<LAST_RUN_DATE>/auction_combined_categorized.json
+rm data/categorized/auction_bt_for_agent.json
 ```
+Passing this week's `<ID>` instead joins last week's labels onto this week's
+products — lot_numbers are recycled, so ~80-94% still "match" while pointing at
+entirely different lots. That does not read as an error; it reads as a
+catastrophic seed regression. Measured 2026-08-16 on identical seeds: **33.4%
+cross-week vs 98.0% correctly paired.** The tool now aborts on this rather than
+printing the bogus table, and the abort message repeats the commands above.
+
 Reports per-bucket recall against last week's accepted labels. **LOT recall
-must stay at or above 97%** (currently 97.9%). PAIR recall is lower (~94%) and
+must stay at or above 97%** (currently 98.0%). PAIR recall is lower (~96%) and
 partly reflects errors in the old labels themselves — it flagged wifi routers
 as Power tools because of the word "router" — so treat the per-bucket table as
 a lead, not a verdict.
+
+This is also why `_for_agent.json` is now worth keeping one week back (see the
+retention section) — without it the backtest cannot be run correctly at all.
 
 ### 4. STOP — hand off to the user
 
@@ -317,15 +331,16 @@ rm -f data/raw/auction_*.json
 **Safe to delete outright:**
 - `data/raw/auction_*.json` — by far the largest files (~60 MB per week) and
   nothing reads them after step 7. Delete once the deploy is verified.
-- `_for_agent.json`, `_for_resale.json`, `_resale_groups.json`,
-  `_candidates.json`, `_base.json`, `_sweep.json`, `_prefilter.json`,
-  `_flags.json` from any prior week — and `_categorized.json` from any week
-  before last.
+- `_for_resale.json`, `_resale_groups.json`, `_candidates.json`, `_base.json`,
+  `_sweep.json`, `_prefilter.json`, `_flags.json` from any prior week — and
+  `_categorized.json` / `_for_agent.json` from any week before last.
 
-**Keep last week's `_categorized.json` too.** `tools/prefilter.py --backtest`
-replays this week's seeds against last week's accepted labels and reports
-per-bucket recall — the only cheap measurement of whether a seed edit helped,
-and it needs that file. One week back is enough.
+**Keep last week's `_categorized.json` AND its `_for_agent.json`.**
+`tools/prefilter.py --backtest` replays this week's seeds against last week's
+accepted labels and reports per-bucket recall — the only cheap measurement of
+whether a seed edit helped. It needs **both**: the labels and the slimmed lots
+they were assigned to. One week back is enough. Deleting the `_for_agent.json`
+does not degrade the backtest, it makes it impossible — see step 3.
 
 **The other thing worth keeping: resale valuations.** Roughly a third of any
 week's lots are products that ran in a previous week (measured: 32.8% of lots,

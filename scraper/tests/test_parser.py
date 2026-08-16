@@ -203,17 +203,31 @@ class TestConditionInMappedLot:
 
 
 class TestCloseAt:
-    def test_est_timezone_parsed(self, mapped_lots):
+    def test_mislabelled_est_in_summer_resolves_to_edt(self, mapped_lots):
+        # "5/24/2026 12:00:00 PM EST" — HiBid hardcodes "EST" year-round, but
+        # 24 May is daylight time. The label is ignored; the date decides.
         lot = next(l for l in mapped_lots if l["id"] == 100001)
-        # "5/24/2026 12:00:00 PM EST" → should include -05:00
         assert lot["close_at"] is not None
-        assert "-05:00" in lot["close_at"]
+        assert "-04:00" in lot["close_at"]
 
     def test_edt_timezone_parsed(self, mapped_lots):
         lot = next(l for l in mapped_lots if l["id"] == 100003)
         # "5/25/2026 12:00:00 PM EDT" → should include -04:00
         assert lot["close_at"] is not None
         assert "-04:00" in lot["close_at"]
+
+    def test_winter_date_resolves_to_est(self):
+        # Standard time really is -05:00, and must stay that way.
+        from scraper.parser import _parse_close_at
+        got = _parse_close_at("Internet Bidding closes at: 1/11/2026 1:00:00 PM EST")
+        assert got == "2026-01-11T13:00:00-05:00"
+
+    def test_wall_clock_is_preserved_verbatim(self):
+        # The number HiBid prints is what the site shows; only the offset is
+        # ours to decide. Regression guard for the hour-shift bug.
+        from scraper.parser import _parse_close_at
+        got = _parse_close_at("Internet Bidding closes at: 8/16/2026 1:00:01 PM EST")
+        assert got == "2026-08-16T13:00:01-04:00"
 
     def test_close_at_is_iso_format(self, mapped_lots):
         import datetime

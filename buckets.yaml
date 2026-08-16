@@ -6,6 +6,30 @@
 # `group` assigns each bucket to a top-level group for two-level
 # Bat's List navigation in the viewer. The Agent IGNORES `group`
 # (it only matters to the build script / viewer).
+#
+# Four fields drive tools/prefilter.py and are NOT shown to the Agent:
+#
+#   seeds:      lexical shortlist terms. Lowercased, anchored at a word
+#               boundary on the LEFT only — `tote` matches "TOTES" and `key`
+#               matches "KEYBOARD" but not "MONKEY". Include both type words
+#               and brand names, since many titles are a bare brand.
+#   categories: HiBid breadcrumb PREFIXES, matched on whole " - " segments.
+#               This is the only axis that reaches a bare-SKU lot whose title
+#               carries no usable keyword at all.
+#   exclude:    veto terms. A lot matching one is never shortlisted for this
+#               bucket, at zero model cost.
+#   aliases:    former names of this bucket, so --backtest can score a
+#               previous week's labels after a rename.
+#
+# THE PREFILTER MUST NEVER ENCODE A QUALITY GATE. Several buckets below say
+# "QUALITY or BRANDED ... do NOT flag generic". That judgement belongs to the
+# Agent, reading `description`. Seed those buckets with plain TYPE words so
+# the shortlist stays wide; encoding the gate as a keyword rule would turn
+# curation into string matching and destroy it.
+#
+# `subtypes` IS shown to the Agent — it is the advisory vocabulary for
+# `bats_subtype`, the drill-down's third level. Reusing wording is the whole
+# point; forty near-synonyms are useless as navigation.
 
 buckets:
   - name: "Smart home"
@@ -16,6 +40,16 @@ buckets:
       sensors, video doorbells, and anything app- or voice-controlled for
       the home. Branded or off-brand both qualify.
     examples: ["Hue", "Lifx", "Govee", "Lepro", "Ecobee", "Nest", "Wyze", "Kasa", "Sengled"]
+    subtypes: ["smart bulbs", "light strips", "smart plugs", "thermostats",
+               "sensors", "video doorbells", "smart hubs"]
+    seeds: ["smart bulb", "smart light", "light strip", "led strip", "smart plug",
+            "smart switch", "smart outlet", "thermostat", "smart hub", "video doorbell",
+            "doorbell camera", "motion sensor", "smart sensor", "alexa", "google home",
+            "smart speaker", "hue", "lifx", "govee", "lepro", "ecobee", "wyze",
+            "kasa", "sengled", "smart home", "ring sensor", "ring alarm",
+            "ring camera", "blink camera", "arlo", "security camera",
+            "smart doorbell", "echo dot", "echo show", "smart display"]
+    seed_exempt: ["Nest"]  # nesting bowls, nesting tables
 
   - name: "Smart locks"
     group: "Electronics & gaming"
@@ -26,6 +60,12 @@ buckets:
       outdoor/garage smart locks. Any keyless-entry hardware counts.
       Branded or generic.
     examples: ["August", "Schlage Encode", "Yale Assure", "Level", "Wyze Lock", "Master Lock smart", "eufy"]
+    subtypes: ["door locks", "deadbolts", "keypad locks", "padlocks", "lock boxes"]
+    seeds: ["smart lock", "keyless lock", "keyless entry", "keypad lock",
+            "fingerprint lock", "deadbolt", "smart deadbolt", "smart padlock",
+            "schlage", "yale assure", "august lock", "eufy lock", "lockbox",
+            "lock box"]
+    seed_exempt: ["August", "Level", "Wyze Lock", "Master Lock smart", "eufy"]
 
   - name: "Electronics"
     group: "Electronics & gaming"
@@ -36,13 +76,70 @@ buckets:
       items over generic cables and no-name accessories.
       (Video games, consoles, and VR go under "Video games & VR".)
     examples: ["Sony", "Bose", "Anker", "Logitech", "JBL", "Apple"]
+    subtypes: ["headphones", "earbuds", "speakers", "soundbars", "tablets",
+               "cameras", "streaming devices", "monitors", "webcams",
+               "microphones", "projectors", "smartwatches", "drones"]
+    seeds: ["headphone", "earbud", "earphone", "headset", "soundbar", "bluetooth speaker",
+            "portable speaker", "tablet", "ipad", "kindle", "e-reader", "streaming stick",
+            "roku", "chromecast", "fire tv", "apple tv", "webcam", "microphone",
+            "projector", "smartwatch", "smart watch", "fitbit", "drone", "turntable",
+            "receiver", "amplifier", "monitor", "docking station", "usb hub",
+            "power bank", "sony", "bose", "anker", "logitech", "jbl", "beats",
+            "sennheiser", "samsung", "nikon", "canon", "gopro", "airpod",
+            "apple watch", "ipod", "macbook", "laptop", "wifi adapter",
+            "usb adapter", "bluetooth adapter", "ethernet adapter", "wifi extender",
+            "router", "modem", "tp link", "garmin", "dji ", "usb c to",
+            "phone case", "screen protector", "smart ring", "magic mouse",
+            "magic keyboard", "airtag", "magsafe", "tile tracker", "mouse",
+            "usb receiver", "sd card", "memory card", "external drive", "ssd "]
+    # Deliberately NOT the whole "Computers & Electronics" tree: that is 1,245
+    # lots and made this bucket the same absorber it already was. These are the
+    # leaves where the item genuinely is consumer electronics.
+    categories:
+      - "Computers & Electronics - Consumer Electronics - Home Audio"
+      - "Computers & Electronics - Consumer Electronics - Tablets"
+      - "Computers & Electronics - Consumer Electronics - TVs"
+      - "Computers & Electronics - Consumer Electronics - Blu-ray / DVD Players"
+      - "Computers & Electronics - Cameras & Camera Accessories"
+      - "Computers & Electronics - Computers - Monitors"
+      - "Computers & Electronics - Computers - Laptops"
+      - "Computers & Electronics - Computers - Desktop / All-in-Ones"
+      - "Computers & Electronics - Computers - Networking"
+      - "Computers & Electronics - Consumer Electronics - Phones"
+    exclude: ["blood pressure monitor", "baby monitor", "bp monitor",
+              "monitor stand", "monitor mount", "monitor arm"]
+    seed_exempt: ["Apple"]  # matches apple juice, apple cider, applesauce
 
-  - name: "Mechanical keyboards"
+  - name: "Keyboards & PC peripherals"
     group: "Electronics & gaming"
+    aliases: ["Mechanical keyboards"]
     description: >
-      Mechanical keyboards, keycaps, key switches, and keyboard
-      accessories or parts — prebuilt or custom, branded or generic.
-    examples: ["Keychron", "Ducky", "GMMK", "Akko"]
+      Keyboards of every kind — mechanical, membrane, wireless, gaming,
+      compact/TKL/60% — plus keycaps, key switches and keyboard accessories,
+      AND PC input peripherals generally: mice, mousepads, trackballs, wrist
+      rests, and keyboard/mouse combos. Any switch type qualifies; you
+      usually cannot tell mechanical from membrane out of a title, so do not
+      try to — flag it and say which in `bats_subtype` when the title makes
+      it clear. Branded or generic.
+    examples: ["Keychron", "Ducky", "GMMK", "Akko", "Logitech", "Razer",
+               "SteelSeries", "Corsair", "HyperX", "Redragon", "MSI"]
+    subtypes: ["mechanical keyboards", "membrane keyboards", "keycaps",
+               "key switches", "mice", "mousepads", "kb+mouse combos",
+               "keyboard accessories", "trackballs"]
+    seeds: ["keyboard", "keycap", "key switch", "keyswitch", "tkl", "tenkeyless",
+            "mechanical key", "hot swap", "hot-swap", "mouse pad", "mousepad",
+            "gaming mouse", "wireless mouse", "trackball", "wrist rest",
+            "keychron", "ducky", "gmmk", "akko", "razer", "steelseries",
+            "corsair", "hyperx", "redragon", "logitech g", "msi forge",
+            "usb receiver", "unifying receiver", "keyboard case", "combo touch",
+            "keyboard folio", "num pad", "numpad", "macro pad"]
+    seed_exempt: ["Logitech", "MSI"]  # both sell far more non-keyboards than
+    # keyboards; the type words above already catch their boards.
+    categories: ["Computers & Electronics - Computers - Peripherals - Keyboards / Mice"]
+    # The mower's "IGNITION KEY SWITCH" was flagged as a mechanical keyboard
+    # in the 2026-08-15 run. Killing it here costs zero model tokens.
+    exclude: ["ignition key switch", "ignition switch", "piano", "midi",
+              "keyboard tray", "keyboard stand"]
 
   - name: "Video games & VR"
     group: "Electronics & gaming"
@@ -51,6 +148,13 @@ buckets:
       headsets and accessories — current and recent-gen. Resells well;
       VR headsets especially hold value.
     examples: ["Nintendo Switch", "PlayStation", "Xbox", "Meta Quest", "Steam Deck"]
+    subtypes: ["consoles", "controllers", "games", "vr headsets",
+               "console accessories"]
+    seeds: ["nintendo", "switch console", "playstation", "ps4", "ps5", "xbox",
+            "meta quest", "oculus", "steam deck", "vr headset", "game controller",
+            "gaming controller", "dualsense", "joy-con", "joycon", "amiibo",
+            "video game", "gamecube", "sega"]
+    categories: ["Computers & Electronics - Consumer Electronics - Video Games"]
 
   - name: "Power tools"
     group: "Tools & garage"
@@ -59,12 +163,27 @@ buckets:
       grinders, impact drivers, rotary/multi-tools, and tool
       batteries/chargers. Branded or generic, corded or cordless.
     examples: ["DeWalt", "Milwaukee", "Makita", "Bosch", "Ryobi", "Ridgid", "Metabo"]
+    subtypes: ["drills", "impact drivers", "circular saws", "reciprocating saws",
+               "sanders", "grinders", "rotary tools", "nailers", "tool batteries"]
+    seeds: ["drill", "impact driver", "circular saw", "reciprocating saw", "jigsaw",
+            "miter saw", "table saw", "sander", "angle grinder", "rotary tool",
+            "multi-tool", "multi tool", "nail gun", "nailer", "heat gun", "power tool",
+            "oscillating tool", "dremel", "dewalt", "milwaukee", "makita", "bosch",
+            "ryobi", "ridgid", "metabo", "craftsman", "porter cable", "drill bit",
+            "driver bit", "saw blade", "socket set", "wrench set", "screwdriver",
+            "air compressor", "stud finder", "laser level", "caulking gun",
+            "glue gun", "soldering", "rotary hammer", "planer", "router bit",
+            "spray gun", "paint sprayer", "wood router", "router table"]
 
   - name: "Tie-downs"
     group: "Tools & garage"
     description: >
       Ratchet straps, tie-down straps, bungee cords, cargo straps, and
       securing/hauling straps.
+    subtypes: ["ratchet straps", "bungee cords", "cargo straps", "tow straps"]
+    seeds: ["ratchet strap", "tie down", "tie-down", "bungee", "cargo strap",
+            "tow strap", "cam buckle", "cargo net", "recovery strap",
+            "lashing strap"]
 
   - name: "Garage & tool organization"
     group: "Tools & garage"
@@ -75,6 +194,13 @@ buckets:
       focused; general bins go under "Storage bins & totes", food
       containers under "Kitchen storage & organization".)
     examples: ["Husky", "Gladiator", "Craftsman", "Wera"]
+    subtypes: ["tool chests", "tool bags", "pegboards", "wall racks",
+               "workshop shelving", "tool organizers"]
+    seeds: ["tool chest", "tool cabinet", "tool box", "toolbox", "tool bag",
+            "pegboard", "peg board", "tool rack", "tool organizer", "tool holder",
+            "wall mount rack", "workbench", "work bench", "garage shelf",
+            "garage shelving", "utility shelving", "gladiator", "husky ", "wera"]
+    seed_exempt: ["Craftsman"]  # Craftsman spans tools, mowers and storage
 
   - name: "3D printing supplies"
     group: "Tools & garage"
@@ -84,6 +210,12 @@ buckets:
       printer parts and upgrades, and 3D printers themselves. Branded or
       generic. These run expensive retail, so auction wins are valuable.
     examples: ["Bambu", "Prusa", "Polymaker", "Sunlu", "Elegoo", "Creality"]
+    subtypes: ["filament", "resin", "printers", "nozzles", "build plates",
+               "printer parts"]
+    seeds: ["3d print", "filament", "pla ", "petg", "abs filament", "tpu filament",
+            "3d printer", "hotend", "hot end", "build plate", "print bed",
+            "nozzle 0", "bambu", "prusa", "polymaker", "sunlu", "elegoo",
+            "creality", "anycubic", "resin print"]
 
   - name: "Adhesives & tape"
     group: "Tools & garage"
@@ -92,6 +224,16 @@ buckets:
       tape, masking and painter's tape, super glue, epoxy, mounting
       strips/tape, and similar adhesives.
     examples: ["Gorilla", "3M", "Scotch", "Loctite"]
+    subtypes: ["duct tape", "painters tape", "super glue", "epoxy",
+               "mounting tape", "electrical tape"]
+    seeds: ["duct tape", "gorilla tape", "gorilla glue", "masking tape",
+            "painters tape", "painter's tape", "electrical tape", "super glue",
+            "superglue", "epoxy", "mounting tape", "mounting strip", "adhesive",
+            "double sided tape", "packing tape", "scotch tape", "loctite",
+            "caulk", "sealant", "gorilla ", "3m ", "velcro", "hook and loop",
+            "command strip", "glue stick", "wood glue", "contact cement",
+            "thread locker", "silicone sealant", "foam tape", "duck tape"]
+    seed_exempt: ["Scotch"]  # scotch whisky, Scotch-Brite cleaning pads
 
   - name: "Batteries & chargers"
     group: "Tools & garage"
@@ -100,6 +242,12 @@ buckets:
       (AA/AAA/C/D/9V), rechargeables, power-tool batteries and chargers,
       power banks, and battery packs.
     examples: ["Duracell", "Energizer", "Anker", "EBL"]
+    subtypes: ["household batteries", "rechargeables", "tool batteries",
+               "power banks", "chargers"]
+    seeds: ["battery", "batteries", "aa batter", "aaa batter", "9v batter",
+            "rechargeable batter", "power bank", "battery charger", "battery pack",
+            "duracell", "energizer", "eneloop", "jump starter", "portable charger",
+            "anker", "ebl "]
 
   - name: "Extension cords & power strips"
     group: "Tools & garage"
@@ -107,6 +255,12 @@ buckets:
       Extension cords, power strips, surge protectors, and power
       adapters/multi-outlets. Indoor or outdoor rated.
     examples: ["Belkin", "APC", "Cordinate"]
+    subtypes: ["extension cords", "power strips", "surge protectors",
+               "outlet adapters"]
+    seeds: ["extension cord", "power strip", "surge protector", "power bar",
+            "outlet adapter", "wall tap", "multi outlet", "cord reel", "belkin",
+            "cordinate", "apc ", "power cord", "outlet strip", "usb wall charger",
+            "wall charger", "power adapter", "outlet extender", "smart strip"]
 
   - name: "Lawn equipment"
     group: "Outdoor & garden"
@@ -116,6 +270,14 @@ buckets:
       and similar outdoor power equipment. Branded or generic, corded,
       cordless, or gas.
     examples: ["EGO", "Greenworks", "Ryobi", "Toro", "Husqvarna", "DeWalt"]
+    subtypes: ["mowers", "string trimmers", "leaf blowers", "hedge trimmers",
+               "chainsaws", "pressure washers", "snow blowers"]
+    seeds: ["lawn mower", "lawnmower", "string trimmer", "weed eater", "weed wacker",
+            "leaf blower", "hedge trimmer", "edger", "chainsaw", "chain saw",
+            "pressure washer", "power washer", "snow blower", "snowblower",
+            "tiller", "cultivator", "greenworks", "husqvarna", "toro ", "ego power",
+            "ryobi", "dewalt", "stihl", "echo trimmer", "craftsman mower"]
+    seed_exempt: ["EGO"]  # covered by "ego power"; bare "ego" is too short
 
   - name: "Tarps"
     group: "Outdoor & garden"
@@ -125,6 +287,14 @@ buckets:
       BBQ/grill covers, patio set covers, equipment and machinery covers,
       and vehicle/car/boat covers. Anything that shields gear from the
       elements. Branded or generic.
+    subtypes: ["poly tarps", "canvas tarps", "furniture covers", "grill covers",
+               "vehicle covers"]
+    seeds: ["tarp", "poly cover", "canvas cover", "grill cover", "bbq cover",
+            "patio cover", "furniture cover", "car cover", "boat cover",
+            "equipment cover", "chair cover", "table cover", "canopy",
+            "drop cloth", "moving blanket", "tarpaulin", "sun shade", "shade sail",
+            "mattress cover", "storage cover", "motorcycle cover", "atv cover",
+            "bike cover", "cushion storage", "mower cover", "generator cover"]
 
   - name: "BBQ accessories"
     group: "Outdoor & garden"
@@ -133,12 +303,25 @@ buckets:
       pellet hoppers, grill tools, covers, and related parts. Branded or
       generic.
     examples: ["Napoleon", "Traeger", "Pit Boss", "Weber", "Char-Broil"]
+    subtypes: ["grill grates", "grill tools", "smoker accessories",
+               "pellets", "thermometers"]
+    seeds: ["grill grate", "grill tool", "grill brush", "bbq tool", "smoke tube",
+            "smoker box", "wood pellet", "grill thermometer", "meat thermometer",
+            "skewer", "griddle", "charcoal", "grill light", "rotisserie",
+            "traeger", "pit boss", "weber", "char-broil", "napoleon grill",
+            "grill cover", "bbq cover", "grill basket", "grill mat", "grill press",
+            "smoker tube", "bbq glove", "grill scraper", "broil king"]
+    seed_exempt: ["Napoleon"]  # covered by "napoleon grill"
 
   - name: "Garden hose"
     group: "Outdoor & garden"
     description: >
       Garden hoses, hose nozzles, sprayers, shutoffs, hose reels, and
       hose connectors/fittings.
+    subtypes: ["hoses", "nozzles", "sprinklers", "hose reels", "fittings"]
+    seeds: ["garden hose", "hose nozzle", "hose reel", "hose connector",
+            "hose fitting", "expandable hose", "soaker hose", "sprinkler",
+            "spray nozzle", "hose splitter", "quick connect hose"]
 
   - name: "Gardening tools"
     group: "Outdoor & garden"
@@ -148,6 +331,13 @@ buckets:
       hand cultivators, weeders, garden forks, watering cans, and garden
       kneelers. Branded or generic, if clearly gardening hand tools.
     examples: ["Fiskars", "Felco", "Corona", "Wolf-Garten"]
+    subtypes: ["pruners", "loppers", "shears", "shovels", "rakes", "trowels",
+               "watering cans"]
+    seeds: ["pruner", "pruning", "secateur", "lopper", "garden shear",
+            "hedge shear", "trowel", "garden spade", "shovel", "garden rake",
+            "leaf rake", "garden hoe", "cultivator hand", "weeder", "garden fork",
+            "watering can", "garden kneeler", "fiskars", "felco"]
+    seed_exempt: ["Corona", "Wolf-Garten"]  # Corona is a beer brand here
 
   - name: "Garden & lawncare misc"
     group: "Outdoor & garden"
@@ -161,6 +351,14 @@ buckets:
       netting, weed barrier/landscape fabric, planters and plant pots, and
       similar yard/garden supplies.
     examples: ["Scotts", "Miracle-Gro", "Vigoro"]
+    subtypes: ["grass seed", "fertilizer", "soil & mulch", "planters",
+               "landscape fabric", "lawn treatments", "plant supports"]
+    seeds: ["grass seed", "lawn seed", "flower seed", "vegetable seed", "compost",
+            "fertilizer", "plant food", "potting mix", "potting soil", "topsoil",
+            "mulch", "weed and feed", "weed & feed", "grub control", "lawn treatment",
+            "landscape edging", "garden edging", "plant stake", "garden netting",
+            "weed barrier", "landscape fabric", "planter", "plant pot", "flower pot",
+            "scotts", "miracle-gro", "miracle gro", "vigoro"]
 
   - name: "Outdoor furniture & hammocks"
     group: "Outdoor & garden"
@@ -171,17 +369,33 @@ buckets:
       chairs, and patio seating sets. Comfortable outdoor furniture for
       relaxing. Branded or generic.
     examples: ["ENO", "Sunnydaze", "Keter", "Adirondack"]
+    subtypes: ["hammocks", "patio chairs", "loungers", "patio sets",
+               "swings & gliders", "adirondack chairs"]
+    seeds: ["hammock", "patio chair", "patio set", "patio furniture",
+            "outdoor chair", "outdoor furniture", "chaise lounge", "lounger",
+            "adirondack", "porch swing", "patio swing", "glider chair",
+            "zero gravity chair", "camping chair", "folding chair", "sunnydaze",
+            "keter", "eno hammock"]
+    seed_exempt: ["ENO"]  # bare "eno" matches "enough"
 
   - name: "Bath towels"
     group: "Home & bedroom"
     description: >
       Bath towels, towel sets, hand towels, washcloths, and bath sheets.
+    subtypes: ["bath towels", "towel sets", "hand towels", "washcloths"]
+    seeds: ["bath towel", "towel set", "hand towel", "washcloth", "wash cloth",
+            "bath sheet", "beach towel", "towel bale"]
 
   - name: "Bed linens"
     group: "Home & bedroom"
     description: >
       Bed sheets, sheet sets, pillowcases, duvet covers, comforters, and
       bedding sets.
+    subtypes: ["sheet sets", "pillowcases", "duvet covers", "comforters",
+               "bedding sets"]
+    seeds: ["sheet set", "bed sheet", "fitted sheet", "flat sheet", "pillowcase",
+            "pillow case", "duvet cover", "comforter", "bedding set", "bed skirt",
+            "coverlet"]
 
   - name: "Bedding & pillows"
     group: "Home & bedroom"
@@ -189,17 +403,29 @@ buckets:
       Soft bedding goods beyond sheets — pillows, mattress toppers and
       pads, mattress protectors, mattresses, blankets, throws, and quilts.
     examples: ["Casper", "Tempur-Pedic", "MyPillow", "Coop"]
+    subtypes: ["pillows", "mattress toppers", "mattress protectors",
+               "mattresses", "blankets", "quilts", "throws"]
+    seeds: ["pillow", "mattress topper", "mattress pad", "mattress protector",
+            "mattress", "blanket", "throw blanket", "quilt", "duvet insert",
+            "weighted blanket", "body pillow", "tempur", "casper", "mypillow"]
+    seed_exempt: ["Coop"]  # matches "cooper", "chicken coop"
+    exclude: ["pillowcase", "pillow case", "throw pillow cover"]
 
   - name: "Nightstands"
     group: "Home & bedroom"
     description: >
       Nightstands, bedside tables, and bedroom side tables.
+    subtypes: ["nightstands", "bedside tables"]
+    seeds: ["nightstand", "night stand", "bedside table", "bedside cabinet",
+            "side table"]
 
   - name: "King bed frames"
     group: "Home & bedroom"
     description: >
       King-size bed frames, headboards, and complete king beds.
       King size specifically (not queen/full/twin).
+    subtypes: ["bed frames", "headboards", "complete beds"]
+    seeds: ["bed frame", "headboard", "platform bed", "bed base", "king bed"]
 
   - name: "Cleaning supplies & tools"
     group: "Cleaning & storage"
@@ -209,6 +435,17 @@ buckets:
       cleaning solutions and concentrates, and similar cleaning gear.
       Branded or generic.
     examples: ["OXO", "Scotch-Brite", "Libman", "Rubbermaid"]
+    subtypes: ["scrub brushes", "mops & brooms", "microfiber cloths",
+               "detergents", "sponges", "vacuums", "spray bottles"]
+    seeds: ["sponge", "scrub brush", "scrubber", "microfiber cloth", "mop ",
+            "broom", "duster", "squeegee", "spray bottle", "cleaning solution",
+            "detergent", "disinfectant", "all purpose cleaner", "dish soap",
+            "laundry detergent", "bleach", "shop vac", "wet dry vac", "vacuum",
+            "swiffer", "scotch-brite", "libman", "clorox", "lysol", "oxo ",
+            "rubbermaid", "cleaning cloth", "paper towel", "trash bag", "garbage bag",
+            "dish rack", "drying rack", "steam cleaner", "carpet cleaner",
+            "stain remover", "fabric softener", "dryer sheet", "toilet brush",
+            "dust pan", "dustpan", "lint roller", "air freshener"]
 
   - name: "Storage bins & totes"
     group: "Cleaning & storage"
@@ -217,22 +454,37 @@ buckets:
       bins, lidded totes, stackable containers, and organizing bins NOT
       specific to kitchen or garage/workshop.
     examples: ["Sterilite", "Rubbermaid", "IRIS"]
+    subtypes: ["storage bins", "lidded totes", "stackable containers",
+               "organizing bins", "storage drawers"]
+    seeds: ["storage bin", "storage tote", "tote", "storage container",
+            "stackable bin", "stacking bin", "organizing bin", "storage box",
+            "storage drawer", "under bed storage", "sterilite", "iris usa",
+            "storage cube", "collapsible bin", "rubbermaid"]
+    seed_exempt: ["IRIS"]  # iris the flower; "iris usa" is seeded instead
 
   - name: "Laundry baskets"
     group: "Cleaning & storage"
     description: >
       Laundry baskets, hampers, laundry bags, and laundry sorters.
+    subtypes: ["laundry baskets", "hampers", "laundry bags", "sorters"]
+    seeds: ["laundry basket", "laundry hamper", "hamper", "laundry bag",
+            "laundry sorter", "clothes basket", "laundry cart"]
 
   - name: "Barbies"
     group: "Toys & games"
     description: >
       Barbie dolls, playsets, vehicles, dreamhouses, and Barbie accessories.
+    subtypes: ["dolls", "playsets", "vehicles", "dreamhouses"]
+    seeds: ["barbie", "dreamhouse", "dream house"]
 
   - name: "Surprise toys"
     group: "Toys & games"
     description: >
       LOL Surprise and Na Na Na Surprise toys — dolls, blind packs/balls,
       playsets, and accessories.
+    subtypes: ["blind packs", "dolls", "playsets"]
+    seeds: ["lol surprise", "l.o.l. surprise", "na na na surprise", "blind bag",
+            "blind box", "surprise ball", "mystery pack"]
 
   - name: "Lego"
     group: "Toys & games"
@@ -240,16 +492,31 @@ buckets:
       Lego sets, Lego pieces and parts, Lego building tables, and
       Lego-compatible building-brick sets. Includes Duplo.
     examples: ["Lego", "Duplo", "KidKraft Lego table"]
+    subtypes: ["lego sets", "duplo", "building bricks", "lego tables"]
+    seeds: ["lego", "duplo", "building brick", "building block set",
+            "brick set", "mega bloks"]
 
   - name: "Hatchimals"
     group: "Toys & games"
     description: >
       Hatchimals toys — eggs, CollEGGtibles, playsets, and accessories.
+    subtypes: ["eggs", "colleggtibles", "playsets"]
+    seeds: ["hatchimal", "colleggtible"]
 
   - name: "Board games"
     group: "Toys & games"
     description: >
       Board games, card games, party games, tabletop games, and puzzles.
+    subtypes: ["board games", "card games", "party games", "puzzles",
+               "tabletop games"]
+    seeds: ["board game", "card game", "party game", "tabletop game",
+            "jigsaw puzzle", "puzzle", "trivia game", "dice game", "monopoly",
+            "scrabble", "catan", "ticket to ride", "playing card", "chess",
+            "dominoes", "family game", "game", "beyblade", "pokemon", "flash card",
+            "trading card", "piece puzzle", "bingo", "poker", "yahtzee", "jenga",
+            "uno ", "tarot", "domino", "checkers", "backgammon", "cribbage"]
+    exclude: ["video game", "game controller", "gaming mouse", "gaming keyboard",
+              "gaming headset", "game console", "gaming chair"]
 
   - name: "Sports & recreation gear"
     group: "Sports & fitness"
@@ -259,6 +526,24 @@ buckets:
       gear: balls, nets, goals, sticks, bats, racquets, gloves, pads and
       protective gear. Includes kids'/youth sizes and equipment.
     examples: ["Spalding", "Wilson", "Bauer", "Franklin", "Nike"]
+    subtypes: ["balls", "nets & goals", "sticks & bats", "racquets",
+               "protective gear", "gloves", "skates"]
+    seeds: ["basketball", "soccer ball", "soccer net", "hockey stick",
+            "hockey skate", "baseball bat", "baseball glove", "football",
+            "tennis racquet", "tennis racket", "volleyball", "golf club",
+            "golf ball", "pickleball", "badminton", "skateboard", "roller skate",
+            "shin guard", "helmet", "mouthguard", "sports bag", "spalding",
+            "wilson sport", "bauer", "franklin sport", "lacrosse", "archery",
+            "fishing rod", "bicycle", "scooter", "nike ", "water gun", "knee pad",
+            "elbow pad", "exercise ball", "pilates", "training glove", "rebounder",
+            "stomp rocket", "swim goggle", "life jacket", "sled", "ski ", "snowboard",
+            "ping pong", "table tennis", "dart board", "horseshoe", "cornhole",
+            "medicine ball", "toning ball", "boxing glove", "punching bag",
+            "nerf", "balance ball", "kickball", "dodgeball", "hockey short",
+            "skate", "shin pad", "sports net", "goal net", "batting",
+            "bocce", "washer toss", "ladder toss", "ball pit", "ring toss",
+            "spikeball", "frisbee", "disc golf", "croquet", "bean bag toss"]
+    seed_exempt: ["Wilson", "Franklin"]  # both are also generic surnames
 
   - name: "Home gym & weightlifting"
     group: "Sports & fitness"
@@ -269,6 +554,18 @@ buckets:
       cardio machines, and gym accessories. Resells well; bumper plates
       especially worth flagging.
     examples: ["Rogue", "REP", "Bowflex", "NordicTrack", "Eleiko"]
+    subtypes: ["barbells", "weight plates", "dumbbells", "kettlebells",
+               "racks & stands", "benches", "cardio machines", "gym accessories"]
+    seeds: ["barbell", "olympic bar", "weight plate", "bumper plate", "dumbbell",
+            "kettlebell", "power rack", "squat rack", "squat stand", "weight bench",
+            "treadmill", "exercise bike", "elliptical", "rowing machine",
+            "resistance band", "jump rope", "yoga mat", "exercise mat", "ab roller",
+            "pull up bar", "weight set", "gym floor", "rogue fitness", "bowflex",
+            "nordictrack", "weight rack", "medicine ball", "foam roller", "eleiko",
+            "weighted vest", "balance disc", "door gym", "ab wheel", "push up bar",
+            "dip station", "weight belt", "lifting strap", "wrist wrap",
+            "gym mat", "stability ball", "battle rope", "agility ladder"]
+    seed_exempt: ["Rogue", "REP"]  # "rep" matches "repair", "replacement"
 
   - name: "Brand boots & shoes"
     group: "Footwear"
@@ -277,6 +574,15 @@ buckets:
       footwear — winter boots, rain boots, work boots, and notable
       sneaker/shoe brands.
     examples: ["Ugg", "Hunter", "Blundstone", "Doc Martens", "Sorel", "Timberland", "Bogs"]
+    subtypes: ["winter boots", "work boots", "rain boots", "sneakers",
+               "casual shoes", "sandals"]
+    seeds: ["boot", "sneaker", "shoe", "runner", "sandal", "slipper", "clog",
+            "loafer", "ugg", "blundstone", "doc marten", "dr. marten", "sorel",
+            "timberland", "bogs", "hunter boot", "birkenstock", "crocs",
+            "adidas", "new balance", "asics", "reebok", "skechers", "vans "]
+    seed_exempt: ["Hunter"]  # covered by "hunter boot"; bare "hunter" is hunting gear
+    exclude: ["boot tray", "shoe rack", "shoe organizer", "boot brush",
+              "shoe polish", "boot dryer"]
 
   - name: "Brand chef knives"
     group: "Kitchen & dining"
@@ -286,6 +592,15 @@ buckets:
       Recognizable knife brands OR clearly quality kitchen knives even if
       the title doesn't say "knife" (e.g. "cutlery set", a brand name alone).
     examples: ["Shun", "Wüsthof", "Henckels", "Global", "Mac", "Miyabi", "Victorinox", "Dalstrong"]
+    subtypes: ["chef knives", "knife sets", "knife blocks", "paring knives",
+               "santoku", "steak knives", "sharpeners"]
+    seeds: ["knife", "knives", "santoku", "cutlery", "chef kni", "paring",
+            "cleaver", "knife block", "knife set", "steak knife", "bread knife",
+            "shun", "wusthof", "wüsthof", "henckels", "miyabi", "victorinox",
+            "dalstrong", "knife sharpener", "sharpening steel"]
+    seed_exempt: ["Global", "Mac"]  # both match far too much as bare words
+    exclude: ["utility knife", "box cutter", "pocket knife", "hunting knife",
+              "putty knife"]
 
   - name: "Brand cookware"
     group: "Kitchen & dining"
@@ -294,12 +609,23 @@ buckets:
       dutch ovens, cookware sets, and bakeware. Premium brands OR clearly
       quality cookware even when the type word is abbreviated.
     examples: ["De Buyer", "All-Clad", "Made In", "Le Creuset", "Staub", "Lodge", "Calphalon"]
+    subtypes: ["skillets", "saucepans", "dutch ovens", "cookware sets",
+               "bakeware", "sheet pans", "stock pots"]
+    seeds: ["skillet", "fry pan", "frying pan", "saucepan", "sauce pan",
+            "dutch oven", "cookware", "stock pot", "stockpot", "saute pan",
+            "sauté pan", "roasting pan", "baking sheet", "sheet pan", "bakeware",
+            "cake pan", "muffin pan", "loaf pan", "casserole dish", "cast iron",
+            "le creuset", "all-clad", "all clad", "staub", "lodge cast",
+            "calphalon", "de buyer", "made in cookware", "griddle pan", "lodge "]
+    seed_exempt: ["Made In"]  # "made in china" appears in thousands of titles
 
   - name: "Starbucks coffee"
     group: "Kitchen & dining"
     description: >
       Starbucks-branded coffee products — whole bean, ground coffee,
       K-cups/pods, and instant coffee.
+    subtypes: ["whole bean", "ground coffee", "k-cups", "instant coffee"]
+    seeds: ["starbucks"]
 
   - name: "Kitchen storage & organization"
     group: "Kitchen & dining"
@@ -308,6 +634,16 @@ buckets:
       containers (e.g. OXO Pop / "pop" containers), canisters, dry-goods
       containers and sets, pantry bins, and spice/jar organizers.
     examples: ["OXO Pop", "Rubbermaid Brilliance", "Snapware", "Pyrex"]
+    subtypes: ["food containers", "canisters", "pantry bins",
+               "spice organizers", "lid organizers"]
+    seeds: ["food storage container", "food container", "airtight container",
+            "canister", "pantry bin", "spice rack", "spice organizer",
+            "jar organizer", "lid organizer", "oxo pop", "snapware", "pyrex",
+            "brilliance", "meal prep container", "lunch container",
+            "cabinet organizer", "drawer organizer", "pop container",
+            "food storage", "pantry organizer", "snack container", "vacuum sealer",
+            "locknlock", "lock n lock", "glass storage", "storage set",
+            "produce keeper", "cereal container"]
 
   - name: "Dinnerware"
     group: "Kitchen & dining"
@@ -318,6 +654,12 @@ buckets:
       Do NOT flag generic single no-brand pieces (browse those by category
       instead).
     examples: ["Corelle", "Mikasa", "Fiestaware", "Denby"]
+    subtypes: ["dinnerware sets", "plates", "bowls", "mugs", "serving platters"]
+    seeds: ["dinnerware", "dinner plate", "salad plate", "serving platter",
+            "serving bowl", "cereal bowl", "mug set", "plate set", "bowl set",
+            "china set", "stoneware", "porcelain", "coffee mug", "ceramic mug",
+            "mug ", "dish rack set", "corelle", "mikasa",
+            "fiestaware", "denby", "dish set"]
 
   - name: "Glassware & drinkware"
     group: "Kitchen & dining"
@@ -327,6 +669,12 @@ buckets:
       brands and complete sets. Do NOT flag generic single no-brand
       glasses (browse those by category instead).
     examples: ["Libbey", "Stanley", "Yeti", "Tervis"]
+    subtypes: ["tumblers", "glass sets", "stemware", "insulated drinkware",
+               "water bottles", "mugs"]
+    seeds: ["tumbler", "drinkware", "glassware", "wine glass", "stemware",
+            "pint glass", "water bottle", "travel mug", "insulated bottle",
+            "coffee mug", "highball", "decanter", "libbey", "stanley",
+            "yeti", "tervis", "hydro flask", "contigo", "thermos"]
 
   - name: "Shatterproof / outdoor dishware"
     group: "Kitchen & dining"
@@ -336,6 +684,11 @@ buckets:
       tumblers that won't shatter (safe for poolside and outdoor use, no
       glass).
     examples: ["Tervis", "melamine dinnerware", "Tritan tumblers"]
+    subtypes: ["melamine dishware", "acrylic tumblers", "tritan drinkware",
+               "outdoor dish sets"]
+    seeds: ["melamine", "tritan", "acrylic tumbler", "acrylic glass",
+            "shatterproof", "unbreakable", "outdoor dinnerware", "picnic set",
+            "camping dish", "tervis"]
 
   - name: "Specialty cooking & baking ingredients"
     group: "Kitchen & dining"
@@ -345,6 +698,13 @@ buckets:
       and notable-brand pantry ingredients. Auction grocery lots may show
       "best before" dates — flag regardless; Bat will assess.
     examples: ["Callebaut", "Valrhona", "King Arthur", "Nielsen-Massey"]
+    subtypes: ["baking chocolate", "specialty flour", "vanilla",
+               "oils & vinegars", "pantry ingredients", "spices"]
+    seeds: ["baking chocolate", "cocoa powder", "couverture", "specialty flour",
+            "bread flour", "vanilla extract", "vanilla bean", "olive oil",
+            "balsamic", "vinegar", "maple syrup", "honey", "sea salt",
+            "spice set", "callebaut", "valrhona", "king arthur", "nielsen-massey",
+            "saffron", "truffle oil"]
 
   - name: "Kitchen appliances"
     group: "Kitchen & dining"
@@ -354,6 +714,15 @@ buckets:
       kettles, multi-cookers/Instant Pots. Favor recognizable brands and
       quality/working units over generic or non-working items.
     examples: ["KitchenAid", "Vitamix", "Breville", "Cuisinart", "Ninja"]
+    subtypes: ["stand mixers", "blenders", "air fryers", "coffee makers",
+               "toasters", "multi-cookers", "food processors", "kettles"]
+    seeds: ["stand mixer", "hand mixer", "blender", "food processor", "air fryer",
+            "toaster", "coffee maker", "espresso machine", "electric kettle",
+            "instant pot", "multi cooker", "multi-cooker", "slow cooker",
+            "pressure cooker", "rice cooker", "juicer", "waffle maker",
+            "sandwich maker", "deep fryer", "microwave", "kitchenaid", "vitamix",
+            "breville", "cuisinart", "ninja ", "keurig", "nespresso",
+            "immersion blender", "sous vide"]
 
   - name: "Kitchen utensils & gadgets"
     group: "Kitchen & dining"
@@ -363,3 +732,12 @@ buckets:
       recognizable brands and complete sets. Do NOT flag generic single
       no-brand utensils (browse those by category instead).
     examples: ["OXO", "KitchenAid", "Joseph Joseph", "Zwilling"]
+    subtypes: ["spatulas", "tongs", "whisks", "peelers", "graters",
+               "utensil sets", "measuring tools", "cutting boards"]
+    seeds: ["spatula", "tongs", "whisk", "peeler", "grater", "utensil set",
+            "kitchen tool", "measuring cup", "measuring spoon", "colander",
+            "strainer", "ladle", "can opener", "mandoline", "cutting board",
+            "kitchen shear", "rolling pin", "baking mat", "cookie cutter",
+            "pot holder", "oven mitt", "trivet", "corkscrew", "bottle opener",
+            "mixing bowl", "salad spinner", "garlic press", "oxo ",
+            "joseph joseph", "zwilling", "kitchenaid"]

@@ -1,0 +1,229 @@
+# Bat's taste profile — the "why" behind buckets.yaml.
+#
+# This file and buckets.yaml are BOTH attached to the flagging chat. The
+# profile explains what this household actually wants; buckets.yaml is the
+# navigable taxonomy that interest is expressed through.
+#
+# WRITTEN IMPERSONALLY ON PURPOSE. This repo is public. Interests, brands,
+# age bands and sizes are fine here; names, relations and addresses are not,
+# and they buy nothing in recall. Say "kids' toys, ages 8-11" rather than
+# naming a person.
+#
+# Three fields do mechanical work and are linted by tools/prefilter.py:
+#
+#   buckets:  the buckets in buckets.yaml this interest justifies. Every
+#             bucket must be claimed by at least one interest — an unclaimed
+#             bucket is a question to answer, not a silent orphan. An interest
+#             with `buckets: []` is a pure PSEUDO-BUCKET: it has no place in
+#             the taxonomy but its seeds still shortlist lots, so a genuine
+#             personal pick outside every bucket can still reach the model.
+#   tags:     the controlled vocabulary for `personal_tags`. Anything outside
+#             this set is reported by tools/verify_passes.py.
+#   seeds:    lexical shortlist terms, same matching rules as buckets.yaml.
+#             Add them wherever an interest has edges its buckets don't cover
+#             — NOT only on pseudo-buckets. "Kids' toys" owns Barbies and Lego
+#             but no bucket holds a generic doll; "Garage & workshop" owns
+#             Power tools but no bucket holds a hand chisel. Measured, seeding
+#             those edges took personal-pick reach from 72.7% to 94.0%.
+
+# TODO(user): fill these in — they gate apparel and footwear matches, and the
+# flagging pass is told to reject the right item in the wrong size.
+sizes:
+  shoe: null
+  apparel: null
+
+projects:
+  - "Home gym build-out — rack, bar, plates, flooring, accessories."
+  - "Garage/workshop organisation and tooling."
+  - "3D printing: filament, spare parts, consumables."
+  - "Yard and lawn upkeep on an ongoing basis."
+  - "Pool and hot tub maintenance across the season."
+  - "Small-business product testing — items bought to evaluate and resell."
+
+not_wanted:
+  - "Broken, incomplete, or non-functional items, unless the profile
+     explicitly wants that type for parts or repair."
+  - "Generic no-brand single utensils, cables, and accessories with no
+     resale or practical value."
+  - "Apparel and footwear outside the sizes above."
+  - "Consumables already stocked in quantity."
+
+interests:
+  - name: "Home gym"
+    buckets: ["Home gym & weightlifting"]
+    tags: ["home_gym"]
+    description: >
+      Strength training equipment for a home gym — barbells, plates, racks,
+      benches, dumbbells, kettlebells, and gym flooring. The single largest
+      standing interest.
+    # Fitness gear the bucket's own seeds don't reach.
+    seeds: ["fitness", "workout", "exercise", "training bag", "bag stand",
+            "gym ", "weight lifting", "weightlifting", "strength training"]
+
+  - name: "Sports & outdoor recreation"
+    buckets: ["Sports & recreation gear", "Outdoor furniture & hammocks"]
+    tags: ["family_outdoors", "family_activity"]
+    description: >
+      Gear for family outdoor activity and yard seating — bikes, camping,
+      games, hammocks, and patio furniture.
+
+  - name: "Kids' toys & games"
+    buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Board games"]
+    tags: ["kids_interest", "family_activity"]
+    description: >
+      Toys and games for kids roughly ages 8-11, plus board games the whole
+      household plays. Collectible and blind-box toys included.
+    # The five toy buckets are narrow (Barbies, Lego, Surprise toys,
+    # Hatchimals, Board games). Nothing holds a generic doll or plush, which
+    # was the largest single group of picks the shortlist used to drop.
+    seeds: ["doll", "plush", "stuffed animal", "toy ", "toys", "figurine",
+            "action figure", "playset", "play set", "craft kit", "art set",
+            "kids ", "children", "toddler", "squishmallow", "disney",
+            "frozen ", "paw patrol", "bluey", "ride on"]
+
+  - name: "PC & desk setup"
+    buckets: ["Keyboards & PC peripherals", "Electronics", "Video games & VR"]
+    tags: ["pc_accessory", "pc_gaming", "secondary_monitor", "networking"]
+    description: >
+      Desktop PC and gaming setup — keyboards, mice, monitors, headsets,
+      capture and streaming gear, networking equipment, consoles and VR.
+      Mechanical keyboards are a specific enthusiasm; ordinary membrane
+      boards are still worth surfacing but rank below them.
+
+  - name: "Smart home"
+    buckets: ["Smart home", "Smart locks"]
+    tags: ["smart_home"]
+    description: >
+      Home automation — smart bulbs and strips, plugs, thermostats, sensors,
+      video doorbells, and keyless entry hardware.
+
+  - name: "Garage & workshop"
+    buckets:
+      ["Power tools", "Garage & tool organization", "Adhesives & tape",
+       "Batteries & chargers", "Extension cords & power strips", "Tie-downs"]
+    tags: ["garage_workshop", "tooling", "garage_organization",
+           "charging_and_power", "yard_and_garage"]
+    description: >
+      An actively used workshop — power and hand tools, tool storage and
+      organisation, fasteners and adhesives, tool batteries and chargers,
+      cords, and tie-downs for hauling.
+    # "Power tools" covers powered tools only; no bucket holds a hand chisel,
+    # a socket set, or a box of fasteners.
+    seeds: ["chisel", "hand tool", "wrench", "socket", "pliers", "hammer",
+            "screwdriver", "utility knife", "clamp", "vise", "level ",
+            "tape measure", "bolt", "nut and bolt", "screw", "fastener",
+            "washer", "anchor", "cable tie", "zip tie", "hardware kit",
+            "work glove", "safety glass", "tool set"]
+
+  - name: "3D printing"
+    buckets: ["3D printing supplies"]
+    tags: ["3d_printing", "3d_printing_consumable"]
+    description: >
+      An operating 3D printer — filament and resin, nozzles, build plates,
+      and printer spares. Filament is a recurring consumable.
+
+  - name: "Yard & lawn"
+    buckets:
+      ["Lawn equipment", "Garden hose", "Gardening tools",
+       "Garden & lawncare misc", "Tarps"]
+    tags: ["outdoor_maintenance", "yard_watering"]
+    description: >
+      Ongoing yard upkeep — mowers and trimmers, hoses and watering, hand
+      garden tools, lawn treatments, and tarps.
+    seeds: ["mosquito", "bug zapper", "pest control", "wasp", "gazebo",
+            "screen tent", "outdoor umbrella", "wheelbarrow", "garden cart"]
+
+  - name: "BBQ & outdoor cooking"
+    buckets: ["BBQ accessories"]
+    tags: ["outdoor_cooking", "bbq_accessory"]
+    description: >
+      Grilling and outdoor cooking — grill tools and accessories, smoking
+      supplies, thermometers, covers, and fuel.
+
+  - name: "Kitchen"
+    buckets:
+      ["Kitchen appliances", "Brand cookware", "Brand chef knives",
+       "Kitchen utensils & gadgets", "Glassware & drinkware", "Dinnerware",
+       "Shatterproof / outdoor dishware",
+       "Specialty cooking & baking ingredients", "Kitchen storage & organization",
+       "Starbucks coffee"]
+    tags: ["premium_kitchen"]
+    description: >
+      A well-equipped kitchen that rewards quality — recognisable-brand
+      appliances, cookware, cutlery and tools. Quality is the whole point
+      here: generic no-brand single pieces are explicitly not wanted, and
+      several buckets encode that gate in their own descriptions.
+
+  - name: "Cleaning"
+    buckets: ["Cleaning supplies & tools"]
+    tags: ["cleaning_consumable", "cleaning_equipment", "second_shop_vac"]
+    description: >
+      Household cleaning — vacuums (a second shop vac is actively wanted),
+      mops and brushes, and detergents and cleaning consumables bought in
+      bulk when cheap.
+
+  - name: "Storage & organization"
+    buckets: ["Storage bins & totes", "Laundry baskets"]
+    tags: ["home_organization"]
+    description: >
+      General household storage — plastic bins and lidded totes, stackable
+      containers, organising bins, and laundry baskets.
+
+  - name: "Bed & bath"
+    buckets:
+      ["Bedding & pillows", "Bed linens", "Bath towels", "King bed frames",
+       "Nightstands"]
+    tags: ["bed_and_bath_linens"]
+    description: >
+      Bedroom and bathroom textiles and furniture. Bed size is king — check
+      size before flagging fitted sheets or frames.
+
+  - name: "Footwear"
+    buckets: ["Brand boots & shoes"]
+    tags: ["footwear"]
+    description: >
+      Recognisable-brand boots and shoes, work boots included. Size-gated:
+      see `sizes.shoe` above. The right boot in the wrong size is not a match.
+
+  - name: "Product testing & resale"
+    buckets: []
+    tags: ["product_testing", "small_business"]
+    description: >
+      Items bought to evaluate, review, or resell through a small business.
+      Cuts across every category, so it is a lens rather than a bucket: a lot
+      can be a product-testing pick without belonging to any bucket.
+    seeds: ["wholesale lot", "case pack", "bulk lot", "pallet", "retail box"]
+
+  - name: "Pool & hot tub"
+    buckets: []
+    tags: ["pool_maintenance", "pool_recreation", "hot_tub_maintenance"]
+    description: >
+      Seasonal pool and hot tub upkeep and recreation. No bucket covers this,
+      so it reaches the model purely through the seeds below.
+    seeds:
+      ["pool", "chlorine", "pool filter", "pool pump", "pool vacuum",
+       "skimmer", "pool float", "hot tub", "spa chemical", "test strip",
+       "shock treatment", "pool cover", "pool noodle"]
+
+  - name: "Practical lighting"
+    buckets: []
+    tags: ["practical_lighting"]
+    description: >
+      Work and utility lighting rather than decorative — shop lights, work
+      lights, headlamps, flashlights, motion floodlights, and solar path
+      lighting. Smart/colour-changing lighting belongs to Smart home instead.
+    seeds:
+      ["work light", "shop light", "led shop", "flashlight", "headlamp",
+       "floodlight", "flood light", "lantern", "solar light", "light bar",
+       "utility light", "spotlight", "spot light", "led bulb", "light bulb",
+       "string light", "path light", "garden light", "solar lamp",
+       "motion light", "camping light"]
+
+  - name: "Vehicle"
+    buckets: []
+    tags: ["tesla_model_3"]
+    description: >
+      Accessories for a Tesla Model 3 specifically — floor mats, chargers,
+      screen protectors, and model-fit interior parts. Generic car accessories
+      are not wanted; the fit has to be plausible.
+    seeds: ["tesla", "model 3", "ev charger", "nema 14-50", "j1772"]

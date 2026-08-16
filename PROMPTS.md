@@ -1,16 +1,23 @@
 # ChatGPT Pass Prompts
 
-The three ChatGPT passes referenced in `CLAUDE.md` step 4. Each returns one
+The two ChatGPT passes referenced in `CLAUDE.md` step 4. Each returns one
 JSON file.
 
 | Pass | Input file | Save output as |
 |---|---|---|
-| 1. Bat's List flagging | `auction_<ID>_for_agent.json` | `auction_<ID>_categorized.json` |
+| 1. Bat's List + personal match | `auction_<ID>_candidates.json` | `auction_<ID>_flags.json` |
 | 2. Resale valuation | `auction_<ID>_for_resale.json` | `auction_<ID>_resale_deduped.json` |
-| 3. Personal match | `auction_<ID>_for_agent.json` | `auction_<ID>_personal.json` |
 
-Passes 1 and 3 read every lot. Pass 2 reads a deduplicated file with one row
-per distinct product, since these auctions list the same item dozens of times.
+Pass 1 used to be two separate passes over the same 27k-row file — one for
+bucket flags, one for personal match. They are now one pass, because they were
+asking the same question ("does Bat care about this, and why?") of the same
+rows, and splitting it doubled the output for nothing.
+
+Pass 1 no longer reads every lot either. `tools/prefilter.py` shortlists
+candidates per bucket and writes an all-false row for everything else, so the
+model sees roughly a third of the auction, grouped by bucket. Pass 2 reads a
+deduplicated file with one row per distinct product, since these auctions list
+the same item dozens of times.
 
 Every prompt below is written so its output matches exactly what `build/`
 consumes. The "why this matters" notes under each prompt are the failure modes
@@ -21,10 +28,10 @@ missing.
 
 ## Input fields
 
-Paste this block into each of the three chats alongside the prompt. All three
-files share this shape, and none of the passes work well without knowing that
-an absent key is meaningful. (Pass 2's rows carry one extra field, `qty`,
-described in its own section.)
+Paste this block into each chat alongside the prompt. Both files share this
+shape, and neither pass works well without knowing that an absent key is
+meaningful. (Pass 2's rows carry one extra field, `qty`, described in its own
+section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
 
 > **Input fields.** Every lot has:
 > - `lot_number` — the join key. Copy it back verbatim, prefix included.
@@ -52,7 +59,7 @@ described in its own section.)
 
 ---
 
-## Shared rules (apply to all three passes)
+## Shared rules (apply to both passes)
 
 - **Output raw JSON only.** No ``` fences, no preamble, no "Here's your file",
   no trailing commentary. The verify step in `CLAUDE.md` rejects anything
@@ -65,13 +72,12 @@ described in its own section.)
   sampling, summarising, or stopping early. Each prompt below ends with a
   completeness instruction; keep it.
 - **Replace `N` in that instruction with the real row count** before pasting.
-  `tools/slim.py` and `tools/slim_resale.py` both print it. A concrete number
-  is what makes the agent's own count checkable; leaving the literal `N` in
-  makes the instruction unenforceable.
-- **Truncation is the failure mode to watch.** These are single-pass runs over
-  tens of thousands of rows, and a run that quietly stops early produces valid
-  JSON that is simply short — indistinguishable from success by eye. Nothing
-  in the build catches it; `tools/verify_passes.py` and
+  `tools/prefilter.py` and `tools/slim_resale.py` both print it. A concrete
+  number is what makes the agent's own count checkable; leaving the literal
+  `N` in makes the instruction unenforceable.
+- **Truncation is the failure mode to watch.** A run that quietly stops early
+  produces valid JSON that is simply short — indistinguishable from success by
+  eye. Nothing in the build catches it; `tools/verify_passes.py` and
   `tools/expand_resale.py` do, by comparing lot sets rather than trusting the
   file. If a pass does come up short, they will say so and name the missing
   lots, and the fix is to re-run that pass for the missing rows and merge the
@@ -79,28 +85,67 @@ described in its own section.)
 
 ---
 
-## Pass 1 — Bat's List flagging
+## Pass 1 — Bat's List + personal match
 
-**Attach `buckets.yaml` to the chat.** Editing it in the repo does not update
-what the chat sees. It currently has **45 buckets**; if a read-test in a fresh
-chat reports a different number, the file didn't attach and the whole pass will
-produce unusable bucket names.
+**Attach BOTH `buckets.yaml` and `profile.yaml` to the chat.** Editing them in
+the repo does not update what the chat sees. `tools/prefilter.py` prints the
+bucket count on every run; if a read-test in a fresh chat reports a different
+number, the file didn't attach and the whole pass will produce unusable bucket
+names.
 
-Save as: `data/categorized/auction_<ID>_categorized.json`
+**Input file: `auction_<ID>_candidates.json`** — the shortlist, not the whole
+auction. Roughly a third of the lots, sorted so each bucket's rows are
+contiguous and the narrow buckets come first. `tools/prefilter.py` prints the
+row offsets of each bucket boundary; split long pastes there so no bucket's run
+is cut in half.
+
+Save as: `data/categorized/auction_<ID>_flags.json`
+
+Note the name. Step 5a merges it onto `auction_<ID>_base.json` to produce
+`auction_<ID>_categorized.json`, which is what the build consumes. Saving this
+pass's output directly as `_categorized.json` would drop every lot the
+prefilter screened out — about two thirds of the auction.
 
 ### Prompt
 
-> You are flagging auction lots against a curated interest list ("Bat's List").
+> You are judging a pre-screened shortlist of auction lots for one specific
+> person, against a curated interest list ("Bat's List").
 >
-> I have attached `buckets.yaml`. It defines the complete set of buckets. Each
-> bucket has a `name`, a `description`, and optional `examples`. Match lots
-> **semantically against the `description`** — `examples` are illustrative
-> hints, not an exhaustive whitelist. A generic or off-brand item still matches
-> if it fits the description. Before you begin, tell me how many buckets you
-> read so I can confirm the file attached correctly.
+> I have attached two files. `profile.yaml` describes what this household
+> actually wants — interests, projects underway, sizes, and things explicitly
+> not wanted. `buckets.yaml` defines the complete set of buckets, each with a
+> `name`, a `description`, optional `examples`, and an optional `subtypes`
+> vocabulary. **The buckets exist because of the profile**: they are the
+> navigable expression of those interests. Match lots **semantically against
+> the `description`** — `examples` are illustrative hints, not an exhaustive
+> whitelist. A generic or off-brand item still matches if it fits the
+> description. Before you begin, tell me how many buckets you read so I can
+> confirm the file attached correctly.
 >
 > I will give you auction lots as JSON. See "Input fields" below for what each
 > lot contains.
+>
+> **About `cand`.** Each lot carries `cand`: the buckets a local
+> keyword/category prefilter judged *possible*. It is where to look first, not
+> an answer.
+>
+> - **`cand` is not permission.** A lawn mower's "IGNITION KEY SWITCH" is a
+>   candidate for the keyboard bucket and is not a keyboard. Reject freely —
+>   most shortlisted lots are not matches, and a bucket whose description sets
+>   a quality bar ("do NOT flag generic no-brand pieces") still applies that
+>   bar in full.
+> - **Judge each candidate independently.** `cand` often lists two or three.
+>   Accept every one that genuinely fits — a gaming keyboard is both
+>   "Keyboards & PC peripherals" *and* "Electronics". Expect roughly one in ten
+>   accepted lots to carry two or more buckets. Assigning exactly one bucket to
+>   almost everything is a known failure mode of this task.
+> - Assigning a bucket **not** in `cand` is allowed but should be rare — only
+>   when the item unmistakably belongs there. I measure this, and it is useful
+>   signal about what the prefilter is missing.
+> - Some lots carry `profile` instead of or alongside `cand`. That means the
+>   lot matched a profile interest with no bucket of its own (pool upkeep,
+>   work lighting, vehicle fit). Those can be a personal pick with
+>   `bats_buckets: []`.
 >
 > For **every** lot I give you, return one object:
 >
@@ -108,36 +153,65 @@ Save as: `data/categorized/auction_<ID>_categorized.json`
 > {
 >   "lot_number": "S-1a",
 >   "is_bats_list": true,
->   "bats_buckets": ["Power tools"],
->   "bats_subtype": "impact drivers"
+>   "bats_buckets": ["Keyboards & PC peripherals", "Electronics"],
+>   "bats_subtype": "mechanical keyboards",
+>   "personal_match": true,
+>   "personal_tags": ["pc_gaming"],
+>   "match_strength": "strong",
+>   "match_types": ["personal_use"],
+>   "personal_reasoning": "Enthusiast mechanical board for the desk setup in the profile."
 > }
 > ```
 >
 > Rules:
 > - Return one row for **every** input lot, including lots that match nothing.
->   For those, set `is_bats_list` to `false` and `bats_buckets` to `[]`.
->   Never omit a lot, and never return only the matches.
+>   For those, return exactly these four keys and nothing else:
+>   `{"lot_number": "...", "is_bats_list": false, "bats_buckets": [], "personal_match": false}`.
+>   Do not shorten that further — the four keys are load-bearing (see below).
 > - `bats_buckets` values must be bucket `name` strings copied **exactly** from
->   `buckets.yaml` — same spelling, casing, spacing, and punctuation
->   (e.g. `"Garden & lawncare misc"`, not `"Garden and lawncare misc"`).
->   Never invent a bucket name.
-> - A lot may match more than one bucket. List all that apply. `is_bats_list`
->   is `true` if and only if `bats_buckets` is non-empty.
-> - `bats_subtype` is a free-form 1-3 word label describing **what the item
->   actually is**, one level finer than the bucket — `"scrub brushes"`,
->   `"detergents"` and `"mops & brooms"` inside `"Cleaning supplies & tools"`;
->   `"impact drivers"` and `"circular saws"` inside `"Power tools"`. Lowercase.
->   **Reuse the same wording across the whole run** rather than inventing a new
->   phrasing per lot — these become navigation, so `"scrub brushes"` on forty
->   lots is useful and forty near-synonyms are not. Omit the key (or use
->   `null`) whenever `is_bats_list` is `false`.
+>   `buckets.yaml` — same spelling, casing, spacing, and punctuation (e.g.
+>   `"Garden & lawncare misc"`, not `"Garden and lawncare misc"`). Never invent
+>   a bucket name.
+> - `is_bats_list` is `true` if and only if `bats_buckets` is non-empty.
+> - **`bats_subtype` is required whenever `is_bats_list` is true.** It is a
+>   1-3 word lowercase label for **what the item actually is**, one level finer
+>   than the bucket. Each bucket lists a `subtypes` vocabulary — use one of
+>   those verbatim when it fits, and invent a new 1-3 word lowercase label only
+>   when none does. **Reuse wording across the whole run**: these become
+>   navigation, so `"scrub brushes"` on forty lots is useful and forty near
+>   synonyms are not. Omit the key (or use `null`) only when `is_bats_list` is
+>   `false`.
+> - `personal_match` must be a real JSON boolean `true` — not the string
+>   `"true"`, not `1`. Only `true` counts as a pick.
+> - A lot can be on Bat's List without being a personal pick, and vice versa.
+>   The bucket answers "is this a type Bat collects?"; the pick answers "does
+>   Bat want *this one*, now?" — which is where `profile.yaml`'s projects,
+>   sizes, and `not_wanted` list do their work.
+> - `match_strength` is one lowercase word — `"strong"`, `"moderate"`, or
+>   `"weak"`. It is rendered into the badge as "PERSONAL PICK · {STRENGTH}
+>   MATCH".
+> - `personal_tags` and `match_types` are short arrays of plain strings shown
+>   as chips. **Draw `personal_tags` from the `tags` vocabulary in
+>   `profile.yaml`** rather than inventing new wording per lot.
+> - `personal_reasoning` is one short sentence, and the key must be named
+>   `personal_reasoning`.
+> - Omit `personal_tags`, `match_strength`, `match_types`, and
+>   `personal_reasoning` entirely on lots where `personal_match` is `false`.
+> - Check `size` before flagging apparel or footwear — a great item in the
+>   wrong size is not a match. Check `damage`, `missing_parts`, and the
+>   `damaged` / `missing_major_parts` / `functional` flags too: do not flag a
+>   broken or incomplete item as a pick unless the profile specifically wants
+>   it for parts or repair.
+> - Be selective about `personal_match: true`. That list is meant to be short
+>   enough to actually read. Being complete (a row per lot) and being selective
+>   (few `true`s) are both required.
 > - Use `model` to identify items whose title is a bare SKU or an ambiguous
 >   brand word — it is often the difference between correctly bucketing a lot
 >   and missing it. Do not let a wrong `category` talk you out of a match the
 >   title and model clearly support.
-> - Use these four keys and no others. In particular do **not** include a
->   `bats_category`, `bats_subcategory`, `category`, `subcategory`, or
->   `confidence` key.
+> - Use these keys and no others. In particular do **not** include a
+>   `bats_category`, `bats_subcategory`, `category`, `subcategory`,
+>   `reasoning`, or `confidence` key.
 > - Output a raw JSON array only — no markdown fences, no commentary.
 > - The file contains N rows. Return exactly N objects, one per row, in the
 >   same order. If you cannot complete all of them in one response, stop at a
@@ -146,42 +220,49 @@ Save as: `data/categorized/auction_<ID>_categorized.json`
 
 ### Why this matters
 
-- **The categorized file decides which lots exist in the bundle.** `build/merge.py`
-  iterates the categorized items and looks each one up in the raw scrape — it
-  does not iterate the raw file. Any lot missing from this file is missing from
-  the site entirely, flagged or not. This is why the pass must return all rows,
-  not just matches.
+- **Non-match rows need all four keys, not one.** Step 5a merges this file onto
+  `_base.json` with `merge_categorized`, which replaces **whole rows** by
+  `lot_number`. A returned `{"lot_number": "X", "is_bats_list": false}` would
+  replace the base row and delete `bats_buckets` and `personal_match` with it,
+  turning `personal_match` into `null` in the bundle and quietly changing step
+  8's coverage count. `tools/verify_passes.py` checks the union of keys across
+  all rows and catches this; the four-key rule prevents it.
 - **A `bats_category` key silently changes how the file is parsed.**
-  `build/transform.py:17` detects "Shape B" purely by that key's presence, and
+  `build/transform.py` detects "Shape B" purely by that key's presence, and
   Shape B reads buckets from `bats_category`/`bats_subcategory` while
-  **ignoring `bats_buckets` completely**. One stray key empties every bucket
-  in the bundle without any error.
-- **Bucket names must match `buckets.yaml` exactly.** Unrecognized names fall
-  into the synthetic "Other" group and get reported in the build's "no group"
-  warning — which `CLAUDE.md` step 7 says must come back empty.
-- **`category`/`subcategory` from the agent are discarded** by
-  `build/merge.py:138`; HiBid's native tree is the source of truth. Asking for
-  them wastes tokens and output budget.
-- **`bats_subtype` must not be named `bats_subcategory`.** The two read alike,
-  but `build/transform.py:17` detects "Shape B" purely by the presence of
-  `bats_category` — and Shape B reads buckets from
-  `bats_category`/`bats_subcategory` while ignoring `bats_buckets` entirely.
-  The subtype key is deliberately named differently so it can never trip that
-  detection.
-- **The subtype is what makes Bat's List navigable at the item level.** It is
-  the same mechanism that makes pass 3's `personal_tags` feel better organised
-  than the 45 fixed buckets: wording that fits the item, instead of a coarse
-  bin. `build/transform.py` lowercases and collapses whitespace so
-  "Scrub Brushes" and "scrub  brushes" become one node, but it cannot merge
-  genuine synonyms — that is why the prompt insists on consistent wording.
-  `tools/verify_passes.py` reports subtype coverage so a pass that ignored the
-  instruction is visible before you build.
-- **`confidence` is deliberately not requested.** The `Lot` schema still has a
-  `confidence` field and `build/transform.py:188` defaults it to `"low"` when
-  absent, but nothing in the viewer ever reads it — only `resale_confidence`
-  (a different field, from pass 2) drives any UI. Emitting it on 26k rows costs
-  output budget for a value nobody sees. If a future UI change starts showing
-  it, add `"confidence": "low" | "medium" | "high"` back as a fourth key.
+  **ignoring `bats_buckets` completely**. Same trap for naming the subtype
+  `bats_subcategory`. Verify now fails on either.
+- **Bucket names must match `buckets.yaml` exactly.** A near-miss name isn't
+  corrected — it lands in the synthetic "Other" group, out of its real group in
+  the viewer's nav. Verify now fails on unknown names rather than letting the
+  build warn about them one step later.
+- **`is_bats_list` must agree with `bats_buckets`.** A `true` with an empty
+  array puts the lot on the Bat tab under no bucket, where
+  `viewer/src/lib/filter.ts` renders it as an empty bucket view. Verify fails
+  on the mismatch.
+- **The subtype is what makes Bat's List navigable at the item level.** Without
+  it a bucket like "Cleaning supplies & tools" is a flat list of 169 lots.
+  `build/transform.py` lowercases and collapses whitespace so "Scrub Brushes"
+  and "scrub  brushes" become one node, but it cannot merge genuine synonyms —
+  which is why `buckets.yaml` now ships a `subtypes` vocabulary per bucket.
+  The 2026-08-15 run emitted this field on **0 of 27,440 lots**, the old verify
+  reported it and exited 0, and the third drill-down level was dead for a week.
+  It is now a hard failure below 90% coverage of flagged lots.
+- **The key is `personal_reasoning`, not `reasoning`.** `build/transform.py`
+  reads `personal_reasoning` directly. This used to be renamed by a hand-written
+  step in `CLAUDE.md`; that step is gone, so the pass must emit the final name.
+  Verify fails if fewer than 95% of picks carry it.
+- **Only literal `true` registers as a pick** (`viewer/src/lib/personal.ts`).
+  The string `"true"` renders nothing and reports nothing.
+- **`category`/`subcategory` from the agent are discarded** by `build/merge.py`
+  — HiBid's own tree is the single source of truth for categorization.
+- **`confidence` is deliberately not requested.** `build/transform.py` defaults
+  it when absent, and nothing in the viewer ever reads it.
+- **One bucket per lot is the known failure shape.** The 2026-08-15 run gave
+  3,951 of 4,119 flagged lots exactly one bucket and only 168 two, against a
+  prompt that said "list all that apply". The stated one-in-ten expectation
+  above is there because the bare instruction demonstrably did not work. Step 8
+  counts multi-bucket lots for exactly this reason.
 
 ---
 
@@ -281,93 +362,7 @@ output directly as `_resale.json` would leave most of the auction unvalued.
   coverage check in `tools/expand_resale.py` and the "with resale" count in
   `CLAUDE.md` step 8 are what stand between a truncated run and a quietly wrong
   site.
-
 ---
 
-## Pass 3 — Personal match
-
-Save as: `data/categorized/auction_<ID>_personal.json`
-
-This pass depends on a personal taste profile that is **not stored in this
-repo** — it lives in the ChatGPT agent's configuration. Keep the profile in the
-agent's instructions (or paste it at the top of the chat) and leave the
-placeholder below pointing at it.
-
-### Prompt
-
-> You are identifying auction lots that match a specific person's tastes,
-> interests, and household needs.
->
-> [PERSONAL PROFILE — keep this in the agent's saved instructions: hobbies,
-> brands, sizes, rooms being furnished, projects underway, things explicitly
-> not wanted, etc.]
->
-> I will give you auction lots as JSON. See "Input fields" below for what each
-> lot contains.
->
-> For **every** lot, return one object:
->
-> ```json
-> {
->   "lot_number": "S-1a",
->   "personal_match": true,
->   "personal_tags": ["woodworking", "garage"],
->   "match_strength": "strong",
->   "match_types": ["hobby"],
->   "reasoning": "Bench chisels suit the woodworking projects in the profile."
-> }
-> ```
->
-> Rules:
-> - `personal_match` must be a real JSON boolean `true` — not the string
->   `"true"`, not `1`. Only `true` counts as a pick.
-> - **Return a row for every lot. Do not skip any.** For a lot that does not
->   match, return just `{"lot_number": "...", "personal_match": false}` — omit
->   `personal_tags`, `match_strength`, `match_types`, and `reasoning` entirely
->   for non-matches. Those short rows are cheap and let me verify that the pass
->   actually covered the whole auction rather than quietly stopping early.
-> - `match_strength` is a single word describing how strong the match is —
->   use `"strong"`, `"moderate"`, or `"weak"`. It is rendered directly into the
->   badge text as "Personal pick — {strength} match", so keep it lowercase and
->   to one word.
-> - `personal_tags` and `match_types` are short arrays of plain strings, shown
->   as chips in the UI. Keep tags to 1-3 words each. Reuse consistent tag
->   wording across the whole run rather than inventing a new phrasing per lot.
-> - `reasoning` is one short sentence explaining the match, and the key must be
->   named `reasoning`.
-> - Check `size` before flagging apparel or footwear — a great item in the
->   wrong size is not a match. Check `damage`, `missing_parts`, and the
->   `damaged` / `missing_major_parts` / `functional` flags too: do not flag a
->   broken or incomplete item as a pick unless the profile specifically wants
->   it for parts or repair.
-> - Be selective about which lots get `personal_match: true`. That list is
->   meant to be short enough to actually read — if thousands come back `true`,
->   the pass has failed. Being complete (a row per lot) and being selective
->   (few `true`s) are both required.
-> - Output a raw JSON array only — no markdown fences, no commentary.
-> - The file contains N rows. Return exactly N objects, one per row, in the
->   same order. If you cannot complete all of them in one response, stop at a
->   row boundary and tell me the last `lot_number` you finished so I can pick
->   up from there — never silently drop rows to make the output fit.
-
-### Why this matters
-
-- **The merge step reads `reasoning`** and stores it as `personal_reasoning`
-  (`CLAUDE.md` step 6). Naming the key `personal_reasoning` in the file means
-  the field arrives empty.
-- **Only literal `true` registers.** `viewer/src/lib/personal.ts:12` gates on
-  `personal_match === true`, so a string `"true"` renders as "not a pick" while
-  still counting in the step 8 "carry personal_match" total — which is why that
-  step also reports the `=== true` count separately.
-- **`match_strength` is free-form and unvalidated**, so a typo won't fail the
-  build — it just renders into the badge verbatim ("Personal pick — Strong
-  match" vs "strong").
-
----
-
-## After all three files are saved
-
-Hand back to `CLAUDE.md` step 5, which expands the deduplicated resale file to
-every lot and then runs `tools/verify_passes.py` over all three — checking field
-names, duplicate lot_numbers, and that each file describes *this* week's
-auction rather than a leftover from last week.
+Once both files are saved, tell Claude and it will pick up at
+`CLAUDE.md` step 5.

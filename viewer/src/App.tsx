@@ -144,6 +144,20 @@ export function App() {
     [allLots, bundle]
   );
 
+  // The selected bucket is persisted by NAME (localStorage + the URL hash), so
+  // renaming a bucket in buckets.yaml strands anyone who was last looking at
+  // it: the grid filters to nothing while the rail still shows the old label,
+  // and no bucket is highlighted in the picker to click away from. Drop a
+  // selection the current bundle no longer knows about.
+  useEffect(() => {
+    if (batBucket === null || batNav.length === 0) return;
+    const known = batNav.some((g) => g.buckets.some((b) => b.name === batBucket));
+    if (!known) {
+      setBatBucket(null);
+      setBatSubtype(null);
+    }
+  }, [batNav, batBucket]);
+
   // Condition values actually present in the data, in canonical order.
   const availableConditions = useMemo<Condition[]>(() => {
     const present = new Set<Condition>();

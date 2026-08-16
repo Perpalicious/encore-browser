@@ -1,8 +1,8 @@
 # Encore Lot Browser — Project Instructions
 
-This repo scrapes weekly HiBid/Encore auctions, runs them through three
-ChatGPT passes (Bat's List flagging, resale valuation, personal-match),
-builds a static bundle, and deploys it to GitHub Pages via a local
+This repo scrapes weekly HiBid/Encore auctions, runs them through two
+ChatGPT passes (combined Bat's List + personal match, and resale
+valuation), builds a static bundle, and deploys it to GitHub Pages via a local
 `gh-pages` branch push (NOT via GitHub Actions — the repo is capped on
 Actions storage, so deploys must go through `npx gh-pages`, never `git
 push` to trigger a workflow).
@@ -15,8 +15,8 @@ you're on and use the right path.
 
 Ask for the auction ID(s) if not already given. Then follow this
 sequence exactly. **Stop and wait for the user at the marked points —
-the three ChatGPT passes cannot be run by you; they require the user to
-paste the slimmed file into a ChatGPT chat and paste the response back.**
+the two ChatGPT passes cannot be run by you; they require the user to
+paste the input file into a ChatGPT chat and paste the response back.**
 
 ### 0. Sync
 ```bash
@@ -79,7 +79,7 @@ print('duplicate lot_numbers:', len(dupes))
 ```
 If non-zero, stop — something didn't get prefixed correctly.
 
-### 3. Slim (feeds all three ChatGPT passes)
+### 3. Slim, then shortlist (builds both passes' inputs)
 ```bash
 python3 tools/slim.py <ID>
 ```
@@ -106,39 +106,83 @@ so the resale pass values one representative per distinct product and the
 result is fanned back out in step 5. Expect ~15-25% fewer rows. This is a
 pure dedup, not a junk filter — every lot still ends up valued, and the
 grouping key includes condition and damage so a sealed unit is never averaged
-with a broken one. Only the resale pass uses this file; flagging and
-personal-match still read the full slimmed file.
+with a broken one. Only the resale pass uses this file.
+
+Then shortlist candidates for the flagging pass:
+```bash
+python3 tools/prefilter.py <ID>
+```
+Writes `_candidates.json` (the model's input), `_base.json` (an all-false row
+for every lot, so coverage is guaranteed without spending tokens on obvious
+non-matches), `_sweep.json`, and `_prefilter.json`. Check its printout:
+- candidate count is normally ~35-40% of the auction (~10k rows)
+- no bucket exceeds the 8% share guard and no `Error:` lines
+- **zero-candidate buckets are listed as a WARNING** — a seed typo looks
+  exactly like this, and that bucket will score no matches all week
+- the paste boundaries at the end tell the user where to split long chunks
+
+Why the shortlist exists: the flagging pass used to judge all ~27k lots
+against all 45 buckets with an ~85% negative rate, and narrow buckets
+starved. Measured on 2026-08-15, 77 lots had KEYBOARD in the title and 5 were
+flagged; storage bins scored 4 of 36. See the docstring in
+`tools/prefilter.py`.
+
+Measure recall before trusting a seed edit — this costs nothing and needs no
+ChatGPT run:
+```bash
+python3 tools/prefilter.py <ID> --backtest data/archive/<LAST_RUN_DATE>/auction_combined_categorized.json
+```
+Reports per-bucket recall against last week's accepted labels. **LOT recall
+must stay at or above 97%** (currently 97.9%). PAIR recall is lower (~94%) and
+partly reflects errors in the old labels themselves — it flagged wifi routers
+as Power tools because of the word "router" — so treat the per-bucket table as
+a lead, not a verdict.
 
 ### 4. STOP — hand off to the user
 
 Tell the user: *"Two files are ready:
-- `data/categorized/auction_<ID>_for_agent.json` — for the Bat's List
-  flagging pass and the personal-match pass
+- `data/categorized/auction_<ID>_candidates.json` — for the combined Bat's
+  List + personal-match pass. **Attach both `buckets.yaml` and
+  `profile.yaml` to that chat.**
 - `data/categorized/auction_<ID>_for_resale.json` — for the resale pass
   only (deduplicated, so it's smaller)
 
-Please run the three ChatGPT passes and give me back three files:
-- `data/categorized/auction_<ID>_categorized.json`
+Please run the two ChatGPT passes and give me back two files:
+- `data/categorized/auction_<ID>_flags.json`  ← note the name
 - `data/categorized/auction_<ID>_resale_deduped.json`  ← note the name
-- `data/categorized/auction_<ID>_personal.json`
 
 Let me know when they're saved and I'll continue."*
 
-The resale pass returns `_resale_deduped.json`, NOT `_resale.json` —
-step 5 generates `_resale.json` from it. Writing the pass output
-straight to `_resale.json` would leave most lots unvalued.
+Both names matter. The flagging pass returns `_flags.json`, NOT
+`_categorized.json` — step 5 merges it onto `_base.json` to build the
+categorized file. Saving it straight to `_categorized.json` would drop every
+lot the prefilter screened out, which is about two thirds of the auction. The
+resale pass likewise returns `_resale_deduped.json`, NOT `_resale.json`;
+step 5 generates that from it, and writing it directly would leave most lots
+unvalued.
 
-The prompt to use for each of the three passes is in `PROMPTS.md`,
-along with the output-shape rules each pass must follow. If the user
-asks what to paste into ChatGPT, point them there rather than
-improvising a prompt.
+The prompt to use for each pass is in `PROMPTS.md`, along with the
+output-shape rules each must follow. If the user asks what to paste into
+ChatGPT, point them there rather than improvising a prompt.
 
-Do not proceed past this point until the user confirms all three files
-exist.
+Do not proceed past this point until the user confirms both files exist.
 
-### 5. Expand the resale file, then verify all three
+### 5. Assemble the categorized file, expand resale, then verify
 
-Fan each product's valuation back out to every lot in its group:
+Merge the returned flags onto the all-false base so every lot has a row:
+```bash
+python -m merge_categorized --existing data/categorized/auction_<ID>_base.json \
+  --new data/categorized/auction_<ID>_flags.json \
+  --output data/categorized/auction_<ID>_categorized.json
+```
+It reports `Merged <n_added> new items` — **`n_added` must be 0.** Anything
+else means the pass returned a `lot_number` that isn't in this week's auction,
+which is either a hallucinated row or a stale file. Stop and investigate.
+
+This step also carries the `lot_set_sha` stamped into `_base.json` through to
+the categorized file, which verify checks in the next step.
+
+Now fan each product's valuation back out to every lot in its group:
 ```bash
 python3 tools/expand_resale.py <ID>
 ```
@@ -148,7 +192,7 @@ product went unvalued — which is the signature of a truncated ChatGPT run.
 If that happens, tell the user which products are missing and have them
 re-run that portion; do not hand-patch the file.
 
-Now verify all three pass outputs:
+Now verify both pass outputs:
 ```bash
 python3 tools/verify_passes.py <ID>
 ```
@@ -157,37 +201,31 @@ lot_numbers match **this week's** slimmed file. That last check is the one
 that matters: two-auction weeks all write to `auction_combined_*.json`, and a
 previous week's file overlaps ~94% of this week's lot numbers, so a stale file
 builds cleanly into a completely wrong bundle. Row counts alone will not catch
-it.
+it; the `lot_set_sha` comparison catches it exactly.
+
+It now **fails** (not just reports) on: `bats_subtype` coverage under 90% of
+flagged lots, bucket names absent from `buckets.yaml`, any `bats_category` key,
+`is_bats_list` disagreeing with `bats_buckets`, and `personal_reasoning`
+missing from more than 5% of picks. Each of those produces a clean-looking
+build with wrong or missing data; the 0%-subtype run of 2026-08-15 shipped
+precisely because this script reported and exited 0.
+
+It also prints a per-bucket `shown / kept / rate` table. Two shapes to report
+to the user:
+- **a bucket shown ≥20 candidates and keeping none** — the pass refused the
+  whole bucket, which is the exact failure this pipeline exists to fix
+- **a rate above 95%** — the shortlist is doing the judging, so that bucket's
+  seeds have become a whitelist and its `description` is no longer deciding
+
+The `outside` column counts buckets assigned outside the shortlist. That is the
+prefilter's own recall gap; feed it back with
+`python3 tools/prefilter.py <ID> --audit data/categorized/auction_<ID>_flags.json`,
+which also mines candidate new seeds from the accepted titles.
 
 If verify fails, report exactly what it said to the user and stop. Do not
 proceed with a malformed, stale, or markdown-wrapped file.
 
-### 6. Merge personal-match fields into the categorized file
-```bash
-python3 -c "
-import json
-cat = json.load(open('data/categorized/auction_<ID>_categorized.json'))
-personal = json.load(open('data/categorized/auction_<ID>_personal.json'))
-cat_items = cat.get('items', cat) if isinstance(cat, dict) else cat
-personal_items = personal.get('items', personal) if isinstance(personal, dict) else personal
-personal_by_lot = {p['lot_number']: p for p in personal_items}
-merged = 0
-for c in cat_items:
-    p = personal_by_lot.get(c['lot_number'])
-    if p:
-        c['personal_match'] = p.get('personal_match')
-        c['personal_tags'] = p.get('personal_tags')
-        c['match_strength'] = p.get('match_strength')
-        c['match_types'] = p.get('match_types')
-        c['personal_reasoning'] = p.get('reasoning')
-        merged += 1
-out = cat_items if not isinstance(cat, dict) else cat
-json.dump(out, open('data/categorized/auction_<ID>_categorized.json', 'w'))
-print(f'Merged personal fields into {merged}/{len(cat_items)} items')
-"
-```
-
-### 7. Build the bundle
+### 6. Build the bundle
 ```bash
 python -m build --raw data/raw/auction_<ID>.json \
   --categorized data/categorized/auction_<ID>_categorized.json \
@@ -202,7 +240,7 @@ Check the build's own output for:
   don't match `buckets.yaml` exactly and will fall into "Other"; report
   this to the user rather than silently continuing.
 
-### 8. Verify the bundle (non-negotiable — this is the step that catches
+### 7. Verify the bundle (non-negotiable — this is the step that catches
 silent data loss; do not skip it)
 ```bash
 python3 -c "
@@ -213,6 +251,8 @@ print(len(lots), 'lots')
 print(sum(1 for l in lots if l.get('est_resale_low') is not None), 'with resale')
 print(sum(1 for l in lots if l.get('personal_match') is not None), 'carry personal_match')
 print(sum(1 for l in lots if l.get('personal_match') is True), 'are personal_match=true')
+print(sum(1 for l in lots if l.get('bat_subtype')), 'carry a bat_subtype')
+print(sum(1 for l in lots if len(l.get('bat_buckets') or []) >= 2), 'have 2+ buckets')
 "
 ```
 Report these numbers to the user. If resale or personal_match coverage
@@ -220,11 +260,18 @@ is 0 or unexpectedly low, STOP and investigate — do not deploy. Likely
 causes: a filename mismatch between what was merged/built and what's on
 disk, or a `--categorized`/`--resale` flag pointing at a stale file.
 
-### 9. Deploy
+The last two lines are the regression check on the flagging pass itself.
+Baseline before the prefilter (2026-08-15): **0** lots carried a subtype and
+**168 of 4,119** flagged lots had two or more buckets. If `bat_subtype` is
+near zero, the pass ignored the field again. If multi-bucket lots are near
+zero, it collapsed back to picking one bucket per lot and the narrow buckets
+are starving again — report both to the user rather than deploying past them.
+
+### 8. Deploy
 ```bash
 cd viewer && npm run build && npx gh-pages -d dist -b gh-pages && cd ..
 ```
-`npm run build` MUST run after step 7 (bundle regeneration) — if a stale
+`npm run build` MUST run after step 6 (bundle regeneration) — if a stale
 `dist` exists from an earlier build, this step must rebuild it fresh, or
 the deploy will ship old data. Never run `npx gh-pages` without a fresh
 `npm run build` immediately before it in the same sequence.
@@ -234,8 +281,8 @@ Tell the user the deploy is live at
 refresh (Ctrl+Shift+R) or check in an incognito window if the CDN is
 slow to update (can take 1-3 minutes).
 
-### 10. Commit and push to `main` (backs up code + data; does NOT trigger
-a deploy — deploy already happened in step 9 via `gh-pages`)
+### 9. Commit and push to `main` (backs up code + data; does NOT trigger
+a deploy — deploy already happened in step 8 via `gh-pages`)
 ```bash
 git add -A
 git commit -m "Update bundle: auction <ID>"
@@ -271,9 +318,16 @@ rm -f data/raw/auction_*.json
 - `data/raw/auction_*.json` — by far the largest files (~60 MB per week) and
   nothing reads them after step 7. Delete once the deploy is verified.
 - `_for_agent.json`, `_for_resale.json`, `_resale_groups.json`,
-  `_categorized.json`, `_personal.json` from any prior week.
+  `_candidates.json`, `_base.json`, `_sweep.json`, `_prefilter.json`,
+  `_flags.json` from any prior week — and `_categorized.json` from any week
+  before last.
 
-**The one thing worth keeping: resale valuations.** Roughly a third of any
+**Keep last week's `_categorized.json` too.** `tools/prefilter.py --backtest`
+replays this week's seeds against last week's accepted labels and reports
+per-bucket recall — the only cheap measurement of whether a seed edit helped,
+and it needs that file. One week back is enough.
+
+**The other thing worth keeping: resale valuations.** Roughly a third of any
 week's lots are products that ran in a previous week (measured: 32.8% of lots,
 17.5% of distinct products, week of 2026-07-18 vs 2026-08-01). A valuation for
 "SHARK HD430C FLEXSTYLE, Like New" is just as true this week as last, so
@@ -286,7 +340,7 @@ resale data at all (that week ran before the resale pass existed). From the
 2026-08-01 run forward, keep each `auction_<ID>_resale_deduped.json` in its
 dated archive folder when clearing the rest.
 
-Do not keep old files "just in case" beyond that. `diff_categorized` is a
+Do not keep old files "just in case" beyond those two. `diff_categorized` is a
 within-run resume tool keyed on this week's lot_numbers; it has no use for
 prior weeks.
 
@@ -327,11 +381,20 @@ git config --global user.email "<their email>"
 - **Deploy is local, not `git push`** — `npx gh-pages -d dist -b
   gh-pages` is the only thing that updates the live site. A `git push`
   to `main` alone does nothing to the deployed site.
-- **`buckets.yaml` changes must be re-uploaded to the ChatGPT flagging
-  pass** — editing the file in the repo does not update what the chat
-  sees; the user must re-attach it. There are currently 45 buckets; if
-  a bucket-name read-test in a fresh chat returns a different number,
-  flag it to the user before they run the full categorization pass.
+- **`buckets.yaml` AND `profile.yaml` must both be re-uploaded to the
+  ChatGPT flagging pass** — editing them in the repo does not update what the
+  chat sees; the user must re-attach both. `tools/prefilter.py` prints the
+  bucket count on every run; if a read-test in a fresh chat returns a
+  different number, flag it to the user before they run the full pass.
+- **A seed typo silently zeroes a bucket.** This is the systemic failure mode
+  the prefilter introduces: nothing downstream can distinguish "no lots
+  matched this bucket" from "the seed was misspelled". Three things catch it —
+  the zero-candidate WARNING in step 3, `--backtest` recall, and the `outside`
+  column in step 5's audit. Do not skip the backtest after editing seeds.
+- **The prefilter must never encode a quality gate.** Buckets whose
+  descriptions say "QUALITY or BRANDED ... do NOT flag generic" rely on the
+  model applying that bar. Seed them with plain type words so the shortlist
+  stays wide; turning the gate into a keyword rule destroys the curation.
 - **The build is lenient by design** (`--drop-orphans`, tolerant of
   missing optional fields) — this is good for robustness but means
   mistakes fail silently rather than loudly. Verification steps exist

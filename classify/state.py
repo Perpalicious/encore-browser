@@ -127,7 +127,7 @@ class PassRun:
         chunks: dict[str, dict] = {}
         for i, piece in enumerate(pieces):
             cid = chunking.chunk_id(self.pass_id, i)
-            config.write_json(self.chunk_path(cid), piece)
+            config.write_json_rows(self.chunk_path(cid), piece)
             prior = keep.get(cid)
             if prior and prior.get("state") in (INGESTED, SUPERSEDED, BLOCKED):
                 chunks[cid] = prior
@@ -173,7 +173,7 @@ class PassRun:
         left, right = chunking.bisect(lots)
         created = []
         for child_cid, rows in zip(chunking.child_ids(cid), (left, right)):
-            config.write_json(self.chunk_path(child_cid), rows)
+            config.write_json_rows(self.chunk_path(child_cid), rows)
             self.chunks[child_cid] = {
                 "state": PENDING,
                 "lots": [str(r["lot_number"]) for r in rows],

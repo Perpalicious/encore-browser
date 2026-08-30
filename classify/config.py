@@ -83,3 +83,19 @@ def write_json(path: Path, payload: Any, *, indent: int | None = None) -> None:
         json.dumps(payload, indent=indent, ensure_ascii=False), encoding="utf-8"
     )
     tmp.replace(path)
+
+
+def write_json_rows(path: Path, rows: list) -> None:
+    """Atomic write of a list, one row per line.
+
+    Same JSON as ``write_json`` would produce, but with a newline between
+    elements. Worker agents read chunks with a line-indexed Read tool: a
+    single-line file cannot be paged past its truncation point, so a chunk
+    serialised without newlines is only partially visible to the worker and
+    silently loses every row after the cutoff.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    body = ",\n".join(json.dumps(r, ensure_ascii=False) for r in rows)
+    tmp.write_text(f"[\n{body}\n]" if rows else "[]", encoding="utf-8")
+    tmp.replace(path)

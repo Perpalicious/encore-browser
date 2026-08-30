@@ -1,7 +1,11 @@
 """
 Verify the ChatGPT pass outputs before anything is merged or built.
 
-    python3 tools/verify_passes.py <ID>
+    python3 tools/verify_passes.py <ID> [--no-resale]
+
+Pass --no-resale on a week the resale pass was deliberately skipped:
+the categorized checks, including the stale-lot-set comparison, still
+run in full and only the resale file is left unchecked.
 
 Checks each file for required fields, structural invariants, and — the
 important part — that its lot_numbers match this week's slimmed file exactly.
@@ -225,7 +229,7 @@ def report_bucket_recall(auction_id: str, items: list[dict], buckets: list[dict]
               f"seeds via `tools/prefilter.py <ID> --audit`.")
 
 
-def main(auction_id: str) -> None:
+def main(auction_id: str, *, check_resale: bool = True) -> None:
     slim_path = Path(f"data/categorized/auction_{auction_id}_for_agent.json")
     if not slim_path.exists():
         sys.exit(f"Error: slimmed file not found: {slim_path}")
@@ -238,7 +242,8 @@ def main(auction_id: str) -> None:
 
     failed = False
     categorized_items: list[dict] = []
-    for label in ("categorized", "resale"):
+    labels = ("categorized", "resale") if check_resale else ("categorized",)
+    for label in labels:
         path = Path(f"data/categorized/auction_{auction_id}_{label}.json")
         if not path.exists():
             print(f"{label:12s} MISSING  {path}")
@@ -326,10 +331,15 @@ def main(auction_id: str) -> None:
     print()
     if failed:
         sys.exit("VERIFY FAILED — do not build. Fix the files above and re-run.")
-    print("Both files verified against this week's lot set.")
+    if check_resale:
+        print("Both files verified against this week's lot set.")
+    else:
+        print("Categorized file verified against this week's lot set "
+              "(resale skipped via --no-resale).")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    argv = [a for a in sys.argv[1:] if a != "--no-resale"]
+    if len(argv) != 1:
         sys.exit(__doc__)
-    main(sys.argv[1])
+    main(argv[0], check_resale="--no-resale" not in sys.argv)

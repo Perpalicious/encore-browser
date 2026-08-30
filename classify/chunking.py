@@ -7,9 +7,13 @@ What actually went wrong in this project's history was recall degrading across
 a long list — 5 of 77 KEYBOARD lots flagged, 4 of 36 storage bins — so nothing
 here raises the ceiling.
 
-The byte limit is the guard against pathological chunks. Rows average ~238
-bytes, so 500 rows is ~119 KB; a run of unusually verbose lots would otherwise
-produce a chunk several times that size while still counting as "500 rows".
+The byte limit is what keeps a chunk readable by the worker in one pass. A
+worker's Read tool truncates at roughly 25K tokens, which for dense JSON is
+around 40-45 KB, so the old 150 KB guard let `prepare` emit chunks the worker
+could only see the first ~40% of. Chunks are also written one row per line
+(see config.write_json_rows) so a worker can page a chunk that does truncate;
+a single-line chunk cannot be paged past its cutoff at all, and the rows past
+it are invisible rather than merely deferred.
 """
 
 from __future__ import annotations
@@ -18,7 +22,7 @@ import json
 import re
 
 MAX_ROWS = 500
-MAX_BYTES = 150_000
+MAX_BYTES = 70_000
 
 _CHUNK_ID_RE = re.compile(r"^(?P<pass>[a-z]+)/(?P<index>\d+)(?P<suffix>(?:\.\d+)*)$")
 

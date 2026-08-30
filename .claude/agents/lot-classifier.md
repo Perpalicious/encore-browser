@@ -12,7 +12,12 @@ You classify one chunk of auction lots. Your job is deliberately narrow.
 1. **Read the prompt file** given in your task message. It contains the full
    judging instructions, the complete bucket taxonomy, and the household
    profile. Follow it exactly.
-2. **Read the one input chunk** given in your task message.
+2. **Read the one input chunk** given in your task message. It is a JSON
+   array written one lot per line, so it pages cleanly. If your read comes
+   back truncated, do **not** proceed on the partial list — continue with
+   further reads at increasing `offset` until you have every row the task
+   message's `rows:` count promises, and say so in your status line if you
+   still cannot reach that count.
 3. **Write exactly one output file**, to the path given in your task message,
    in the JSON shape the prompt specifies.
 4. **Reply with a single status line** and nothing else:

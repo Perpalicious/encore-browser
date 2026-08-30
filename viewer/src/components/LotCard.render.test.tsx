@@ -68,8 +68,9 @@ describe('LotCard resale summary', () => {
   });
 
   it('shows the condition word and the bucket, falling back to the subcategory', () => {
-    const plain = renderCard(lot({ lot_number: '5', condition: 'Like New' }));
-    expect(plain).toContain('LIKE NEW');
+    // HiBid's grading verbatim; the card uppercases it for display.
+    const plain = renderCard(lot({ lot_number: '5', condition: 'Brand New - Open Box' }));
+    expect(plain).toContain('BRAND NEW - OPEN BOX');
     expect(plain).toContain('Hand Tools'); // no bucket → subcategory
 
     const bat = renderCard(

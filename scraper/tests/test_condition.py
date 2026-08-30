@@ -3,48 +3,57 @@ Tests for scraper/condition.py — condition extraction and description parsing.
 """
 
 import pytest
-from scraper.condition import parse_condition
+from scraper.condition import CONDITION_LABELS, parse_condition
 
 
-class TestConditionMapping:
-    """Test all condition mapping values."""
+class TestConditionPassthrough:
+    """HiBid's condition string is stored 1:1, title-cased."""
 
     @pytest.mark.parametrize(
         "raw_value, expected",
         [
-            # New
-            ("BRAND NEW - SEALED", "New"),
-            ("BRAND NEW", "New"),
-            ("NEW IN BOX", "New"),
-            ("NEW", "New"),
-            # Case-insensitive
-            ("brand new - sealed", "New"),
-            ("Brand New", "New"),
-            # Like New
-            ("LIKE NEW", "Like New"),
-            ("OPEN BOX", "Like New"),
-            ("EXCELLENT", "Like New"),
-            # Good
+            # HiBid's full observed vocabulary (30,358 lots, week of 2026-08-16)
+            ("BRAND NEW - SEALED", "Brand New - Sealed"),
+            ("BRAND NEW - OPEN BOX", "Brand New - Open Box"),
+            ("NEW (ADJUSTED QUANTITY)", "New (Adjusted Quantity)"),
+            ("BEST BEFORE (GROCERY)", "Best Before (Grocery)"),
+            ("EXCELLENT", "Excellent"),
             ("GOOD", "Good"),
-            ("VERY GOOD", "Good"),
-            # Fair
+            ("NEW WITH DEFECTS", "New With Defects"),
             ("FAIR", "Fair"),
-            ("USED", "Fair"),
-            # Heavily Used
             ("HEAVILY USED", "Heavily Used"),
-            ("POOR", "Heavily Used"),
-            ("DAMAGED", "Heavily Used"),
+            ("FOR PARTS ONLY", "For Parts Only"),
+            ("DO NOT BID", "Do Not Bid"),
+            # HiBid is inconsistent about case on a handful of lots
+            ("Excellent", "Excellent"),
+            ("brand new - sealed", "Brand New - Sealed"),
+            # Stray whitespace around the value
+            ("  GOOD  ", "Good"),
         ],
     )
     def test_condition_values(self, raw_value: str, expected: str) -> None:
         description = f"Condition: {raw_value}\nSome free-form text here."
         condition, _, _ = parse_condition(description)
         assert condition == expected, (
-            f"Condition: '{raw_value}' should map to '{expected}', got '{condition}'"
+            f"Condition: '{raw_value}' should store as '{expected}', got '{condition}'"
         )
 
-    def test_unknown_condition_returns_none(self) -> None:
+    def test_every_known_label_round_trips(self) -> None:
+        """CONDITION_LABELS must all survive parsing unchanged — it drives the
+        viewer's chip order and colour map, so a typo there is silent."""
+        for label in CONDITION_LABELS:
+            condition, _, _ = parse_condition(f"Condition: {label.upper()}\ntext")
+            assert condition == label
+
+    def test_unknown_condition_passes_through(self) -> None:
+        """A value HiBid adds later must reach the viewer, not become null."""
         description = "Condition: REFURBISHED\nSome text."
+        condition, _, _ = parse_condition(description)
+        assert condition == "Refurbished"
+
+    def test_placeholder_returns_none(self) -> None:
+        """'Select Condition Here' is an unfilled dropdown, not a grading."""
+        description = "Condition: Select Condition Here\nSome text."
         condition, _, _ = parse_condition(description)
         assert condition is None
 
@@ -157,7 +166,7 @@ class TestFullDescription:
             "Apple AirPods Pro (2nd generation) with MagSafe Charging Case."
         )
         condition, price, remaining = parse_condition(description)
-        assert condition == "New"
+        assert condition == "Brand New - Sealed"
         assert price == 249.00
         assert "Apple AirPods Pro" in remaining
         assert "Condition:" not in remaining

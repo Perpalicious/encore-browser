@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Lot } from './types';
+import { CONDITION_ORDER } from './types';
 import { buildLotViews, indexViews, dayLetter, conditionColor, titleCase } from './lotView';
 
 function lot(partial: Partial<Lot> & { lot_number: string }): Lot {
@@ -249,17 +250,38 @@ describe('outlook and confidence', () => {
 });
 
 describe('condition colour', () => {
-  it('maps each condition to its own token', () => {
-    const colors = (['New', 'Like New', 'Good', 'Fair', 'Heavily Used'] as const).map(
-      conditionColor
+  it('gives every known condition a colour', () => {
+    for (const c of CONDITION_ORDER) {
+      expect(conditionColor(c), `no colour for ${c}`).toMatch(/^var\(--/);
+    }
+  });
+
+  it('spans the five-step ramp, several labels sharing a swatch', () => {
+    // Labels are HiBid's 1:1; colour stays a coarse quality signal, so e.g. all
+    // four "new" gradings are green. 'Do Not Bid' takes the neutral divider.
+    const colors = new Set(CONDITION_ORDER.map(conditionColor));
+    expect(colors).toEqual(
+      new Set([
+        'var(--c-new)',
+        'var(--c-like)',
+        'var(--c-good)',
+        'var(--c-fair)',
+        'var(--c-heavy)',
+        'var(--line)',
+      ])
     );
-    expect(new Set(colors).size).toBe(5);
-    expect(conditionColor('New')).toBe('var(--c-new)');
-    expect(conditionColor('Heavily Used')).toBe('var(--c-heavy)');
+    expect(conditionColor('Brand New - Sealed')).toBe('var(--c-new)');
+    expect(conditionColor('Brand New - Open Box')).toBe('var(--c-new)');
+    expect(conditionColor('Excellent')).toBe('var(--c-like)');
+    expect(conditionColor('For Parts Only')).toBe('var(--c-heavy)');
   });
 
   it('falls back to the neutral divider when condition is missing', () => {
     expect(conditionColor(null)).toBe('var(--line)');
+  });
+
+  it('falls back to the neutral divider for a condition HiBid adds later', () => {
+    expect(conditionColor('Refurbished')).toBe('var(--line)');
   });
 });
 

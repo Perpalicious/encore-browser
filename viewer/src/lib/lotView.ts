@@ -230,17 +230,30 @@ export function indexViews(views: LotView[]): Map<string, LotView> {
  * the five-step palette appears (docs/design/README.md § "The signal system").
  * Everything else is greyscale, lavender accent, or the blush filter chip.
  */
-export const CONDITION_COLOR: Record<Condition, string> = {
-  New: 'var(--c-new)',
-  'Like New': 'var(--c-like)',
+/**
+ * The label text is HiBid's, 1:1; the colour stays a coarse five-step quality
+ * signal, so several labels share a swatch. Anything absent here — an unmapped
+ * condition, or one HiBid adds later — falls back to the neutral divider.
+ */
+export const CONDITION_COLOR: Record<string, string> = {
+  'Brand New - Sealed': 'var(--c-new)',
+  'Brand New - Open Box': 'var(--c-new)',
+  'New (Adjusted Quantity)': 'var(--c-new)',
+  'Best Before (Grocery)': 'var(--c-new)',
+  Excellent: 'var(--c-like)',
   Good: 'var(--c-good)',
+  'New With Defects': 'var(--c-fair)',
   Fair: 'var(--c-fair)',
   'Heavily Used': 'var(--c-heavy)',
+  'For Parts Only': 'var(--c-heavy)',
+  // Not a condition at all — HiBid uses it to mark lots that aren't real items
+  // (fee notices, house announcements). Neutral so it never reads as quality.
+  'Do Not Bid': 'var(--line)',
 };
 
 /** Condition colour, falling back to the neutral divider for unknown condition. */
 export function conditionColor(cond: Condition | null): string {
-  return cond ? CONDITION_COLOR[cond] : 'var(--line)';
+  return (cond && CONDITION_COLOR[cond]) || 'var(--line)';
 }
 
 /** Display capitalisation for the lowercase confidence/outlook enums. */

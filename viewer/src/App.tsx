@@ -158,11 +158,15 @@ export function App() {
     }
   }, [batNav, batBucket]);
 
-  // Condition values actually present in the data, in canonical order.
+  // Condition values actually present in the data, in canonical order. Any
+  // condition HiBid has added since CONDITION_ORDER was last updated still gets
+  // a chip, sorted after the known ones rather than silently unfilterable.
   const availableConditions = useMemo<Condition[]>(() => {
     const present = new Set<Condition>();
     for (const l of allLots) if (l.condition !== null) present.add(l.condition);
-    return CONDITION_ORDER.filter((c) => present.has(c));
+    const known = CONDITION_ORDER.filter((c) => present.has(c));
+    const unknown = [...present].filter((c) => !CONDITION_ORDER.includes(c)).sort();
+    return [...known, ...unknown];
   }, [allLots]);
 
   // Debounce the query so the fuzzy pass over ~26k lots doesn't run per keystroke.
@@ -382,7 +386,7 @@ export function App() {
     if (dayFilter !== 'Both') {
       out.push({ id: 'day', label: dayFilter, onRemove: () => setDayFilter('Both') });
     }
-    for (const c of CONDITION_ORDER) {
+    for (const c of availableConditions) {
       if (conditions.has(c)) {
         out.push({ id: `condition-${c}`, label: c, onRemove: () => toggleCondition(c) });
       }
@@ -438,7 +442,7 @@ export function App() {
       });
     }
     return out;
-  }, [categoryPath, dayFilter, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, batSubtype, hasCloseTimes, hideEnded, toggleCondition]);
+  }, [categoryPath, dayFilter, conditions, availableConditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, batSubtype, hasCloseTimes, hideEnded, toggleCondition]);
 
   const closeDetail = useCallback(() => setExpandedId(null), []);
 

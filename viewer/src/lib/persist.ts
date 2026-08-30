@@ -10,6 +10,7 @@ import type {
   Tab,
   ViewMode,
 } from './types';
+import { CONDITION_ORDER } from './types';
 
 /**
  * View-state persistence — docs/design/README.md § "Persistence".
@@ -85,7 +86,10 @@ const DAYS: DayFilter[] = ['Sunday', 'Monday', 'Both'];
 const VIEWS: ViewMode[] = ['grid', 'list'];
 const MVIEWS: MobileView[] = ['rows', 'cards'];
 const DENSITIES: Density[] = ['standard', 'compact'];
-const CONDS: Condition[] = ['New', 'Like New', 'Good', 'Fair', 'Heavily Used'];
+// Restored condition filters are whitelisted against the known vocabulary.
+// A condition HiBid adds later is dropped from a restored filter rather than
+// trusted out of localStorage; selecting it again re-adds it.
+const CONDS: Condition[] = CONDITION_ORDER;
 
 function oneOf<T>(value: unknown, allowed: T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;

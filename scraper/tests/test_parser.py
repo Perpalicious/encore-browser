@@ -176,12 +176,12 @@ class TestLotUrl:
 class TestConditionInMappedLot:
     def test_brand_new_sealed(self, mapped_lots):
         lot = next(l for l in mapped_lots if l["id"] == 100001)
-        assert lot["condition"] == "New"
+        assert lot["condition"] == "Brand New - Sealed"
         assert lot["est_retail_price"] == 249.00
 
-    def test_like_new(self, mapped_lots):
+    def test_brand_new_open_box(self, mapped_lots):
         lot = next(l for l in mapped_lots if l["id"] == 100002)
-        assert lot["condition"] == "Like New"
+        assert lot["condition"] == "Brand New - Open Box"
         assert lot["est_retail_price"] == 499.99
 
     def test_good(self, mapped_lots):

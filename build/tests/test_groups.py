@@ -32,7 +32,7 @@ class TestLoadBucketGroups:
         assert len(order) >= 8  # the curated file defines at least the 8 documented groups
 
     def test_bucket_count_and_integrity(self):
-        """The curated file holds exactly 48 buckets, every one grouped, no
+        """The curated file holds exactly 62 buckets, every one grouped, no
         duplicate names. Guards accidental drops/dupes when buckets evolve.
 
         Bump this deliberately when a bucket is added or removed — a stale
@@ -43,10 +43,17 @@ class TestLoadBucketGroups:
 
         raw = yaml.safe_load(BUCKETS_YAML.read_text(encoding="utf-8"))
         names = [b["name"] for b in raw["buckets"]]
-        assert len(names) == 48
+        # 2026-08-30: 48 -> 61. Added Personal care (6) and Food & drink (3
+        # new), plus Vacuums & floor care, Seating & occasional furniture,
+        # Car care & detailing, Lawn treatment & pest control, Kids' outdoor
+        # water play, Kids' craft & activity, Audio & headphones. Folded
+        # "Starbucks coffee" into
+        # "Coffee & espresso" and "Shatterproof / outdoor dishware" into
+        # "Dinnerware". See data/Watch/FINDINGS.md.
+        assert len(names) == 62
         assert len(names) == len(set(names)), "duplicate bucket names"
         assert all(b.get("group") for b in raw["buckets"]), "a bucket is missing its group"
-        assert len(mapping) == 48
+        assert len(mapping) == 62
 
     def test_new_outdoor_furniture_bucket(self):
         """The 'Outdoor furniture & hammocks' bucket exists in Outdoor & garden."""
@@ -63,11 +70,28 @@ class TestLoadBucketGroups:
 
     def test_buckets_added_for_previously_unbucketed_picks(self):
         """Hand tools, dolls/plush and non-Starbucks coffee had no bucket, so
-        picks in those areas landed nowhere in the viewer's nav."""
+        picks in those areas landed nowhere in the viewer's nav.
+
+        Coffee moved out of "Kitchen & dining" into its own "Food & drink"
+        group on 2026-08-30 — the bucket still exists, which is what this
+        guards; only its group changed."""
         mapping, _ = load_bucket_groups(BUCKETS_YAML)
         assert mapping["Hand tools"] == "Tools & garage"
         assert mapping["Dolls & plush"] == "Toys & games"
-        assert mapping["Coffee & espresso"] == "Kitchen & dining"
+        assert mapping["Coffee & espresso"] == "Food & drink"
+        # Folded-in buckets must be gone, not silently duplicated.
+        assert "Starbucks coffee" not in mapping
+        assert "Shatterproof / outdoor dishware" not in mapping
+
+    def test_personal_care_and_food_groups_exist(self):
+        """The two groups added from three months of bid/watch history.
+        Personal care was ~840 lots/week of supply with no bucket at all."""
+        mapping, order = load_bucket_groups(BUCKETS_YAML)
+        assert mapping["Skincare & body"] == "Personal care"
+        assert mapping["Hair styling tools"] == "Personal care"
+        assert mapping["Snacks & confectionery"] == "Food & drink"
+        assert mapping["Vacuums & floor care"] == "Cleaning & storage"
+        assert "Personal care" in order and "Food & drink" in order
 
 
 class TestResolveBucketGroups:

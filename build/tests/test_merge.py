@@ -293,10 +293,10 @@ class TestCategoryPathDrivesCategoryAndSub:
         assert lots[0].subcategory == "Advertising"             # leaf
 
     def test_raw_condition_preserved_when_agent_omits(self):
-        raw = [_raw_item(condition="Like New")]
+        raw = [_raw_item(condition="Excellent")]
         cat = [_cat_item()]  # no condition in agent output
         merged = merge(raw, cat)
-        assert merged[0]["condition"] == "Like New"
+        assert merged[0]["condition"] == "Excellent"
 
     def test_raw_description_wins_over_non_empty_agent_description(self):
         """When raw has meaningful description text, agent's value never overwrites."""

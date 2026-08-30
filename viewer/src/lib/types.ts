@@ -1,4 +1,14 @@
-export type Condition = 'New' | 'Like New' | 'Good' | 'Fair' | 'Heavily Used';
+/**
+ * HiBid's own condition vocabulary, passed through 1:1 by the scraper. The old
+ * five-label scheme ('New' | 'Like New' | ...) came from a pre-data design spec;
+ * 'Like New' in particular never appeared in a single listing, and covered 53%
+ * of lots by merging 'Excellent' with 'Brand New - Open Box'.
+ *
+ * `string` rather than a closed union on purpose: build/__main__.py warns about
+ * a condition HiBid adds later but still ships it, and the viewer must render
+ * it (neutral colour, no chip) rather than break.
+ */
+export type Condition = string;
 export type Confidence = 'low' | 'medium' | 'high';
 export type ResaleOutlook = 'good' | 'fair' | 'poor';
 export type DayFilter = 'Sunday' | 'Monday' | 'Both';
@@ -20,13 +30,22 @@ export type MobileCols = 2 | 3 | 4;
  */
 export type SortKey = 'lot' | 'resale-desc' | 'resale-asc' | 'retail-desc' | 'close-asc';
 
-/** Condition values in canonical (best → worst) order for filter chips. */
+/**
+ * Condition values in canonical (best → worst) order for filter chips. Mirrors
+ * CONDITION_LABELS in scraper/condition.py — keep the two in step.
+ */
 export const CONDITION_ORDER: Condition[] = [
-  'New',
-  'Like New',
+  'Brand New - Sealed',
+  'Brand New - Open Box',
+  'New (Adjusted Quantity)',
+  'Best Before (Grocery)',
+  'Excellent',
   'Good',
+  'New With Defects',
   'Fair',
   'Heavily Used',
+  'For Parts Only',
+  'Do Not Bid',
 ];
 
 /**

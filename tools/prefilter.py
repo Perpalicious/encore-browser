@@ -65,6 +65,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from scraper.condition import CONDITION_LABELS
+
 import yaml
 
 # Fields concatenated into the text a seed is matched against. `category` is
@@ -87,7 +89,15 @@ DEFAULT_MAX_BUCKET_SHARE = 0.08
 # Measured normal is ~8.9k candidates from ~27.4k lots (32%). The cap is a
 # runaway-seed tripwire, not a target — set well above normal so a slightly
 # bigger auction does not hard-fail a Sunday-night run.
-DEFAULT_MAX_ROWS = 12000
+# Raised from 12000 to 13000 on 2026-08-30 as HEADROOM, not because the cap was
+# breached. That run added Personal care (6 buckets) and Food & drink (3 new),
+# worth ~2,000 candidate lots a week — but the consumable `condition_in` gate
+# and splitting audio out of Electronics gave more back than they cost, so the
+# week of 2026-08-16 lands at 11,891 (44.0%). That is only ~1% under the old
+# cap, close enough that ordinary week-to-week variance would trip it and block
+# step 3 of the runbook on a perfectly good config.
+# Bump deliberately, and only with a measured reason.
+DEFAULT_MAX_ROWS = 13000
 DEFAULT_SWEEP = 500
 SWEEP_SEED = 20260815
 
@@ -188,6 +198,20 @@ class Matcher:
         self.name = name
         self.seed_re = compile_seeds(spec.get("seeds") or [])
         self.exclude_re = compile_seeds(spec.get("exclude") or [])
+        # Optional allowlist over the structured `condition` field. This is NOT
+        # the quality gate the module docstring forbids: that one asks "is this
+        # brand good enough", which is judgement and belongs to the Agent. This
+        # asks "is this sealed consumable actually sealed", which is a fact the
+        # scrape already carries. Measured 2026-08-30 over 54,463 lots,
+        # personal-care categories run ~57% "Excellent" / ~25% "Good" and only
+        # ~14% sealed; on a pump bottle those middle grades mean opened, which
+        # the profile lists as an automatic pass. Without this the shortlist
+        # spends two thirds of its budget on lots that are rejected on sight.
+        #
+        # Values must be HiBid gradings from CONDITION_LABELS. A stale one
+        # matches nothing and empties the bucket in silence, so it is checked
+        # against the vocabulary in the guards below rather than trusted.
+        self.conditions = {str(c) for c in (spec.get("condition_in") or [])}
         self.crumbs = category_prefixes(spec.get("categories") or [])
         self.seeds = [s.strip().lower() for s in (spec.get("seeds") or []) if s.strip()]
 
@@ -195,9 +219,18 @@ class Matcher:
     def configured(self) -> bool:
         return bool(self.seed_re or self.crumbs)
 
-    def match(self, text: str, segments: list[str]) -> str | None:
-        """Return the reason this lot is a candidate, or None."""
+    def match(
+        self, text: str, segments: list[str], condition: str | None = None
+    ) -> str | None:
+        """Return the reason this lot is a candidate, or None.
+
+        `condition` is optional so lint_examples() can probe seeds with no lot
+        in hand. A lot whose condition is missing is never gated out — we do
+        not hide what we could not grade.
+        """
         if self.exclude_re and self.exclude_re.search(text):
+            return None
+        if self.conditions and condition is not None and condition not in self.conditions:
             return None
         if self.seed_re:
             hit = self.seed_re.search(text)
@@ -304,17 +337,20 @@ def shortlist(
         key = str(lot.get("lot_number"))
         text = haystack(lot)
         segments = crumb_segments(lot.get("category"))
+        condition = lot.get("condition")
 
         hits = []
         for matcher in bucket_matchers:
-            reason = matcher.match(text, segments)
+            reason = matcher.match(text, segments, condition)
             if reason is not None:
                 hits.append(matcher.name)
                 seed_hits[matcher.name][reason] += 1
         if hits:
             cand_by_lot[key] = hits
 
-        pseudo_hits = [m.name for m in pseudo_matchers if m.match(text, segments) is not None]
+        pseudo_hits = [
+            m.name for m in pseudo_matchers if m.match(text, segments, condition) is not None
+        ]
         if pseudo_hits:
             profile_by_lot[key] = pseudo_hits
 
@@ -425,17 +461,18 @@ def run_backtest(
             continue
         text = haystack(lot)
         segments = crumb_segments(lot.get("category"))
+        condition = lot.get("condition")
         buckets_here = row.get("bats_buckets") or []
         if buckets_here:
             flagged_lots += 1
-            if any(m.match(text, segments) is not None for m in bucket_matchers):
+            if any(m.match(text, segments, condition) is not None for m in bucket_matchers):
                 reached_lots += 1
         for raw in buckets_here:
             name = alias.get(raw, raw)
             matcher = by_name.get(name)
             pairs += 1
             per_bucket[name][1] += 1
-            if matcher is not None and matcher.match(text, segments) is not None:
+            if matcher is not None and matcher.match(text, segments, condition) is not None:
                 shortlisted += 1
                 per_bucket[name][0] += 1
 
@@ -626,6 +663,20 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- guards ---------------------------------------------------------
     failures = []
+
+    # A condition_in value outside HiBid's vocabulary gates every lot out, which
+    # is indistinguishable from "nothing matched". This is the same class of
+    # silent-zeroing as a seed typo, so it fails the run rather than warning.
+    for m in bucket_matchers:
+        stale = sorted(m.conditions - set(CONDITION_LABELS))
+        if stale:
+            failures.append(
+                f"{m.name}: condition_in value(s) not in HiBid's vocabulary: "
+                f"{', '.join(repr(c) for c in stale)}. Nothing can match these, so "
+                f"the bucket would shortlist zero lots. Valid values: "
+                f"{', '.join(CONDITION_LABELS)}"
+            )
+
     for name, n in bucket_sizes.items():
         if n / total > args.max_bucket_share:
             top = ", ".join(f"{s!r}({c})" for s, c in seed_hits[name].most_common(3))

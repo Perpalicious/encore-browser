@@ -3,8 +3,14 @@
 from typing import Literal, Optional
 from pydantic import BaseModel, field_validator
 
+from scraper.condition import CONDITION_LABELS
 
-VALID_CONDITIONS = {"New", "Like New", "Good", "Fair", "Heavily Used"}
+
+# HiBid's own condition vocabulary, passed through 1:1 by scraper/condition.py.
+# Kept as a plain set, not a Literal: an unrecognised value must reach the
+# viewer rather than fail the build, so a condition HiBid adds later shows up
+# instead of vanishing. build/transform.py warns on anything outside this set.
+VALID_CONDITIONS = set(CONDITION_LABELS)
 VALID_CONFIDENCES = {"low", "medium", "high"}
 
 
@@ -13,7 +19,7 @@ class Lot(BaseModel):
     lot_number: str
     title: str
     description: str
-    condition: Optional[Literal["New", "Like New", "Good", "Fair", "Heavily Used"]]
+    condition: Optional[str]
     thumb_url: str
     image_url: str
     lot_url: str

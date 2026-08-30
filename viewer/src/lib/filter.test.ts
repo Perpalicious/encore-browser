@@ -29,11 +29,11 @@ function lot(lot_number: string, opts: Partial<Lot> = {}): Lot {
 }
 
 const LOTS: Lot[] = [
-  lot('1', { condition: 'New', is_bat: true, bat_buckets: ['Lego'] }),
+  lot('1', { condition: 'Brand New - Sealed', is_bat: true, bat_buckets: ['Lego'] }),
   lot('2', { condition: 'Good', is_bat: true, bat_buckets: ['Lego'] }),
-  lot('3', { condition: 'Like New' }),
+  lot('3', { condition: 'Brand New - Open Box' }),
   lot('4', { condition: null }), // no condition
-  lot('5', { condition: 'New', is_bat: true, bat_buckets: ['Power tools'] }),
+  lot('5', { condition: 'Brand New - Sealed', is_bat: true, bat_buckets: ['Power tools'] }),
 ];
 
 const base = {
@@ -51,19 +51,20 @@ describe('filterLots condition filter', () => {
   });
 
   it('narrows to lots whose condition is selected', () => {
-    const conditions = new Set<Condition>(['New']);
+    const conditions = new Set<Condition>(['Brand New - Sealed']);
     const out = filterLots(LOTS, { ...base, conditions });
     expect(out.map((l) => l.lot_number).sort()).toEqual(['1', '5']);
   });
 
   it('multi-select is a union across selected conditions', () => {
-    const conditions = new Set<Condition>(['New', 'Good']);
+    const conditions = new Set<Condition>(['Brand New - Sealed', 'Good']);
     const out = filterLots(LOTS, { ...base, conditions });
     expect(out.map((l) => l.lot_number).sort()).toEqual(['1', '2', '5']);
   });
 
   it('excludes lots with no condition while a filter is active', () => {
-    const conditions = new Set<Condition>(['Like New']);
+    // Open-box is its own grade now, not merged with 'Excellent'.
+    const conditions = new Set<Condition>(['Brand New - Open Box']);
     const out = filterLots(LOTS, { ...base, conditions });
     expect(out.map((l) => l.lot_number)).toEqual(['3']);
     expect(out.find((l) => l.lot_number === '4')).toBeUndefined();
@@ -74,16 +75,16 @@ describe('filterLots condition filter', () => {
       ...base,
       tab: 'bat',
       batBucket: 'Lego',
-      conditions: new Set<Condition>(['New']),
+      conditions: new Set<Condition>(['Brand New - Sealed']),
     });
-    // Bucket Lego = lots 1,2; condition New within that = lot 1 only.
+    // Bucket Lego = lots 1,2; Brand New - Sealed within that = lot 1 only.
     expect(out.map((l) => l.lot_number)).toEqual(['1']);
   });
 });
 
 describe('filterLots personal-picks filter', () => {
   const PERSONAL_LOTS: Lot[] = [
-    lot('1', { personal_match: true, is_bat: true, bat_buckets: ['Lego'], condition: 'New' }),
+    lot('1', { personal_match: true, is_bat: true, bat_buckets: ['Lego'], condition: 'Brand New - Sealed' }),
     lot('2', { personal_match: false }),
     lot('3', { personal_match: null }),
     lot('4'), // fields absent entirely (older bundle)
@@ -123,7 +124,7 @@ describe('filterLots personal-picks filter', () => {
     const out = filterLots(PERSONAL_LOTS, {
       ...base,
       personalOnly: true,
-      conditions: new Set<Condition>(['New']),
+      conditions: new Set<Condition>(['Brand New - Sealed']),
     });
     expect(out.map((l) => l.lot_number)).toEqual(['1']);
   });

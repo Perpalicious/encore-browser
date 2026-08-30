@@ -67,11 +67,11 @@ Defined as CSS custom properties on `:root` and `[data-theme="light"]`. Theme sw
 | `--lavbd` | `rgba(179,164,255,.35)` | Accent border |
 | `--onlav` | `#0d0b16` | Text on a lavender fill |
 | `--blusht` / `--blushbg` / `--blushbd` | `#ffb9d6` / `rgba(255,159,198,.12)` / `rgba(255,159,198,.3)` | **Active-filter chips only** |
-| `--c-new` | `#7fe6bd` | Condition: New |
-| `--c-like` | `#a8d4ff` | Condition: Like New |
+| `--c-new` | `#7fe6bd` | Condition: Brand New - Sealed, Brand New - Open Box, New (Adjusted Quantity), Best Before (Grocery) |
+| `--c-like` | `#a8d4ff` | Condition: Excellent |
 | `--c-good` | `#cfcadd` | Condition: Good |
-| `--c-fair` | `#ffcf8a` | Condition: Fair |
-| `--c-heavy` | `#ff9d9d` | Condition: Heavily Used |
+| `--c-fair` | `#ffcf8a` | Condition: New With Defects, Fair |
+| `--c-heavy` | `#ff9d9d` | Condition: Heavily Used, For Parts Only |
 | `--t0` … `--t7` | `#efedf5 #f4eef2 #eef2f6 #f2f1ec #f0eef5 #f5eff1 #edf1f3 #f3f0ec` | Image-tile tints, assigned `index % 8` |
 | `--ink` | `rgba(24,20,40,.16)` | Placeholder shape stroke on a tile |
 | `--ink2` | `rgba(24,20,40,.45)` | Day letter / retail on a tile |
@@ -371,7 +371,7 @@ The prototype generates lots deterministically; your real records need these fie
 
 ```
 { i, title, cat, sub, bucket|null, retail, lo, hi, mid,
-  cond: 'New'|'Like New'|'Good'|'Fair'|'Heavily Used',
+  cond: string,   // HiBid's grading verbatim, see CONDITION_ORDER
   day: 'S'|'M', lot: 'S-1204',
   conf: 'Low'|'Medium'|'High',
   out:  'Poor'|'Fair'|'Good'|'Strong',

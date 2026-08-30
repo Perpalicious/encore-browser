@@ -26,11 +26,16 @@
 #             Power tools but no bucket holds a hand chisel. Measured, seeding
 #             those edges took personal-pick reach from 72.7% to 94.0%.
 
-# TODO(user): fill these in — they gate apparel and footwear matches, and the
-# flagging pass is told to reject the right item in the wrong size.
+# These gate apparel and footwear matches — the flagging pass is told to
+# reject the right item in the wrong size. Two adults, so each is a map.
 sizes:
+  apparel:
+    womens: "M"
+    mens: "L"
+  # TODO(user): still unset. `Brand boots & shoes` sees ~404 lots a week and
+  # converts at 0.6x its own supply share, which is probably this rather than
+  # disinterest. One observed datapoint: a watched women's 8 M flat.
   shoe: null
-  apparel: null
 
 projects:
   - "Home gym build-out — rack, bar, plates, flooring, accessories."
@@ -40,7 +45,25 @@ projects:
   - "Pool and hot tub maintenance across the season."
   - "Small-business product testing — items bought to evaluate and resell."
 
+# HOW THINGS ACTUALLY GET REJECTED. Many buckets get browsed thoroughly and
+# still convert poorly — that is condition risk, not disinterest, so never
+# read a low flag rate as a reason to narrow a bucket.
+#   - On CONSUMABLES (personal care, food, cleaning) anything below
+#     "Brand New - Sealed" usually means opened. Measured across 54,463
+#     lots, personal-care categories run ~57% "Excellent" and only ~14%
+#     sealed. Note "Brand New - Open Box" is an OPENED pack despite the
+#     name — it is unused merchandise, not an intact seal.
+#   - Even "Brand New - Sealed" does not guarantee sealed. One such lot
+#     reads "2 sealed, 1 opened amount of sheets unknown".
+#   - If the photos cannot show an intact seal on something meant to be
+#     sealed, that is a pass regardless of the stated grade.
+# Buckets whose descriptions say CONSUMABLE encode this bar.
+
 not_wanted:
+  - "Consumables — personal care, food, drink, cleaning — in any condition
+     below New, or where the photos cannot establish that the seal is
+     intact. An opened lotion or a broken-seal food pack is an immediate
+     pass even when the listing says New."
   - "Broken, incomplete, or non-functional items, unless the profile
      explicitly wants that type for parts or repair."
   - "Generic no-brand single utensils, cables, and accessories with no
@@ -69,7 +92,7 @@ interests:
 
   - name: "Kids' toys & games"
     buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Board games",
-              "Dolls & plush"]
+              "Dolls & plush", "Kids' outdoor water play", "Kids' craft & activity"]
     tags: ["kids_interest", "family_activity"]
     description: >
       Toys and games for kids roughly ages 8-11, plus board games the whole
@@ -81,7 +104,8 @@ interests:
             "sticker", "science kit", "building set"]
 
   - name: "PC & desk setup"
-    buckets: ["Keyboards & PC peripherals", "Electronics", "Video games & VR"]
+    buckets: ["Keyboards & PC peripherals", "Electronics", "Video games & VR",
+              "Audio & headphones"]
     tags: ["pc_accessory", "pc_gaming", "secondary_monitor", "networking"]
     description: >
       Desktop PC and gaming setup — keyboards, mice, monitors, headsets,
@@ -123,7 +147,7 @@ interests:
   - name: "Yard & lawn"
     buckets:
       ["Lawn equipment", "Garden hose", "Gardening tools",
-       "Garden & lawncare misc", "Tarps"]
+       "Garden & lawncare misc", "Tarps", "Lawn treatment & pest control"]
     tags: ["outdoor_maintenance", "yard_watering"]
     description: >
       Ongoing yard upkeep — mowers and trimmers, hoses and watering, hand
@@ -142,20 +166,17 @@ interests:
     buckets:
       ["Kitchen appliances", "Brand cookware", "Brand chef knives",
        "Kitchen utensils & gadgets", "Glassware & drinkware", "Dinnerware",
-       "Shatterproof / outdoor dishware",
-       "Specialty cooking & baking ingredients", "Kitchen storage & organization",
-       "Starbucks coffee", "Coffee & espresso"]
+       "Kitchen storage & organization"]
     tags: ["premium_kitchen"]
     description: >
       A well-equipped kitchen that rewards quality — recognisable-brand
       appliances, cookware, cutlery and tools. Quality is the whole point
       here: generic no-brand single pieces are explicitly not wanted, and
       several buckets encode that gate in their own descriptions.
-      Coffee is a standing consumable — beans are ground at home for iced
-      coffee, so whole bean and ground both count, pre-ground included.
+      Food and drink itself now lives in its own interest below.
 
   - name: "Cleaning"
-    buckets: ["Cleaning supplies & tools"]
+    buckets: ["Cleaning supplies & tools", "Vacuums & floor care"]
     tags: ["cleaning_consumable", "cleaning_equipment", "second_shop_vac"]
     description: >
       Household cleaning — vacuums (a second shop vac is actively wanted),
@@ -172,11 +193,12 @@ interests:
   - name: "Bed & bath"
     buckets:
       ["Bedding & pillows", "Bed linens", "Bath towels", "King bed frames",
-       "Nightstands"]
+       "Nightstands", "Seating & occasional furniture"]
     tags: ["bed_and_bath_linens"]
     description: >
-      Bedroom and bathroom textiles and furniture. Bed size is king — check
-      size before flagging fitted sheets or frames.
+      Bedroom and bathroom textiles and furniture, plus living-space seating
+      and occasional tables. Bed size is king — check size before flagging
+      fitted sheets or frames.
 
   - name: "Footwear"
     buckets: ["Brand boots & shoes"]
@@ -185,14 +207,60 @@ interests:
       Recognisable-brand boots and shoes, work boots included. Size-gated:
       see `sizes.shoe` above. The right boot in the wrong size is not a match.
 
+  - name: "Personal care & grooming"
+    buckets: ["Hair care products", "Hair styling tools", "Skincare & body",
+              "Oral & dental care", "Shaving & grooming", "Cosmetics & nail"]
+    tags: ["personal_care", "hair_care", "skincare", "nail_care", "dental_care"]
+    description: >
+      Everyday personal care for two adults — hair care and styling, skin and
+      body products, oral and dental, shaving and grooming, and makeup/nail.
+      This is one of the largest categories in the auction (~840 lots a week)
+      and had NO bucket before 2026-08-30 despite eight bids in three months.
+      Almost all of it is consumable, so the condition bar in `not_wanted`
+      does the real filtering: the interest is broad, the acceptance is
+      narrow. Powered tools in these buckets (hair dryers, electric shavers,
+      water flossers) are appliances and are judged on value, not on seal.
+      Nail is a distinct and consistent sub-interest — gel systems, press-on
+      tips and manicure kits, not just polish.
+    seeds: ["grooming", "personal care", "toiletries", "cosmetic",
+            "salon", "spa set", "gift set bath"]
+
+  - name: "Food & drink"
+    buckets: ["Coffee & espresso", "Pantry & cooking staples",
+              "Snacks & confectionery", "Beverages & drink mixes",
+              "Supplements & protein"]
+    tags: ["food_and_drink", "coffee", "snacks", "supplements"]
+    description: >
+      Groceries worth buying at auction. These are SCAN buckets — they get
+      browsed every week even though they convert rarely, so keep them broad
+      and do not narrow them on a low flag rate.
+      Coffee is a standing consumable: beans are ground at home for iced
+      coffee, so whole bean and ground both count, pre-ground included.
+      Snacks and branded drinks earned their buckets from the history —
+      protein cookies, Crystal Light and a Taco Bell kit were all bid on
+      while no bucket existed to hold them. Supplements pair with the home
+      gym interest.
+      Everything here is consumable: prefer New, and treat an unprovable
+      seal as a pass.
+    seeds: ["grocery", "food lot", "snack", "beverage", "drink ", "pantry"]
+
   - name: "Product testing & resale"
     buckets: []
-    tags: ["product_testing", "small_business"]
+    tags: ["product_testing", "small_business", "proven_resale"]
     description: >
       Items bought to evaluate, review, or resell through a small business.
       Cuts across every category, so it is a lens rather than a bucket: a lot
       can be a product-testing pick without belonging to any bucket.
+      PROVEN RESALE is the strong form of this and is listed separately below.
+      A product already resold successfully is worth flagging on every
+      reappearance, at any quantity, even in mediocre condition — the resale
+      value is known rather than estimated. Tag those `proven_resale`.
+      Do NOT infer resale intent from a product simply appearing in many lots.
+      These auctions over-list heavily: one week ran 46 identical Shark
+      FlexStyle lots and only 2 were bid on. Lot count measures supply, not
+      appetite.
     seeds: ["wholesale lot", "case pack", "bulk lot", "pallet", "retail box"]
+
 
   - name: "Pool & hot tub"
     buckets: []
@@ -220,10 +288,28 @@ interests:
        "motion light", "camping light"]
 
   - name: "Vehicle"
-    buckets: []
-    tags: ["tesla_model_3"]
+    buckets: ["Car care & detailing"]
+    tags: ["tesla_model_3", "car_care"]
     description: >
-      Accessories for a Tesla Model 3 specifically — floor mats, chargers,
-      screen protectors, and model-fit interior parts. Generic car accessories
-      are not wanted; the fit has to be plausible.
+      Two distinct things. First, model-fit parts for a Tesla Model 3 — floor
+      mats, chargers, screen protectors, interior parts — where the fit has to
+      be plausible. Second, car cleaning and detailing generally, which is NOT
+      Tesla-specific: branded wash, wax, wheel and interior products get bought
+      repeatedly regardless of vehicle.
+      Corrected 2026-08-30. This interest previously said "generic car
+      accessories are not wanted", which contradicted the history — Chemical
+      Guys and Meguiar's products were bid on three times in three months while
+      Tesla-fit parts appeared once.
     seeds: ["tesla", "model 3", "ev charger", "nema 14-50", "j1772"]
+
+# Products already resold at a profit, so the margin is known rather than
+# guessed. Flag every reappearance. Keep this list short and user-maintained
+# — it is high precision by construction and worthless if it drifts into a
+# wishlist. Add a line only after an actual completed resale.
+proven_resale:
+  - product: "Shark WandVac handheld vacuum"
+    seeds: ["wandvac", "wand vac"]
+    note: >
+      Resold once already. 21 bids across the history, 16 in the 2026-07-19
+      auction alone — the one same-product run in the data that reflects
+      genuine intent rather than the auction over-listing.

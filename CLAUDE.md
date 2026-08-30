@@ -345,7 +345,7 @@ does not degrade the backtest, it makes it impossible — see step 3.
 **The other thing worth keeping: resale valuations.** Roughly a third of any
 week's lots are products that ran in a previous week (measured: 32.8% of lots,
 17.5% of distinct products, week of 2026-07-18 vs 2026-08-01). A valuation for
-"SHARK HD430C FLEXSTYLE, Like New" is just as true this week as last, so
+"SHARK HD430C FLEXSTYLE, Excellent" is just as true this week as last, so
 retaining past `_resale_deduped.json` files lets a future run skip re-valuing
 anything already priced — worth about another 15 percentage points on top of
 the ~18% that `tools/slim_resale.py` already saves.

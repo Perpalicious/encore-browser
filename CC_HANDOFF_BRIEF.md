@@ -103,16 +103,22 @@ Missing Major Parts? No
 Is Item Damaged? No
 ```
 
-Parse with regex. Map HiBid condition values to design conditions:
+Parse with regex. **Do not map conditions** — store HiBid's value verbatim,
+title-cased (`BRAND NEW - SEALED` → `Brand New - Sealed`).
+
+The five-label scheme this brief originally specified (`New` / `Like New` /
+`Good` / `Fair` / `Heavily Used`) predated any real data and did not survive
+contact with it. Measured over 30,358 lots, `LIKE NEW` never appears in a HiBid
+listing, and half the table's inputs (`BRAND NEW`, `NEW IN BOX`, `NEW`,
+`OPEN BOX`, `VERY GOOD`, `USED`, `POOR`, `DAMAGED`) never appear either. The
+real vocabulary and its handling live in `scraper/condition.py`; see that
+module's docstring.
 
 | HiBid condition | Output condition |
 |---|---|
-| BRAND NEW - SEALED, BRAND NEW, NEW IN BOX, NEW | `New` |
-| LIKE NEW, OPEN BOX, EXCELLENT | `Like New` |
-| GOOD, VERY GOOD | `Good` |
-| FAIR, USED | `Fair` |
-| HEAVILY USED, POOR, DAMAGED | `Heavily Used` |
-| (anything else, or no Condition line) | `null` |
+| any value | that value, title-cased |
+| `Select Condition Here` (unfilled dropdown) | `null` |
+| no Condition line | `null` |
 
 After parsing, set `description` to whatever free-form text remains after stripping the structured `Field: Value` lines. If nothing remains, set to empty string.
 
@@ -160,7 +166,7 @@ type Lot = {
   lot_number: string;
   title: string;
   description: string;
-  condition: 'New' | 'Like New' | 'Good' | 'Fair' | 'Heavily Used' | null;
+  condition: string | null;  // HiBid's grading verbatim, e.g. 'Brand New - Open Box'
   thumb_url: string;
   image_url: string;
   lot_url: string;

@@ -53,17 +53,23 @@ def test_is_bat_must_be_bool_coercible():
     assert lots_f[0].is_bat is False
 
 
-def test_invalid_condition_value_becomes_null():
-    """An unrecognized condition string should pass through as None (from transform)."""
-    item = {**VALID_SHAPE_B, "condition": "BROKEN"}
-    # Transform sets condition = item.get("condition") or None,
-    # but schema uses Optional[Literal[...]] — passing "BROKEN" will fail.
-    # The transform sets condition=None if it's not in the Literal values only via schema.
-    # Actually, "BROKEN" will fail the Literal validator — that's the intended behaviour:
-    # bad condition values must be caught, not silently dropped.
-    with pytest.raises(SystemExit) as exc_info:
-        transform_all([item])
-    assert exc_info.value.code == 1
+def test_unknown_condition_value_passes_through():
+    """A condition outside the known vocabulary must reach the bundle.
+
+    Conditions are HiBid's own strings, stored 1:1 rather than mapped onto a
+    fixed set. If HiBid adds a grading, failing the build (or nulling the field)
+    would hide it; instead it ships, build/__main__.py warns, and the viewer
+    gives it the neutral colour until it's added to CONDITION_LABELS.
+    """
+    item = {**VALID_SHAPE_B, "condition": "Refurbished"}
+    lots = transform_all([item])
+    assert lots[0].condition == "Refurbished"
+
+
+def test_known_condition_value_survives_transform():
+    item = {**VALID_SHAPE_B, "condition": "Brand New - Open Box"}
+    lots = transform_all([item])
+    assert lots[0].condition == "Brand New - Open Box"
 
 
 def test_missing_required_title_exits_1(capsys):

@@ -188,6 +188,30 @@ def main() -> None:
             file=sys.stderr,
         )
 
+    # --- Condition vocabulary ----------------------------------------------
+    # Conditions come straight from HiBid (scraper/condition.py). Anything
+    # outside the known vocabulary still ships — it just gets the neutral
+    # colour in the viewer and no place in the filter-chip order — so surface
+    # it here, since a new HiBid condition is otherwise invisible.
+    from build.schema import VALID_CONDITIONS
+
+    conditioned = sum(1 for lot in lots if lot.condition)
+    unknown_conds = sorted(
+        {lot.condition for lot in lots if lot.condition and lot.condition not in VALID_CONDITIONS}
+    )
+    print(
+        f"Condition: {100.0 * conditioned / n:.1f}% ({conditioned}/{n}) carry a "
+        f"condition, {len(unknown_conds)} value(s) outside the known vocabulary."
+    )
+    if unknown_conds:
+        print(
+            f"Warning: condition value(s) not in CONDITION_LABELS: "
+            f"{', '.join(unknown_conds)}. Add them to scraper/condition.py "
+            "(and CONDITION_COLOR in viewer/src/lib/lotView.ts) so they get a "
+            "colour and a filter chip.",
+            file=sys.stderr,
+        )
+
     # --- Bat's List group mapping (from buckets.yaml) -----------------------
     from build.groups import load_bucket_groups, resolve_bucket_groups, UNGROUPED
 

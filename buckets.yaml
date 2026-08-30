@@ -20,6 +20,16 @@
 #               bucket, at zero model cost.
 #   aliases:    former names of this bucket, so --backtest can score a
 #               previous week's labels after a rename.
+#   condition_in: allowlist over the structured `condition` field. Use ONLY on
+#               sealed consumables, where anything below a "new" grade means the
+#               pack was opened and the lot is an automatic pass (see
+#               profile.yaml `not_wanted`). This is a fact from the scrape, not
+#               the quality judgement forbidden below — never use it to encode
+#               "good brand". A lot with no condition recorded is never gated
+#               out. Values are HiBid's own gradings, verbatim, and must match
+#               CONDITION_LABELS in scraper/condition.py exactly — a value that
+#               is not in that list matches nothing and silently empties the
+#               bucket.
 #
 # THE PREFILTER MUST NEVER ENCODE A QUALITY GATE. Several buckets below say
 # "QUALITY or BRANDED ... do NOT flag generic". That judgement belongs to the
@@ -70,22 +80,22 @@ buckets:
   - name: "Electronics"
     group: "Electronics & gaming"
     description: >
-      Notable consumer electronics and gadgets with resale value — audio
-      gear, headphones/earbuds, computer accessories, tablets, streaming
-      devices, cameras, and similar. Favor recognizable or higher-value
-      items over generic cables and no-name accessories.
-      (Video games, consoles, and VR go under "Video games & VR".)
-    examples: ["Sony", "Bose", "Anker", "Logitech", "JBL", "Apple"]
-    subtypes: ["headphones", "earbuds", "speakers", "soundbars", "tablets",
-               "cameras", "streaming devices", "monitors", "webcams",
-               "microphones", "projectors", "smartwatches", "drones"]
-    seeds: ["headphone", "earbud", "earphone", "headset", "soundbar", "bluetooth speaker",
-            "portable speaker", "tablet", "ipad", "kindle", "e-reader", "streaming stick",
+      Notable consumer electronics and gadgets with resale value — computer
+      accessories, tablets, streaming devices, cameras, monitors, networking,
+      storage, wearables and drones. Favor recognizable or higher-value items
+      over generic cables and no-name accessories.
+      (Video games, consoles and VR go under "Video games & VR".
+      Headphones, speakers and microphones go under "Audio & headphones".)
+    examples: ["Sony", "Anker", "Logitech", "Apple", "Samsung", "GoPro"]
+    subtypes: ["tablets", "cameras", "streaming devices", "monitors",
+               "webcams", "projectors", "smartwatches", "drones",
+               "storage & drives", "networking"]
+    seeds: ["headset", "tablet", "ipad", "kindle", "e-reader", "streaming stick",
             "roku", "chromecast", "fire tv", "apple tv", "webcam", "microphone",
-            "projector", "smartwatch", "smart watch", "fitbit", "drone", "turntable",
-            "receiver", "amplifier", "monitor", "docking station", "usb hub",
-            "power bank", "sony", "bose", "anker", "logitech", "jbl", "beats",
-            "sennheiser", "samsung", "nikon", "canon", "gopro", "airpod",
+            "projector", "smartwatch", "smart watch", "fitbit", "drone",
+            "docking station", "usb hub", "monitor",
+            "power bank", "sony", "anker", "logitech",
+            "samsung", "nikon", "canon", "gopro",
             "apple watch", "ipod", "macbook", "laptop", "wifi adapter",
             "usb adapter", "bluetooth adapter", "ethernet adapter", "wifi extender",
             "router", "modem", "tp link", "garmin", "dji ", "usb c to",
@@ -96,7 +106,6 @@ buckets:
     # lots and made this bucket the same absorber it already was. These are the
     # leaves where the item genuinely is consumer electronics.
     categories:
-      - "Computers & Electronics - Consumer Electronics - Home Audio"
       - "Computers & Electronics - Consumer Electronics - Tablets"
       - "Computers & Electronics - Consumer Electronics - TVs"
       - "Computers & Electronics - Consumer Electronics - Blu-ray / DVD Players"
@@ -107,7 +116,15 @@ buckets:
       - "Computers & Electronics - Computers - Networking"
       - "Computers & Electronics - Consumer Electronics - Phones"
     exclude: ["blood pressure monitor", "baby monitor", "bp monitor",
-              "monitor stand", "monitor mount", "monitor arm"]
+              "monitor stand", "monitor mount", "monitor arm",
+              # The Phones and camera-accessory breadcrumbs were shortlisting
+              # ~250 cases, protectors and cables — exactly the "generic cables
+              # and no-name accessories" this description already disclaims.
+              "phone case", "silicone case", "screen protector", "tempered glass",
+              "usb cable", "aux cable", "audio cable", "charging cable",
+              "cable protector", "phone holder", "phone mount", "phone grip",
+              "popsocket", "lens protector", "instax film", "photo paper",
+              "camera strap", "phone stand"]
     seed_exempt: ["Apple"]  # matches apple juice, apple cider, applesauce
 
   - name: "Keyboards & PC peripherals"
@@ -139,7 +156,12 @@ buckets:
     # The mower's "IGNITION KEY SWITCH" was flagged as a mechanical keyboard
     # in the 2026-08-15 run. Killing it here costs zero model tokens.
     exclude: ["ignition key switch", "ignition switch", "piano", "midi",
-              "keyboard tray", "keyboard stand"]
+              "keyboard tray", "keyboard stand",
+              # Measured 2026-08-30: bare-brand seeds pulled ~18% off-target.
+              # Corsair sells more RGB case fans than keyboards.
+              "rgb fan", "pwm fan", "case fan", "fan controller", "icue rx",
+              "icue commander", "argb 120", "clutch module", "pedal",
+              "driving force shifter", "shifter for", "racing wheel"]
 
   - name: "Video games & VR"
     group: "Electronics & gaming"
@@ -342,10 +364,15 @@ buckets:
     description: >
       Garden hoses, hose nozzles, sprayers, shutoffs, hose reels, and
       hose connectors/fittings.
-    subtypes: ["hoses", "nozzles", "sprinklers", "hose reels", "fittings"]
+    subtypes: ["hoses", "nozzles", "sprinklers", "hose reels", "fittings",
+               "hose timers", "irrigation"]
     seeds: ["garden hose", "hose nozzle", "hose reel", "hose connector",
             "hose fitting", "expandable hose", "soaker hose", "sprinkler",
-            "spray nozzle", "hose splitter", "quick connect hose"]
+            "spray nozzle", "hose splitter", "quick connect hose",
+            # Timers were watched 8x over 3 months and matched nothing.
+            "hose timer", "water timer", "watering timer", "irrigation",
+            "b-hyve", "bhyve", "drip system", "watering wand", "melnor",
+            "orbit b", "hose faucet"]
 
   - name: "Gardening tools"
     group: "Outdoor & garden"
@@ -460,16 +487,19 @@ buckets:
       Branded or generic.
     examples: ["OXO", "Scotch-Brite", "Libman", "Rubbermaid"]
     subtypes: ["scrub brushes", "mops & brooms", "microfiber cloths",
-               "detergents", "sponges", "vacuums", "spray bottles"]
+               "detergents", "sponges", "spray bottles", "paper goods",
+               "bathroom cleaners", "laundry care"]
     seeds: ["sponge", "scrub brush", "scrubber", "microfiber cloth", "mop ",
             "broom", "duster", "squeegee", "spray bottle", "cleaning solution",
             "detergent", "disinfectant", "all purpose cleaner", "dish soap",
-            "laundry detergent", "bleach", "shop vac", "wet dry vac", "vacuum",
+            "laundry detergent", "bleach",
             "swiffer", "scotch-brite", "libman", "clorox", "lysol", "oxo ",
             "rubbermaid", "cleaning cloth", "paper towel", "trash bag", "garbage bag",
             "dish rack", "drying rack", "steam cleaner", "carpet cleaner",
             "stain remover", "fabric softener", "dryer sheet", "toilet brush",
             "dust pan", "dustpan", "lint roller", "air freshener"]
+    # Vacuums, steam mops and carpet machines moved to "Vacuums & floor care".
+    exclude: ["vacuum", "steam mop", "carpet cleaner", "shop vac"]
 
   - name: "Storage bins & totes"
     group: "Cleaning & storage"
@@ -661,34 +691,27 @@ buckets:
             "calphalon", "de buyer", "made in cookware", "griddle pan", "lodge "]
     seed_exempt: ["Made In"]  # "made in china" appears in thousands of titles
 
-  - name: "Starbucks coffee"
-    group: "Kitchen & dining"
-    description: >
-      Starbucks-branded coffee products — whole bean, ground coffee,
-      K-cups/pods, and instant coffee.
-    subtypes: ["whole bean", "ground coffee", "k-cups", "instant coffee"]
-    seeds: ["starbucks"]
-
   - name: "Coffee & espresso"
-    group: "Kitchen & dining"
+    group: "Food & drink"
+    aliases: ["Starbucks coffee"]
     description: >
       Coffee to actually drink, from any recognisable roaster — whole bean,
       ground, K-cups and pods, instant, and espresso. Whole bean and ground
       matter most (beans get ground at home for iced coffee); pods are still
       worth flagging. Also reusable pod filters and grinders.
-      (Starbucks-branded coffee has its own bucket. Coffee MAKERS go under
-      "Kitchen appliances".)
+      Starbucks counts too — it used to have its own bucket and was folded
+      in here (12 lots a fortnight did not justify a whole bucket).
+      Coffee MAKERS go under "Kitchen appliances".
     examples: ["Lavazza", "Kicking Horse", "Illy", "Death Wish", "Peet's", "Tim Hortons"]
     subtypes: ["whole bean", "ground coffee", "k-cups", "pods", "instant coffee",
-               "espresso", "grinders"]
+               "espresso", "grinders", "starbucks"]
     seeds: ["whole bean", "ground coffee", "k-cup", "k cup", "keurig pod",
             "coffee pod", "nespresso pod", "instant coffee", "espresso bean",
             "coffee bean", "coffee grinder", "burr grinder", "reusable k cup",
             "lavazza", "kicking horse", "illy ", "death wish", "peet",
             "tim hortons", "folgers", "maxwell house", "mccafe", "nescafe",
-            "wolfgang puck", "coffee 1", "coffee 2", "roast coffee"]
-    exclude: ["starbucks", "coffee maker", "coffee machine", "coffee table",
-              "coffee mug"]
+            "wolfgang puck", "coffee 1", "coffee 2", "roast coffee", "starbucks"]
+    exclude: ["coffee maker", "coffee machine", "coffee table", "coffee mug"]
 
   - name: "Kitchen storage & organization"
     group: "Kitchen & dining"
@@ -710,19 +733,24 @@ buckets:
 
   - name: "Dinnerware"
     group: "Kitchen & dining"
+    aliases: ["Shatterproof / outdoor dishware"]
     description: >
       QUALITY or BRANDED dinnerware and serving pieces — notable-brand
       plates, bowls, mugs, dinnerware sets, and serving platters. Favor
       recognizable brands, complete sets, and quality stoneware/porcelain.
       Do NOT flag generic single no-brand pieces (browse those by category
       instead).
-    examples: ["Corelle", "Mikasa", "Fiestaware", "Denby"]
-    subtypes: ["dinnerware sets", "plates", "bowls", "mugs", "serving platters"]
+    examples: ["Corelle", "Mikasa", "Fiestaware", "Denby", "Tervis"]
+    subtypes: ["dinnerware sets", "plates", "bowls", "mugs", "serving platters",
+               "melamine & outdoor", "acrylic tumblers"]
     seeds: ["dinnerware", "dinner plate", "salad plate", "serving platter",
             "serving bowl", "cereal bowl", "mug set", "plate set", "bowl set",
             "china set", "stoneware", "porcelain", "coffee mug", "ceramic mug",
             "mug ", "dish rack set", "corelle", "mikasa",
-            "fiestaware", "denby", "dish set"]
+            "fiestaware", "denby", "dish set",
+            # Folded in from "Shatterproof / outdoor dishware" (~4 lots/week).
+            "melamine", "tritan", "acrylic tumbler", "shatterproof",
+            "unbreakable", "outdoor dinnerware", "picnic set", "tervis"]
 
   - name: "Glassware & drinkware"
     group: "Kitchen & dining"
@@ -739,35 +767,37 @@ buckets:
             "coffee mug", "highball", "decanter", "libbey", "stanley",
             "yeti", "tervis", "hydro flask", "contigo", "thermos"]
 
-  - name: "Shatterproof / outdoor dishware"
-    group: "Kitchen & dining"
+  - name: "Pantry & cooking staples"
+    group: "Food & drink"
+    aliases: ["Specialty cooking & baking ingredients"]
     description: >
-      Shatterproof, unbreakable, and outdoor/pool-safe dishware and
-      drinkware — melamine, acrylic, and Tritan plates, bowls, cups, and
-      tumblers that won't shatter (safe for poolside and outdoor use, no
-      glass).
-    examples: ["Tervis", "melamine dinnerware", "Tritan tumblers"]
-    subtypes: ["melamine dishware", "acrylic tumblers", "tritan drinkware",
-               "outdoor dish sets"]
-    seeds: ["melamine", "tritan", "acrylic tumbler", "acrylic glass",
-            "shatterproof", "unbreakable", "outdoor dinnerware", "picnic set",
-            "camping dish", "tervis"]
-
-  - name: "Specialty cooking & baking ingredients"
-    group: "Kitchen & dining"
-    description: >
-      Premium and specialty cooking/baking ingredients — quality baking
-      chocolate, specialty flours, vanilla, premium oils and vinegars,
-      and notable-brand pantry ingredients. Auction grocery lots may show
-      "best before" dates — flag regardless; Bat will assess.
-    examples: ["Callebaut", "Valrhona", "King Arthur", "Nielsen-Massey"]
-    subtypes: ["baking chocolate", "specialty flour", "vanilla",
-               "oils & vinegars", "pantry ingredients", "spices"]
+      Food to cook with — oils and vinegars, sauces and condiments, spices
+      and seasoning, pasta, rice and flour, canned and jarred goods, syrups
+      and honey, plus premium baking ingredients. Branded or generic; this is
+      a SCAN bucket, so breadth beats selectivity. Auction grocery lots may
+      show "best before" dates — flag regardless; Bat will assess.
+      CONSUMABLE: prefer "Brand New - Sealed". On sealed grocery goods an
+      "Excellent" or "Good" grade usually means the seal is broken or the
+      pack is opened, which is an automatic pass. "Best Before (Grocery)"
+      is new stock near its date — fine, Bat will assess.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Callebaut", "Valrhona", "King Arthur", "Nielsen-Massey", "Thai Kitchen"]
+    subtypes: ["oils & vinegars", "sauces & condiments", "spices & seasoning",
+               "pasta, rice & grains", "canned & jarred", "baking ingredients",
+               "syrups & sweeteners"]
     seeds: ["baking chocolate", "cocoa powder", "couverture", "specialty flour",
             "bread flour", "vanilla extract", "vanilla bean", "olive oil",
             "balsamic", "vinegar", "maple syrup", "honey", "sea salt",
             "spice set", "callebaut", "valrhona", "king arthur", "nielsen-massey",
-            "saffron", "truffle oil"]
+            "saffron", "truffle oil",
+            # Broadened 2026-08-30: the old seeds scored 0 engagement on 87
+            # supply lots because they only reached premium baking.
+            "pasta", "canned", "seasoning", "hot sauce", "soy sauce",
+            "coconut milk", "broth", "condiment", "ketchup",
+            "mustard", "mayonnaise", "peanut butter", "jam ", "preserves",
+            "quinoa", "oatmeal", "cereal", "thai kitchen"]
 
   - name: "Kitchen appliances"
     group: "Kitchen & dining"
@@ -804,3 +834,349 @@ buckets:
             "pot holder", "oven mitt", "trivet", "corkscrew", "bottle opener",
             "mixing bowl", "salad spinner", "garlic press", "oxo ",
             "joseph joseph", "zwilling", "kitchenaid"]
+
+  # ------------------------------------------------------------------
+  # Added 2026-08-30 from three months of bid/watch history. See
+  # data/Watch/FINDINGS.md — 40% of real bids matched no bucket at all.
+  #
+  # CONSUMABLE buckets carry a condition line in their description.
+  # Measured on 54,463 supply lots: personal-care consumables run
+  # ~57% "Excellent" / ~25% "Good" and only ~14% sealed. On a sealed
+  # consumable those middle grades mean opened, which is an automatic
+  # pass — so the condition bar is what makes these buckets scannable
+  # (Skincare & body: 892/week raw, ~90/week once sealed-only).
+  # ------------------------------------------------------------------
+
+  - name: "Hair care products"
+    group: "Personal care"
+    description: >
+      Hair care you apply — shampoo, conditioner, masks, oils and serums,
+      dry shampoo, styling product, and hair colour. Branded or generic.
+      Hair DRYERS and stylers go under "Hair styling tools".
+      CONSUMABLE: prefer "Brand New - Sealed". "Brand New - Open Box",
+      "Excellent" or "Good" on a bottle almost always means opened or
+      part-used, which is an automatic pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Pantene", "Head & Shoulders", "Olaplex", "Garnier", "Dove"]
+    subtypes: ["shampoo", "conditioner", "hair masks & oils", "styling product",
+               "dry shampoo", "hair colour"]
+    seeds: ["shampoo", "conditioner", "hair mask", "hair oil", "hair serum",
+            "dry shampoo", "hair spray", "hairspray", "hair gel", "hair mousse",
+            "leave in", "hair color", "hair colour", "hair dye", "everpure",
+            "pantene", "head & shoulders", "olaplex", "garnier", "dove ",
+            "tresemme", "aussie ", "herbal essences", "moroccanoil"]
+    exclude: ["dog shampoo", "pet shampoo", "car shampoo", "wash shampoo"]
+
+  - name: "Hair styling tools"
+    group: "Personal care"
+    description: >
+      Powered hair tools — dryers, straighteners and flat irons, curling
+      irons and wands, multi-stylers, diffusers, and hot brushes. These are
+      APPLIANCES, not consumables, so ordinary used condition is fine and
+      the usual quality bar applies instead. A high-value styler in Fair
+      condition can still be worth flagging.
+    examples: ["Dyson Airwrap", "Shark FlexStyle", "ghd", "Revlon One-Step", "T3"]
+    subtypes: ["hair dryers", "straighteners", "curling irons", "multi-stylers",
+               "hot brushes"]
+    seeds: ["hair dryer", "hairdryer", "blow dryer", "hair straighten",
+            "flat iron", "curling iron", "curling wand", "hot brush",
+            "airwrap", "flexstyle", "supersonic", "one step volumizer",
+            "hair clipper", "ghd ", "revlon one"]
+    seed_exempt: ["T3"]  # "T3" collides with model numbers across the catalogue
+
+  - name: "Skincare & body"
+    group: "Personal care"
+    description: >
+      Skin and body products — lotions and moisturisers, body wash, face
+      wash and cleansers, serums and toners, sunscreen, body butter and
+      scrubs, hand cream. Branded or generic; this is a SCAN bucket.
+      CONSUMABLE: prefer "Brand New - Sealed". Roughly 57% of this category
+      grades "Excellent" and 25% "Good", and on a pump bottle or tube that
+      means opened. A photo that cannot prove the seal is intact is a pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["CeraVe", "Cetaphil", "Neutrogena", "Aveeno", "The Ordinary"]
+    subtypes: ["body lotion", "face care", "sunscreen", "body wash",
+               "serums & toners", "hand & foot care"]
+    seeds: ["lotion", "moisturizer", "moisturiser", "body wash", "body butter",
+            "body scrub", "face cream", "face wash", "facial cleanser",
+            "sunscreen", "sunblock", "spf ", "micellar", "shower gel",
+            "hand cream", "body oil", "cerave", "cetaphil", "neutrogena",
+            "aveeno", "the ordinary", "nivea", "vaseline", "eucerin",
+            "banana boat", "hawaiian tropic", "coppertone", "olay"]
+    exclude: ["dog ", "pet ", "car wash"]
+
+  - name: "Oral & dental care"
+    group: "Personal care"
+    description: >
+      Teeth and mouth — electric toothbrushes and brush heads, water
+      flossers, toothpaste, mouthwash, whitening strips, floss, retainer
+      and denture cleaners. Powered devices (Sonicare, Waterpik, Oral-B)
+      are appliances and ordinary used condition is fine; pastes, rinses
+      and strips are CONSUMABLE and should prefer New.
+    examples: ["Oral-B", "Sonicare", "Waterpik", "Colgate", "Crest"]
+    subtypes: ["electric toothbrushes", "brush heads", "water flossers",
+               "toothpaste & rinse", "whitening", "retainer care"]
+    seeds: ["toothbrush", "toothpaste", "water flosser", "waterflosser",
+            "dental floss", "mouthwash", "whitening strip", "retainer clean",
+            "denture", "oral b", "sonicare", "waterpik", "colgate", "crest ",
+            "interdental"]
+
+  - name: "Shaving & grooming"
+    group: "Personal care"
+    description: >
+      Shaving and body grooming — electric shavers and razors, cartridge
+      razors and blades, beard and body trimmers, epilators, hair-removal
+      devices, shaving cream and aftershave. Powered devices are appliances;
+      creams, blades and refills are CONSUMABLE and should prefer New.
+      Note: "trimmer" alone is ambiguous — hedge and string trimmers are
+      Lawn equipment, not this bucket.
+    examples: ["Gillette", "Philips OneBlade", "Schick", "Braun Series"]
+    subtypes: ["electric shavers", "razors & blades", "beard trimmers",
+               "body groomers", "hair removal", "shave prep"]
+    seeds: ["electric shaver", "beard trimmer", "body groomer", "oneblade",
+            "one blade", "razor blade", "cartridge razor", "shaving cream",
+            "aftershave", "epilator", "hair removal", "gillette", "schick",
+            "wahl ", "andis ", "bikini trimmer", "nose trimmer"]
+    seed_exempt: ["Braun Series"]  # Braun sells far more blenders than shavers
+    exclude: ["hedge trimmer", "string trimmer", "grass trimmer", "edge trimmer"]
+
+  - name: "Cosmetics & nail"
+    group: "Personal care"
+    description: >
+      Makeup and nail — nail polish and gel systems, press-on nails and
+      tips, manicure kits and lamps, plus colour cosmetics (lipstick,
+      mascara, foundation, eyeshadow) and makeup tools. Nail is the
+      stronger half of this bucket in practice.
+      CONSUMABLE: prefer New. An opened polish or a broken-seal palette is
+      a pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["OPI", "Modelones", "Glamnetic", "Essie", "Maybelline"]
+    subtypes: ["nail polish", "gel systems", "press-on nails", "manicure kits",
+               "nail lamps", "colour cosmetics", "makeup tools"]
+    seeds: ["nail polish", "gel polish", "press on nail", "press-on nail",
+            "nail kit", "nail tip", "nail lamp", "manicure", "pedicure",
+            "gel x", "nail art", "lipstick", "mascara", "eyeshadow",
+            "concealer", "makeup brush", "makeup set", "opi ", "modelones",
+            "glamnetic", "essie ", "maybelline", "apres "]
+
+  - name: "Snacks & confectionery"
+    group: "Food & drink"
+    description: >
+      Snack food and sweets — chocolate and candy, chips and crisps,
+      cookies and biscuits, granola and protein bars, popcorn, nuts, jerky,
+      and variety/snack packs. Branded or generic; a SCAN bucket, so
+      breadth beats selectivity.
+      CONSUMABLE: prefer New. Best-before dates are fine to flag — Bat will
+      assess — but an opened or repacked box is a pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Frito-Lay", "Hershey's", "Ghirardelli", "Quest", "Kind"]
+    subtypes: ["chocolate & candy", "chips & savoury", "cookies & biscuits",
+               "bars & granola", "nuts & jerky", "variety packs"]
+    seeds: ["chocolate", "candy", "gummies", "gummy", "chips ", "cookie",
+            "biscuit", "granola", "protein bar", "protein cookie", "popcorn",
+            "beef jerky", "trail mix", "snack pack", "variety pack",
+            "frito", "hershey", "ghirardelli", "quest ", "kind bar",
+            "cadbury", "lindt", "haribo", "pretzel"]
+    seed_exempt: ["Kind"]  # ordinary English word; "kind bar" carries it
+    exclude: ["candy apple", "sugar cookie", "candle", "moisturizer",
+              "candy land", "chocolate lab"]
+
+  - name: "Beverages & drink mixes"
+    group: "Food & drink"
+    description: >
+      Drinks and drink mixes — energy drinks, sparkling water and soft
+      drinks, juice, iced tea, powdered and pitcher drink mixes,
+      electrolyte and hydration packets. Coffee has its own bucket.
+      CONSUMABLE: prefer New. Cans or pouches graded below New usually
+      means a damaged or opened case.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Monster Energy", "Crystal Light", "Celsius", "Gatorade", "Liquid I.V."]
+    subtypes: ["energy drinks", "soft drinks & sparkling", "juice",
+               "iced tea", "drink mixes", "hydration & electrolyte"]
+    seeds: ["energy drink", "monster energy", "red bull", "celsius ",
+            "sparkling water", "soft drink", "iced tea", "drink mix",
+            "crystal light", "electrolyte", "hydration multiplier",
+            "liquid i.v", "gatorade", "powerade", "kool aid", "juice box",
+            "lemonade", "drink pouch", "pitcher pack"]
+    exclude: ["juicer", "drink dispenser", "drink cooler"]
+
+  - name: "Supplements & protein"
+    group: "Food & drink"
+    description: >
+      Nutrition supplements — protein powder and shakes, creatine,
+      pre-workout, vitamins and minerals, collagen, and meal-replacement
+      products. Pairs with the home gym interest.
+      CONSUMABLE: prefer "Brand New - Sealed". A tub graded "Brand New -
+      Open Box", "Excellent" or "Good" has been opened and is a pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Optimum Nutrition", "Quest", "Vega", "Jamieson", "Orgain"]
+    subtypes: ["protein powder", "protein shakes & bars", "creatine",
+               "pre-workout", "vitamins", "collagen"]
+    seeds: ["protein powder", "whey protein", "protein shake", "creatine",
+            "pre workout", "preworkout", "vitamin", "multivitamin",
+            "collagen", "meal replacement", "bcaa", "optimum nutrition",
+            "jamieson", "orgain", "vega ", "supplement", "quest "]
+
+  - name: "Vacuums & floor care"
+    group: "Cleaning & storage"
+    description: >
+      Vacuums and powered floor cleaning of every kind — cordless stick and
+      handheld vacs, robot vacuums and mops, canister and upright vacuums,
+      shop/wet-dry vacs, steam mops, and carpet/upholstery machines. Also
+      filters, bags and brush rolls for them. Branded or generic; a second
+      shop vac is actively wanted.
+      Split out of "Cleaning supplies & tools" 2026-08-30 — at ~438 lots a
+      week it was swamping that bucket.
+    examples: ["Shark", "Dyson", "Bissell", "Roomba", "Vacmaster", "Hoover"]
+    subtypes: ["cordless stick vacs", "handheld vacs", "robot vacuums",
+               "shop & wet/dry vacs", "steam mops", "carpet cleaners",
+               "filters & bags"]
+    seeds: ["vacuum", "wandvac", "dustbuster", "shop vac", "wet dry vac",
+            "wet/dry vac", "steam mop", "robot vac", "roomba", "stick vac",
+            "carpet cleaner", "upholstery cleaner", "canister vac",
+            "vacuum filter", "vacuum bag", "brush roll", "dyson", "bissell",
+            "vacmaster", "hoover ", "roborock", "dreame", "narwal", "levoit",
+            "stainstriker", "spot cleaner"]
+    seed_exempt: ["Shark"]  # Shark also sells hair tools; type words catch its vacs
+    exclude: ["vacuum sealer", "vacuum bag storage", "vacuum flask",
+              "vacuum insulated"]
+
+  - name: "Seating & occasional furniture"
+    group: "Home & bedroom"
+    description: >
+      Living-space furniture that is not a bed — coffee tables, end and side
+      tables, console tables, bar and counter stools, accent chairs and
+      recliners, bean bags, hanging and egg chairs, ottomans, and desk or
+      office chairs. Assembled or flat-pack. Branded or generic.
+    examples: ["VASAGLE", "Rolanstar", "SereneLife", "GDFStudio"]
+    subtypes: ["coffee tables", "side & end tables", "bar stools",
+               "accent chairs", "hanging & egg chairs", "office chairs",
+               "ottomans & bean bags"]
+    seeds: ["coffee table", "end table", "side table", "console table",
+            "accent table", "bar stool", "barstool", "counter stool",
+            "accent chair", "armchair", "recliner", "bean bag", "egg chair",
+            "hanging chair", "ottoman", "desk chair", "office chair",
+            "kneeling chair", "folding chair", "vasagle", "rolanstar",
+            "serenelife", "gdfstudio", "lift top table", "c table"]
+    exclude: ["chair cover", "chair cushion", "chair mat", "high chair",
+              "car seat", "table cloth", "tablecloth", "water table",
+              "picnic table", "table saw"]
+
+  - name: "Car care & detailing"
+    group: "Tools & garage"
+    description: >
+      Car cleaning and detailing — wash soaps and shampoos, waxes and
+      sealants, wheel and tire cleaners, interior cleaners, detailing kits,
+      applicators, drying towels, and wiper blades. Branded detailing
+      chemicals are the core of this; the household buys these repeatedly.
+      This bucket is deliberately NOT Tesla-specific — model-fit parts stay
+      under the Vehicle interest.
+    examples: ["Meguiar's", "Chemical Guys", "Armor All", "Turtle Wax", "Mothers"]
+    subtypes: ["wash & shampoo", "wax & sealant", "wheel & tire",
+               "interior care", "detailing kits", "applicators & towels"]
+    seeds: ["car wash", "car shampoo", "car wax", "carnauba", "detailing kit",
+            "detailing spray", "wheel cleaner", "tire shine", "tyre shine",
+            "interior cleaner", "wash mitt", "drying towel", "clay bar",
+            "wiper blade", "meguiar", "chemical guys", "armor all",
+            "turtle wax", "mothers polish", "car cover", "windshield washer"]
+    seed_exempt: ["Mothers"]  # ordinary word; "mothers polish" carries it
+    exclude: ["car seat", "car charger", "car mount", "car vacuum"]
+
+  - name: "Lawn treatment & pest control"
+    group: "Outdoor & garden"
+    description: >
+      Things applied to a lawn or garden rather than tools — fertiliser,
+      weed and feed, herbicide, grass seed, soil and compost, spreaders and
+      sprayers, dethatchers, plus pest and insect control (diatomaceous
+      earth, ant and wasp killer, rodent traps, mosquito control).
+    examples: ["Scotts", "Turf Builder", "Ortho", "Wilson", "Harris"]
+    subtypes: ["fertiliser & feed", "weed control", "grass seed",
+               "soil & compost", "spreaders & sprayers", "insect control",
+               "rodent control"]
+    seeds: ["fertilizer", "fertiliser", "weed and feed", "weed & feed",
+            "weed killer", "weed control", "herbicide", "grass seed",
+            "lawn soil", "compost", "dethatch", "lawn spreader",
+            "turf builder", "diatomaceous", "insecticide", "pesticide",
+            "ant killer", "wasp", "mosquito", "rodent", "mouse trap",
+            "scotts ", "ortho ", "weedclear", "bug spray", "pest control",
+            "harris diatomaceous"]
+    seed_exempt: ["Wilson", "Harris"]  # surnames; too costly as bare seeds
+    exclude: ["weed puller", "weed barrier", "weed eater"]
+
+  - name: "Kids' outdoor water play"
+    group: "Toys & games"
+    description: >
+      Warm-weather water toys for kids — water tables, water guns and
+      blasters (electric and pump), splash pads, kiddie and inflatable
+      pools, water balloons, pool floats and floaties sized for children,
+      and sprinkler toys. Strongly seasonal; expect nothing in winter.
+      Adult/serious pool maintenance stays with the Pool interest.
+    examples: ["Super Soaker", "X-Shot", "Step2", "Little Tikes", "Bestway"]
+    subtypes: ["water tables", "water guns & blasters", "splash pads",
+               "kiddie & inflatable pools", "pool floats", "water balloons"]
+    seeds: ["water table", "water gun", "water blaster", "super soaker",
+            "x shot", "xshot", "splash pad", "kiddie pool", "paddling pool",
+            "inflatable pool", "water balloon", "pool float", "pool floatie",
+            "swim ring", "water toy", "sand and water", "sand & water",
+            "step2", "little tikes", "bestway", "water sprinkler mat"]
+
+  - name: "Kids' craft & activity"
+    group: "Toys & games"
+    description: >
+      Making and doing rather than playing with — craft and art kits,
+      drawing and colouring supplies, markers and paint sets, modelling and
+      air-dry clay, slime and kinetic sand, bead and jewellery kits,
+      sticker and scrapbook sets, easels and tracing pads, and STEM/robotics
+      kits. Branded or generic.
+    examples: ["Crayola", "Play-Doh", "Melissa & Doug", "Klutz", "Faber-Castell"]
+    subtypes: ["art & drawing", "markers & paint", "modelling clay & dough",
+               "slime & sensory", "bead & jewellery kits", "sticker & craft kits",
+               "STEM & robotics"]
+    seeds: ["crayola", "play doh", "playdoh", "play-doh", "craft kit",
+            "art set", "art kit", "paint set", "marker set", "alcohol marker",
+            "acrylic paint", "colouring book", "coloring book", "air dry clay",
+            "modelling clay", "modeling clay", "kinetic sand", "slime kit",
+            "bead kit", "jewellery kit", "jewelry kit", "sticker book",
+            "scrapbook", "tracing pad", "easel", "stem kit", "robot kit",
+            "science kit", "melissa & doug", "klutz", "faber castell"]
+    exclude: ["paint sprayer", "spray paint", "paint roller", "wall paint"]
+
+  - name: "Audio & headphones"
+    group: "Electronics & gaming"
+    description: >
+      Personal and home audio — over-ear and on-ear headphones, earbuds,
+      Bluetooth and portable speakers, soundbars, USB and streaming
+      microphones, amps and DACs, and turntables. Split out of "Electronics"
+      2026-08-30: audio was watched consistently across three months of
+      history (Audio-Technica three times, Sony WH-1000XM5 twice, Anker,
+      Ultimate Ears, Blue Yeti) while buried in the largest and
+      worst-converting bucket in the taxonomy. Favor recognisable brands
+      over no-name gear.
+    examples: ["Sony", "Bose", "Audio-Technica", "JBL", "Sennheiser",
+               "Ultimate Ears"]
+    subtypes: ["over-ear headphones", "earbuds", "bluetooth speakers",
+               "soundbars", "microphones", "turntables", "amps & DACs"]
+    seeds: ["headphone", "earbud", "earphone", "wh 1000", "wf 1000",
+            "noise cancelling", "noise canceling", "bluetooth speaker",
+            "portable speaker", "soundbar", "sound bar", "turntable",
+            "usb microphone", "condenser mic", "audio technica", "sennheiser",
+            "soundcore", "ultimate ears", "wonderboom", "jbl ", "bose ",
+            "beats ", "airpod", "blue yeti", "shure ", "akg ", "marshall ",
+            "amplifier", "av receiver"]
+    seed_exempt: ["Sony"]  # Sony sells far more non-audio; type words carry it
+    categories:
+      - "Computers & Electronics - Consumer Electronics - Home Audio"
+    exclude: ["speaker wire", "speaker stand", "speaker mount",
+              "headphone stand", "speaker cable"]

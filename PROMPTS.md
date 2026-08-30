@@ -146,131 +146,37 @@ given, and nothing about another pass's lots. Never merge them by hand.
 
 ### Prompt
 
-> **Run this prompt once per pass, in a separate chat each time.** Replace
-> `<PASS NAME>` and `<FOCUS BUCKETS>` with the `name` and `focus_buckets` of
-> the pass you are running, from `passes.yaml`, and attach that pass's input
-> file.
->
-> You are judging auction lots for one specific person, against a curated
-> interest list ("Bat's List").
->
-> These lots are one slice of a larger auction — **<PASS NAME>**. The whole
-> auction has been partitioned by category and each slice is judged separately,
-> so judge only what you are given here.
->
-> The buckets whose inventory usually lands in this slice are:
-> **<FOCUS BUCKETS>**. That list tells you where to look; it does **not**
-> limit you. Assign any bucket in `buckets.yaml` that genuinely fits. The
-> auction house's own categories are unreliable — a Barbie can be filed under
-> Home Goods, and most hand tools are filed under Lawn & Garden — so trust the
-> title and model over the category.
->
-> I have attached two files. `profile.yaml` describes what this household
-> actually wants — interests, projects underway, sizes, and things explicitly
-> not wanted. `buckets.yaml` defines the complete set of buckets, each with a
-> `name`, a `description`, optional `examples`, and an optional `subtypes`
-> vocabulary. **The buckets exist because of the profile**: they are the
-> navigable expression of those interests. Match lots **semantically against
-> the `description`** — `examples` are illustrative hints, not an exhaustive
-> whitelist. A generic or off-brand item still matches if it fits the
-> description. Before you begin, tell me how many buckets you read so I can
-> confirm the file attached correctly.
->
-> I will give you auction lots as JSON. See "Input fields" below for what each
-> lot contains.
->
-> **About `cand`.** Each lot carries `cand`: the buckets a local
-> keyword/category prefilter judged *possible*. It is where to look first, not
-> an answer.
->
-> - **`cand` is not permission.** A lawn mower's "IGNITION KEY SWITCH" is a
->   candidate for the keyboard bucket and is not a keyboard. Reject freely —
->   most shortlisted lots are not matches, and a bucket whose description sets
->   a quality bar ("do NOT flag generic no-brand pieces") still applies that
->   bar in full.
-> - **Judge each candidate independently.** `cand` often lists two or three.
->   Accept every one that genuinely fits — a gaming keyboard is both
->   "Keyboards & PC peripherals" *and* "Electronics". Expect roughly one in ten
->   accepted lots to carry two or more buckets. Assigning exactly one bucket to
->   almost everything is a known failure mode of this task.
-> - Assigning a bucket **not** in `cand` is allowed but should be rare — only
->   when the item unmistakably belongs there. I measure this, and it is useful
->   signal about what the prefilter is missing.
-> - Some lots carry `profile` instead of or alongside `cand`. That means the
->   lot matched a profile interest with no bucket of its own (pool upkeep,
->   work lighting, vehicle fit). Those can be a personal pick with
->   `bats_buckets: []`.
->
-> For **every** lot I give you, return one object:
->
-> ```json
-> {
->   "lot_number": "S-1a",
->   "is_bats_list": true,
->   "bats_buckets": ["Keyboards & PC peripherals", "Electronics"],
->   "bats_subtype": "mechanical keyboards",
->   "personal_match": true,
->   "personal_tags": ["pc_gaming"],
->   "match_strength": "strong",
->   "match_types": ["personal_use"],
->   "personal_reasoning": "Enthusiast mechanical board for the desk setup in the profile."
-> }
-> ```
->
-> Rules:
-> - Return one row for **every** input lot, including lots that match nothing.
->   For those, return exactly these four keys and nothing else:
->   `{"lot_number": "...", "is_bats_list": false, "bats_buckets": [], "personal_match": false}`.
->   Do not shorten that further — the four keys are load-bearing (see below).
-> - `bats_buckets` values must be bucket `name` strings copied **exactly** from
->   `buckets.yaml` — same spelling, casing, spacing, and punctuation (e.g.
->   `"Garden & lawncare misc"`, not `"Garden and lawncare misc"`). Never invent
->   a bucket name.
-> - `is_bats_list` is `true` if and only if `bats_buckets` is non-empty.
-> - **`bats_subtype` is required whenever `is_bats_list` is true.** It is a
->   1-3 word lowercase label for **what the item actually is**, one level finer
->   than the bucket. Each bucket lists a `subtypes` vocabulary — use one of
->   those verbatim when it fits, and invent a new 1-3 word lowercase label only
->   when none does. **Reuse wording across the whole run**: these become
->   navigation, so `"scrub brushes"` on forty lots is useful and forty near
->   synonyms are not. Omit the key (or use `null`) only when `is_bats_list` is
->   `false`.
-> - `personal_match` must be a real JSON boolean `true` — not the string
->   `"true"`, not `1`. Only `true` counts as a pick.
-> - A lot can be on Bat's List without being a personal pick, and vice versa.
->   The bucket answers "is this a type Bat collects?"; the pick answers "does
->   Bat want *this one*, now?" — which is where `profile.yaml`'s projects,
->   sizes, and `not_wanted` list do their work.
-> - `match_strength` is one lowercase word — `"strong"`, `"moderate"`, or
->   `"weak"`. It is rendered into the badge as "PERSONAL PICK · {STRENGTH}
->   MATCH".
-> - `personal_tags` and `match_types` are short arrays of plain strings shown
->   as chips. **Draw `personal_tags` from the `tags` vocabulary in
->   `profile.yaml`** rather than inventing new wording per lot.
-> - `personal_reasoning` is one short sentence, and the key must be named
->   `personal_reasoning`.
-> - Omit `personal_tags`, `match_strength`, `match_types`, and
->   `personal_reasoning` entirely on lots where `personal_match` is `false`.
-> - Check `size` before flagging apparel or footwear — a great item in the
->   wrong size is not a match. Check `damage`, `missing_parts`, and the
->   `damaged` / `missing_major_parts` / `functional` flags too: do not flag a
->   broken or incomplete item as a pick unless the profile specifically wants
->   it for parts or repair.
-> - Be selective about `personal_match: true`. That list is meant to be short
->   enough to actually read. Being complete (a row per lot) and being selective
->   (few `true`s) are both required.
-> - Use `model` to identify items whose title is a bare SKU or an ambiguous
->   brand word — it is often the difference between correctly bucketing a lot
->   and missing it. Do not let a wrong `category` talk you out of a match the
->   title and model clearly support.
-> - Use these keys and no others. In particular do **not** include a
->   `bats_category`, `bats_subcategory`, `category`, `subcategory`,
->   `reasoning`, or `confidence` key.
-> - Output a raw JSON array only — no markdown fences, no commentary.
-> - The file contains N rows. Return exactly N objects, one per row, in the
->   same order. If you cannot complete all of them in one response, stop at a
->   row boundary and tell me the last `lot_number` you finished so I can pick
->   up from there — never silently drop rows to make the output fit.
+The prompt body now lives in **`prompts/flagging.md`**, not here. It moved
+because `python -m classify` assembles it programmatically — substituting the
+pass name and focus buckets, inlining the full `buckets.yaml` and
+`profile.yaml`, and hashing the result into the run fingerprint. Extracting a
+markdown blockquote out of explanatory prose to do that would have been
+exactly the fragility `docs/PASS_SOURCES.md` warned about, so there is now one
+copy of the text and this file keeps the rationale around it.
+
+Two things changed in the move, both because the pass is now chunked:
+
+- **Output shape.** A worker returns one object — `matches` (full rows) plus
+  `no_match` (a plain array of `lot_number` strings) — rather than a row per
+  lot. Negatives are still acknowledged individually, so *judged and rejected*
+  stays distinguishable from *silently skipped*, but a rejection costs a lot
+  number rather than four keys. `classify` expands `no_match` back into the
+  four-key all-false rows before writing `_flags_<x>.json`, so the file on
+  disk is shaped exactly as it always was.
+- **Completeness.** Each worker is told its own chunk's row count and must
+  account for every lot in it. The old "stop at a row boundary and tell me the
+  last `lot_number`" escape hatch is gone: chunks are sized to be finishable,
+  and a short chunk is retried and then bisected rather than resumed by hand.
+
+The `cand` block is conditional. Pass files carry no `cand` or `profile` keys
+— those come from `tools/prefilter.py`'s shortlist — so `classify/prompts.py`
+includes that section only when the input actually has them, rather than
+describing a field the worker cannot see.
+
+To change what the flagging pass does, edit `prompts/flagging.md`. Doing so
+changes the run fingerprint, which invalidates any chunks already ingested —
+deliberately, so a taxonomy or wording change cannot half-apply to a week.
+
 
 ### Why this matters
 

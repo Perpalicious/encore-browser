@@ -18,10 +18,32 @@ sequence exactly. **Stop and wait for the user at the marked points —
 the two ChatGPT passes cannot be run by you; they require the user to
 paste the input file into a ChatGPT chat and paste the response back.**
 
-### 0. Sync
+### 0. Sync, then sweep last week aside
+
 ```bash
 git pull
 ```
+
+Pull **before** `python -m classify prepare`, never during a run: a change to
+`CLAUDE.md`, `buckets.yaml`, `profile.yaml` or the prompt arriving mid-run
+changes the fingerprint and invalidates chunks already ingested.
+
+Then move the previous week out of the way. This is not optional — last week's
+`_categorized.json` and `_resale.json` sit at exactly the paths this week's
+build reads, and lot numbers repeat across weeks (93.9% overlap measured), so
+building against them succeeds and is wrong on nearly every lot:
+
+```bash
+mkdir -p data/archive/<LAST_RUN_DATE>
+mv data/categorized/auction_combined_*.json data/archive/<LAST_RUN_DATE>/ 2>/dev/null
+rm -f data/raw/auction_*.json
+```
+
+`<LAST_RUN_DATE>` is the previous run's date (`ls data/archive/` shows what is
+already there; the files' own mtimes show which week is currently in
+`data/categorized/`). The tracked fixture `auction_703264_categorized.json` is
+not matched by that glob and must stay. See the retention section at the end
+for what is safe to delete afterwards.
 
 ### 1. Scrape
 ```bash
@@ -119,7 +141,8 @@ non-matches), `_sweep.json`, and `_prefilter.json`. Check its printout:
 - no bucket exceeds the 8% share guard and no `Error:` lines
 - **zero-candidate buckets are listed as a WARNING** — a seed typo looks
   exactly like this, and that bucket will score no matches all week
-- the paste boundaries at the end tell the user where to split long chunks
+- the paste boundaries at the end are for the older manual flow; the
+  flagging pass is chunked by `python -m classify prepare` now and ignores them
 
 Why the shortlist exists: the flagging pass used to judge all ~27k lots
 against all 45 buckets with an ~85% negative rate, and narrow buckets
@@ -164,44 +187,85 @@ only 77.4% of lots actually bid on. See `passes.yaml` for why there are four.
 `tools/prefilter.py` still runs: `_base.json` guarantees coverage, and
 `--backtest` / `--audit` remain the cheap way to measure seed quality.
 
-### 4. STOP — hand off to the user
+### 4. Flagging passes — automated. Resale — still a handoff.
 
-Tell the user: *"Five files are ready.
+#### 4a. The four flagging passes
 
-**Four flagging passes — run each in its OWN chat, attaching both
-`buckets.yaml` and `profile.yaml` to every one:**
-- `auction_<ID>_pass_a.json` → save as `auction_<ID>_flags_a.json`
-- `auction_<ID>_pass_b.json` → save as `auction_<ID>_flags_b.json`
-- `auction_<ID>_pass_c.json` → save as `auction_<ID>_flags_c.json`
-- `auction_<ID>_pass_d.json` → save as `auction_<ID>_flags_d.json`
+```bash
+python -m classify prepare <ID>
+```
 
-`PROMPTS.md` has the prompt — substitute each pass's `name` and
-`focus_buckets` from `passes.yaml`.
+Splits each pass into chunks of at most 500 lots (or ~150 KB, whichever comes
+first) and writes a per-pass `PROMPT.md` with the full `buckets.yaml` and
+`profile.yaml` inlined. Expect ~56 chunks for a normal week.
 
-**One resale pass:**
-- `auction_<ID>_for_resale.json` → save as `auction_<ID>_resale_deduped.json`
+Then loop:
 
-Let me know when they're saved and I'll continue."*
+```bash
+python -m classify status <ID>     # prints a DISPATCH block: one line per chunk
+python -m classify ingest <ID>     # validate whatever workers have written
+```
 
-Both names matter. The flagging pass returns `_flags.json`, NOT
-`_categorized.json` — step 5 merges it onto `_base.json` to build the
-categorized file. Saving it straight to `_categorized.json` would drop every
-lot the prefilter screened out, which is about two thirds of the auction. The
-resale pass likewise returns `_resale_deduped.json`, NOT `_resale.json`;
-step 5 generates that from it, and writing it directly would leave most lots
-unvalued.
+For every line in the DISPATCH block, spawn a **`lot-classifier`** subagent
+(Sonnet, Read+Write only, defined in `.claude/agents/lot-classifier.md`).
+Send several Agent calls per message so they run concurrently — waves of about
+ten. Each worker's task message is only this:
 
-The prompt to use for each pass is in `PROMPTS.md`, along with the
-output-shape rules each must follow. If the user asks what to paste into
-ChatGPT, point them there rather than improvising a prompt.
+> Read `<prompt path>` and follow it exactly.
+> chunk id: `<chunk id>` · input: `<input path>` · output: `<output path>`
+> rows: `<n>` · fingerprint: `<fingerprint>`
+> Reply with the single status line and nothing else.
 
-`docs/PASS_SOURCES.md` maps each of the five passes to the exact files that
-supply its prompt, config and data, and lists the assumptions that break an
-automated run (chief among them: never slice `buckets.yaml` down to a pass's
-`focus_buckets`). That is the file to hand an agent that is planning an
-automated run of these passes.
+**Never let the classified rows into your own context.** A week is ~0.7M
+output tokens; workers write their own files and `ingest` reads them. If you
+find yourself reading a chunk output or an `ingested/` file, stop — that is
+the one thing this design exists to prevent.
 
-Do not proceed past this point until the user confirms both files exist.
+Re-run `ingest` then `status` until it says all chunks are ingested. `status`
+exits non-zero while anything is outstanding, so it is safe to loop on.
+Chunks that fail validation are retried once and then bisected automatically
+(500 → 250 → 125 …); a chunk still failing at the floor is reported as
+**BLOCKED** with its lot numbers and the exact errors. Report blocked chunks
+to the user — do not route around them, and do not hand-edit an output file.
+
+```bash
+python -m classify finalize <ID>
+```
+
+Writes `auction_<ID>_flags_<a|b|c|d>.json`, and refuses if any lot is
+unaccounted for. It also prints per-pass flagged / subtyped / multi-bucket /
+pick counts — glance at these before moving on, especially **pass A**: near-zero
+flags there means the personal-care buckets did not attach (see
+`docs/PASS_SOURCES.md`).
+
+**On staleness.** Every chunk records a fingerprint covering the input, the
+prompt, `buckets.yaml`, `profile.yaml`, `passes.yaml`, the contract version,
+the worker definition, the effective Claude instruction stack, and the pinned
+model id. Editing any of them mid-run invalidates the affected results rather
+than blending two configurations — `prepare` says so and discards them, and
+`finalize` refuses while a pass is stale. So land config or doc edits *before*
+starting a run, not during one.
+
+#### 4b. STOP — hand the resale pass to the user
+
+Tell the user: *"The flagging passes are done. One file left for you:*
+
+*- `auction_<ID>_for_resale.json` → save as `auction_<ID>_resale_deduped.json`*
+
+*`PROMPTS.md` has the resale prompt. Let me know when it's saved and I'll
+continue."*
+
+The name matters: the resale pass returns `_resale_deduped.json`, **not**
+`_resale.json`; step 5 generates that from it, and writing it directly would
+leave most lots unvalued.
+
+`docs/PASS_SOURCES.md` maps each pass to the exact files that supply its
+prompt, config and data, and lists the assumptions that break an automated run
+(chief among them: never slice `buckets.yaml` down to a pass's
+`focus_buckets`).
+
+Do not proceed past this point until the user confirms the resale file exists.
+
 
 ### 5. Assemble the categorized file, expand resale, then verify
 
@@ -427,11 +491,12 @@ git config --global user.email "<their email>"
 - **Deploy is local, not `git push`** — `npx gh-pages -d dist -b
   gh-pages` is the only thing that updates the live site. A `git push`
   to `main` alone does nothing to the deployed site.
-- **`buckets.yaml` AND `profile.yaml` must both be re-uploaded to the
-  ChatGPT flagging pass** — editing them in the repo does not update what the
-  chat sees; the user must re-attach both. `tools/prefilter.py` prints the
-  bucket count on every run; if a read-test in a fresh chat returns a
-  different number, flag it to the user before they run the full pass.
+- **The `buckets.yaml` / `profile.yaml` re-upload problem is gone for
+  flagging.** `python -m classify prepare` inlines both from disk on every
+  run, and each worker reports how many buckets it actually read — `ingest`
+  compares that against the count parsed from `buckets.yaml` and rejects a
+  mismatch. The gotcha still applies to the **resale** pass, which is a manual
+  paste; note that pass takes neither file (`docs/PASS_SOURCES.md`).
 - **A seed typo silently zeroes a bucket.** This is the systemic failure mode
   the prefilter introduces: nothing downstream can distinguish "no lots
   matched this bucket" from "the seed was misspelled". Three things catch it —

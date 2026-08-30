@@ -1,8 +1,12 @@
 # Pass sources — what each model pass reads and writes
 
-Reference for building an automated run of the five model passes. Written
-2026-08-30 for an agent doing the planning: it says which file supplies which
-part of each prompt, and which assumptions about those files are wrong.
+Reference for the five model passes: which file supplies which part of each
+prompt, and which assumptions about those files are wrong.
+
+The four flagging passes are **automated** — `python -m classify` chunks them
+and dispatches `lot-classifier` subagents; see `CLAUDE.md` step 4. The resale
+pass is still a manual paste. Written 2026-08-30, updated when flagging was
+automated.
 
 This does **not** restate the pipeline. `CLAUDE.md` owns the run order (scrape →
 slim → shortlist → split → passes → merge → verify → build → deploy) and is the
@@ -22,14 +26,14 @@ every lot is judged exactly once.
 
 | Source | Path | Role |
 |---|---|---|
-| Prompt template | `PROMPTS.md` § *Pass 1 → Prompt* | The blockquote body. Substitute `<PASS NAME>` and `<FOCUS BUCKETS>` |
+| Prompt template | `prompts/flagging.md` | Assembled by `classify/prompts.py`; substitutes `{{PASS_NAME}}`, `{{FOCUS_BUCKETS}}`, `{{BUCKET_COUNT}}`, `{{CAND_SECTION}}`, `{{INPUT_FIELDS}}`, and inlines both YAML files |
 | Pass definitions | `passes.yaml` | Supplies those two substitutions: `name` and `focus_buckets` |
 | Bucket taxonomy | `buckets.yaml` | All 62 buckets, every pass — see "Do not slice" below |
 | Household profile | `profile.yaml` | All of it, every pass |
-| Row schema | `PROMPTS.md` § *Input fields* | Must be in the prompt; an absent key is meaningful and the model needs telling |
-| Output contract | `PROMPTS.md` § *Shared rules* | Must be in the prompt |
+| Row schema | `prompts/input_fields.md` | Inlined into the prompt; an absent key is meaningful and the model needs telling |
+| Output contract | `classify/contract.py` | The canonical row shape — validation, `no_match` expansion, finalize and the tests all derive from it |
 | Data in | `data/categorized/auction_<ID>_pass_<a\|b\|c\|d>.json` | Written by `tools/split_passes.py` |
-| Data out | `data/categorized/auction_<ID>_flags_<a\|b\|c\|d>.json` | Consumed by `merge_categorized` |
+| Data out | `data/categorized/auction_<ID>_flags_<a\|b\|c\|d>.json` | Written by `python -m classify finalize`; consumed by `merge_categorized` |
 
 Per-pass substitutions, from `passes.yaml` (volumes are week of 2026-08-16):
 
@@ -87,29 +91,33 @@ preserve. Send the full file every time.
 
 The same reasoning applies to `profile.yaml`: send all of it.
 
-### 2. Chunking is a gap you have to fill yourself
+### 2. Chunking now exists — use it, do not re-roll it
 
-The passes are 4,891–7,770 lots each — far more than one response. There is no
-chunking helper for them.
+This used to be the gap. The `classify` package fills it: `prepare` splits each
+pass into chunks of at most 500 lots (or ~150 KB, whichever binds first),
+`ingest` validates each returned chunk by reconciling its lot set exactly, and
+`finalize` refuses to write while any lot is unaccounted for.
 
-`tools/prefilter.py` *does* emit paste boundaries (`order_candidates`, surfaced
-in `_prefilter.json`), but that was written for the older shortlist flow.
-**`tools/split_passes.py` has no equivalent** — it writes whole files and prints
-per-pass counts, nothing more.
+500 is a hard maximum, not a default to tune upward. It bounds attention decay,
+which is what actually went wrong here — 5 of 77 KEYBOARD lots flagged, 4 of 36
+storage bins — rather than output truncation, which was never the binding
+constraint at this size.
 
-So the automation needs its own chunk-and-reassemble layer, and that layer is
-where truncation hides. A run that stops early produces valid JSON that is
-simply short, and is indistinguishable from success by eye. Chunk on row
-boundaries, track which rows each chunk was given, and reconcile lot sets rather
-than trusting a response to be complete.
+The reason the reconciliation is exact, rather than a row count: a run that
+stops early produces valid JSON that is simply short, and is indistinguishable
+from success by eye.
 
 ### 3. Substitute the real row count
 
-`PROMPTS.md` § *Shared rules* requires replacing the literal `N` in each
-completeness instruction with the actual row count before sending. A concrete
-number is what makes the model's own count checkable; leaving `N` in makes the
-instruction unenforceable. `tools/split_passes.py` prints the count per pass and
-`tools/slim_resale.py` prints the resale row count.
+A completeness instruction needs a concrete number: that is what makes the
+model's own count checkable, and leaving a literal `N` in makes it
+unenforceable.
+
+For flagging this is now automatic — each worker's task message carries its
+chunk's exact row count, and `ingest` reconciles the returned lot set against
+it rather than taking the model's word. For the **resale** pass it is still
+manual: `tools/slim_resale.py` prints the row count, and `PROMPTS.md` § *Shared
+rules* requires substituting it before pasting.
 
 ### 4. Wire into the existing verification, do not reimplement it
 
@@ -133,28 +141,21 @@ buckets did not attach.
 
 ---
 
-## Known friction: the prompts are prose
+## Prompt text: extracted for flagging, still prose for resale
 
-The prompt bodies live as markdown blockquotes embedded in explanatory prose in
-`PROMPTS.md`. Extracting them means stripping `> ` prefixes out of a document
-that also explains itself, and the surrounding rationale is genuinely worth
-keeping for humans.
+The prompt bodies used to be markdown blockquotes embedded in explanatory prose
+in `PROMPTS.md`, which made programmatic assembly fragile. That is resolved for
+the flagging pass: its body now lives in `prompts/flagging.md`, with
+`prompts/input_fields.md` (the row schema, shared with resale) and
+`prompts/flagging_cand.md` (the conditional `cand` block) beside it.
+`PROMPTS.md` keeps the rationale and links to them.
 
-If this proves fragile, the clean fix is to split the prompt text into
-`prompts/flagging.md` and `prompts/resale.md` and have `PROMPTS.md` keep the
-rationale and link to them. Not done yet — flagged so the decision is
-deliberate rather than discovered mid-implementation.
+**The resale prompt is still a blockquote in `PROMPTS.md`.** It is pasted by
+hand, so nothing parses it; extract it if and when that pass is automated.
 
-Section line numbers as of 2026-08-30 (they drift — match on the headings):
-
-| Section | Lines |
-|---|---|
-| `## Input fields` | 29–67 |
-| `## Shared rules (apply to both passes)` | 68–93 |
-| `### Prompt` (Pass 1, flagging) | 147–274 |
-| `### Prompt` (Pass 2, resale) | 337–396 |
-
----
+Editing `prompts/flagging.md` changes the run fingerprint and invalidates any
+chunks already ingested — deliberately, so a wording change cannot half-apply
+to a week. Land prompt edits before starting a run.
 
 ## Config files at a glance
 
@@ -164,6 +165,9 @@ Section line numbers as of 2026-08-30 (they drift — match on the headings):
 | `profile.yaml` | 16 KB — `sizes`, `projects`, `not_wanted`, `interests`, `proven_resale` | `prefilter.py`, `split_passes.py`, `verify_passes.py` | **Yes**, all four flagging passes |
 | `passes.yaml` | 5.9 KB — `fallback` + 4 `passes` | `split_passes.py` | **No** — read `name` / `focus_buckets` out of it to fill the template |
 | `bats_list.yaml` | 6.5 KB | nothing | No |
+| `prompts/flagging.md` | the flagging prompt body | `classify/prompts.py` | **Yes** — it *is* the prompt |
+| `prompts/input_fields.md` | the row schema | `classify/prompts.py` | **Yes**, inlined |
+| `prompts/flagging_cand.md` | the `cand` block | `classify/prompts.py` | Only when the input carries `cand` |
 
 `buckets.yaml` is the file built from three months of real bid/watch history
 (see its header comment near the Personal care group, and `data/Watch/`) —

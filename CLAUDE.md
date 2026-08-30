@@ -152,18 +152,34 @@ a lead, not a verdict.
 This is also why `_for_agent.json` is now worth keeping one week back (see the
 retention section) — without it the backtest cannot be run correctly at all.
 
+Then split the auction into the four flagging passes:
+```bash
+python3 tools/split_passes.py <ID>
+```
+Writes `_pass_a.json` … `_pass_d.json` and asserts every lot lands in exactly
+one. **This covers 100% of lots — the prefilter shortlist does not.** Measured
+against three months of real bid/watch history, the shortlist alone reached
+only 77.4% of lots actually bid on. See `passes.yaml` for why there are four.
+
+`tools/prefilter.py` still runs: `_base.json` guarantees coverage, and
+`--backtest` / `--audit` remain the cheap way to measure seed quality.
+
 ### 4. STOP — hand off to the user
 
-Tell the user: *"Two files are ready:
-- `data/categorized/auction_<ID>_candidates.json` — for the combined Bat's
-  List + personal-match pass. **Attach both `buckets.yaml` and
-  `profile.yaml` to that chat.**
-- `data/categorized/auction_<ID>_for_resale.json` — for the resale pass
-  only (deduplicated, so it's smaller)
+Tell the user: *"Five files are ready.
 
-Please run the two ChatGPT passes and give me back two files:
-- `data/categorized/auction_<ID>_flags.json`  ← note the name
-- `data/categorized/auction_<ID>_resale_deduped.json`  ← note the name
+**Four flagging passes — run each in its OWN chat, attaching both
+`buckets.yaml` and `profile.yaml` to every one:**
+- `auction_<ID>_pass_a.json` → save as `auction_<ID>_flags_a.json`
+- `auction_<ID>_pass_b.json` → save as `auction_<ID>_flags_b.json`
+- `auction_<ID>_pass_c.json` → save as `auction_<ID>_flags_c.json`
+- `auction_<ID>_pass_d.json` → save as `auction_<ID>_flags_d.json`
+
+`PROMPTS.md` has the prompt — substitute each pass's `name` and
+`focus_buckets` from `passes.yaml`.
+
+**One resale pass:**
+- `auction_<ID>_for_resale.json` → save as `auction_<ID>_resale_deduped.json`
 
 Let me know when they're saved and I'll continue."*
 
@@ -183,15 +199,24 @@ Do not proceed past this point until the user confirms both files exist.
 
 ### 5. Assemble the categorized file, expand resale, then verify
 
-Merge the returned flags onto the all-false base so every lot has a row:
+Chain all four flag files onto the all-false base so every lot has a row,
+feeding each output into the next. Order does not matter — each pass owns a
+disjoint set of lot_numbers:
 ```bash
 python -m merge_categorized --existing data/categorized/auction_<ID>_base.json \
-  --new data/categorized/auction_<ID>_flags.json \
+  --new data/categorized/auction_<ID>_flags_a.json --output /tmp/cat_a.json
+python -m merge_categorized --existing /tmp/cat_a.json \
+  --new data/categorized/auction_<ID>_flags_b.json --output /tmp/cat_b.json
+python -m merge_categorized --existing /tmp/cat_b.json \
+  --new data/categorized/auction_<ID>_flags_c.json --output /tmp/cat_c.json
+python -m merge_categorized --existing /tmp/cat_c.json \
+  --new data/categorized/auction_<ID>_flags_d.json \
   --output data/categorized/auction_<ID>_categorized.json
 ```
-It reports `Merged <n_added> new items` — **`n_added` must be 0.** Anything
-else means the pass returned a `lot_number` that isn't in this week's auction,
-which is either a hallucinated row or a stale file. Stop and investigate.
+Each step reports `Merged <n_added> new items` — **`n_added` must be 0 every
+time.** Anything else means that pass returned a `lot_number` that isn't in
+this week's auction, which is either a hallucinated row or a stale file. Stop
+and investigate, naming which pass.
 
 This step also carries the `lot_set_sha` stamped into `_base.json` through to
 the categorized file, which verify checks in the next step.

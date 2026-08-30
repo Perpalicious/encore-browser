@@ -25,6 +25,12 @@ data/categorized/*
 !data/categorized/auction_703264_categorized.json
 # Prior weeks, moved out of the working folder (see "Data retention" in CLAUDE.md)
 data/archive/
+# Bid/watch history exports. The RAW history is a per-lot log of what this
+# household bid on and watched — the repo is public and profile.yaml is written
+# impersonally on purpose, so it stays local. The aggregate findings are
+# tracked, because code comments and passes.yaml cite them.
+data/Watch/*
+!data/Watch/FINDINGS.md
 
 # Note: viewer/src/data/auction_bundle.json IS committed — GitHub Pages
 # deploys static bundles, so the data file ships in the repo. Regenerate

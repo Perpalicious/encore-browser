@@ -91,31 +91,79 @@ section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
 
 ---
 
-## Pass 1 — Bat's List + personal match
+## Pass 1 — Bat's List + personal match (now FOUR passes: 1A-1D)
 
-**Attach BOTH `buckets.yaml` and `profile.yaml` to the chat.** Editing them in
-the repo does not update what the chat sees. `tools/prefilter.py` prints the
-bucket count on every run; if a read-test in a fresh chat reports a different
-number, the file didn't attach and the whole pass will produce unusable bucket
-names.
+**Attach BOTH `buckets.yaml` and `profile.yaml` to every one of the four
+chats.** Editing them in the repo does not update what a chat sees.
+`tools/prefilter.py` prints the bucket count on every run; if a read-test in a
+fresh chat reports a different number, the file didn't attach and that whole
+pass will produce unusable bucket names.
 
-**Input file: `auction_<ID>_candidates.json`** — the shortlist, not the whole
-auction. Roughly a third of the lots, sorted so each bucket's rows are
-contiguous and the narrow buckets come first. `tools/prefilter.py` prints the
-row offsets of each bucket boundary; split long pastes there so no bucket's run
-is cut in half.
+### Why this is four prompts and not one
 
-Save as: `data/categorized/auction_<ID>_flags.json`
+Two earlier shapes both failed, in opposite directions:
 
-Note the name. Step 5a merges it onto `auction_<ID>_base.json` to produce
-`auction_<ID>_categorized.json`, which is what the build consumes. Saving this
-pass's output directly as `_categorized.json` would drop every lot the
-prefilter screened out — about two thirds of the auction.
+| shape | coverage | what went wrong |
+|---|---|---|
+| all ~27k lots, all buckets, one prompt (before 2026-08-16) | 100% | ~85% negative rate diluted it; narrow buckets starved. 77 lots had KEYBOARD in the title and **5** were flagged; storage bins scored **4 of 36**. Shipped 0% subtype coverage. |
+| prefilter shortlist only (2026-08-16) | ~44% | reaches only **77.4%** of lots actually bid on, measured against three months of real bid/watch history. One pick in four could never be seen. |
+
+Splitting by HiBid category fixes both at once: **every lot is judged exactly
+once**, and each prompt carries 13-30 relevant buckets instead of 62. Coverage
+goes to 100% while dilution goes down.
+
+### The four passes
+
+Run `python3 tools/split_passes.py <ID>` to produce the inputs. Defined in
+`passes.yaml`; volumes below are from the week of 2026-08-16.
+
+| pass | input file | covers | lots | focus buckets |
+|---|---|---|---|---|
+| **1A** | `auction_<ID>_pass_a.json` | Bed / Bath Items, Linens, Carpet — **all personal care lives here** | 6,595 | 13 |
+| **1B** | `auction_<ID>_pass_b.json` | rest of Home Goods, Furniture, Business & Industrial | 7,770 | 30 |
+| **1C** | `auction_<ID>_pass_c.json` | Construction & Farm, Lawn & Garden, Sporting Goods | 4,891 | 22 |
+| **1D** | `auction_<ID>_pass_d.json` | Computers & Electronics, Kid & Baby, Toys, Fashion, tail | 7,767 | 17 |
+
+Save each as: `data/categorized/auction_<ID>_flags_<a|b|c|d>.json`
+
+Note the names. Step 5a chains all four onto `auction_<ID>_base.json` to produce
+`auction_<ID>_categorized.json`. Saving any of them directly as
+`_categorized.json` would drop every lot the other three passes cover.
+
+**Each pass's rows are independent** — a pass returns exactly the rows it was
+given, and nothing about another pass's lots. Never merge them by hand.
+
+### Two things that are easy to get wrong
+
+- **`focus_buckets` is advisory, not a filter.** `passes.yaml` names the
+  buckets whose inventory actually sits in that pass, so the model knows where
+  to look. It may still assign **any** bucket in `buckets.yaml`. HiBid's
+  categories are noisy — a Barbie filed under Home Goods must still come back
+  as `Barbies`, and 59% of Hand tools inventory sits under *Lawn & Garden*.
+- **Pass 1A is the one to watch.** It is the densest slice and had almost no
+  bucket coverage before 2026-08-30. If it returns near-zero flags, the
+  personal-care buckets did not attach.
 
 ### Prompt
 
-> You are judging a pre-screened shortlist of auction lots for one specific
-> person, against a curated interest list ("Bat's List").
+> **Run this prompt once per pass, in a separate chat each time.** Replace
+> `<PASS NAME>` and `<FOCUS BUCKETS>` with the `name` and `focus_buckets` of
+> the pass you are running, from `passes.yaml`, and attach that pass's input
+> file.
+>
+> You are judging auction lots for one specific person, against a curated
+> interest list ("Bat's List").
+>
+> These lots are one slice of a larger auction — **<PASS NAME>**. The whole
+> auction has been partitioned by category and each slice is judged separately,
+> so judge only what you are given here.
+>
+> The buckets whose inventory usually lands in this slice are:
+> **<FOCUS BUCKETS>**. That list tells you where to look; it does **not**
+> limit you. Assign any bucket in `buckets.yaml` that genuinely fits. The
+> auction house's own categories are unreliable — a Barbie can be filed under
+> Home Goods, and most hand tools are filed under Lawn & Garden — so trust the
+> title and model over the category.
 >
 > I have attached two files. `profile.yaml` describes what this household
 > actually wants — interests, projects underway, sizes, and things explicitly

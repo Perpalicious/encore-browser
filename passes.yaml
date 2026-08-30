@@ -1,0 +1,123 @@
+# Flagging-pass split — added 2026-08-30.
+#
+# WHY THIS EXISTS
+# ---------------
+# The flagging pass used to see one of two things, and both were wrong:
+#
+#   1. Before 2026-08-16: all ~27k lots against all 45 buckets in one prompt.
+#      An ~85% negative rate diluted it and narrow buckets starved — measured
+#      on 2026-08-15, 77 lots had KEYBOARD in the title and 5 were flagged;
+#      storage bins scored 4 of 36. That run also shipped 0% subtype coverage.
+#
+#   2. From 2026-08-16: only tools/prefilter.py's shortlist, ~44% of the
+#      auction. Measured against three months of real bid/watch history
+#      (data/Watch/FINDINGS.md), that shortlist reaches only 77.4% of the lots
+#      actually BID ON. Roughly one pick in four could never reach the model,
+#      and no prompt change recovers it.
+#
+# This file is the third answer: partition ALL lots by HiBid category, and run
+# one prompt per partition. Every lot is judged exactly once, and each prompt
+# holds 14-30 relevant buckets instead of 62 — so coverage goes to 100% while
+# the dilution that caused starvation goes DOWN, not up.
+#
+# `categories` are HiBid breadcrumb PREFIXES, matched on whole " - " segments,
+# the same rule tools/prefilter.py uses. Pass A is matched FIRST because its
+# prefixes are deeper than pass B's and would otherwise be swallowed by it.
+# Order matters. A lot matching no pass falls to `fallback`.
+#
+# `focus_buckets` is ADVISORY, not a filter. It is derived from where each
+# bucket's inventory actually sits (a bucket is listed in its top pass, plus
+# any pass holding >=15% of it). The prompt still attaches the full
+# buckets.yaml and the model may assign ANY bucket that genuinely fits — a
+# Barbie filed under Home Goods must still come back as Barbies. The list
+# tells the model where to look, it does not tell it what is allowed.
+#
+# Rebuild the focus lists with:  python3 tools/split_passes.py <ID> --suggest
+
+fallback: D
+
+passes:
+  - id: A
+    name: "Bed, bath & personal care"
+    description: >
+      HiBid files all personal care under Bed / Bath Items — skincare, hair,
+      dental, shaving and cosmetics — alongside actual bedding and towels.
+      It is the single densest slice of the auction at ~6,600 lots, and it had
+      almost no bucket coverage before 2026-08-30.
+    categories:
+      - "Home Goods & Decor - Home Goods - Bed / Bath Items"
+      - "Home Goods & Decor - Home Goods - Linens / Curtains"
+      - "Home Goods & Decor - Home Goods - Carpet / Rugs"
+    focus_buckets:
+      ["Skincare & body", "Hair care products", "Hair styling tools",
+       "Oral & dental care", "Shaving & grooming", "Cosmetics & nail",
+       "Bath towels", "Bed linens", "Bedding & pillows", "Laundry baskets",
+       "Pantry & cooking staples", "Snacks & confectionery",
+       "Supplements & protein"]
+
+  - id: B
+    name: "Kitchen, home, food & cleaning"
+    description: >
+      The rest of Home Goods & Decor plus Furniture and Business & Industrial.
+      Kitchen appliances, cookware, food and drink, cleaning and vacuums,
+      storage, and indoor furniture.
+    categories:
+      - "Home Goods & Decor"
+      - "Furniture"
+      - "Business & Industrial"
+    focus_buckets:
+      ["Kitchen appliances", "Kitchen utensils & gadgets", "Brand cookware",
+       "Brand chef knives", "Kitchen storage & organization", "Dinnerware",
+       "Glassware & drinkware", "Coffee & espresso", "Pantry & cooking staples",
+       "Snacks & confectionery", "Beverages & drink mixes",
+       "Cleaning supplies & tools", "Vacuums & floor care",
+       "Storage bins & totes", "Laundry baskets", "Seating & occasional furniture",
+       "Nightstands", "King bed frames", "Outdoor furniture & hammocks",
+       "BBQ accessories", "Smart home", "Batteries & chargers",
+       "Adhesives & tape", "Hand tools", "Garage & tool organization",
+       "Lawn equipment", "Tarps", "Car care & detailing",
+       "Kids' craft & activity", "3D printing supplies"]
+
+  - id: C
+    name: "Tools, outdoor & sports"
+    description: >
+      Construction & Farm, Lawn & Garden, Sporting Goods. NOTE: HiBid files
+      most hand and power tools under Lawn & Garden, not Construction — 59% of
+      Hand tools and 54% of Power tools inventory sits there.
+    categories:
+      - "Construction & Farm"
+      - "Lawn & Garden"
+      - "Sporting Goods"
+    focus_buckets:
+      ["Power tools", "Hand tools", "Garage & tool organization", "Tie-downs",
+       "Adhesives & tape", "Extension cords & power strips",
+       "Batteries & chargers", "Car care & detailing", "Lawn equipment",
+       "Garden hose", "Gardening tools", "Garden & lawncare misc",
+       "Lawn treatment & pest control", "Tarps", "Outdoor furniture & hammocks",
+       "Home gym & weightlifting", "Sports & recreation gear",
+       "Kids' outdoor water play", "Board games", "Smart home", "Smart locks",
+       "Brand chef knives"]
+
+  - id: D
+    name: "Tech, toys, fashion & the tail"
+    description: >
+      Computers & Electronics, Kid & Baby, Toys, Fashion, and the small tail
+      (Antiques, Jewelry, Art, Vehicles, Boats). Also the fallback for any lot
+      whose category is missing or unrecognised, so nothing is ever dropped.
+    categories:
+      - "Computers & Electronics"
+      - "Kid & Baby Essentials"
+      - "Toys"
+      - "Fashion"
+      - "Antiques & Collectibles"
+      - "Jewelry, Watches & Gemstones"
+      - "Art"
+      - "Cars & Vehicles"
+      - "Boats & Aviation"
+    focus_buckets:
+      ["Electronics", "Audio & headphones", "Keyboards & PC peripherals",
+       "Video games & VR", "Smart home", "Barbies", "Surprise toys",
+       "Hatchimals", "Lego", "Dolls & plush", "Board games",
+       "Kids' craft & activity", "Kids' outdoor water play",
+       "Brand boots & shoes", "3D printing supplies",
+       "Batteries & chargers", "Extension cords & power strips"]

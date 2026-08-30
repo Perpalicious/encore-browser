@@ -195,6 +195,12 @@ The prompt to use for each pass is in `PROMPTS.md`, along with the
 output-shape rules each must follow. If the user asks what to paste into
 ChatGPT, point them there rather than improvising a prompt.
 
+`docs/PASS_SOURCES.md` maps each of the five passes to the exact files that
+supply its prompt, config and data, and lists the assumptions that break an
+automated run (chief among them: never slice `buckets.yaml` down to a pass's
+`focus_buckets`). That is the file to hand an agent that is planning an
+automated run of these passes.
+
 Do not proceed past this point until the user confirms both files exist.
 
 ### 5. Assemble the categorized file, expand resale, then verify

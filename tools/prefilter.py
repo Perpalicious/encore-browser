@@ -70,8 +70,21 @@ from scraper.condition import CONDITION_LABELS
 import yaml
 
 # Fields concatenated into the text a seed is matched against. `category` is
-# included so a breadcrumb word ("Keyboards / Mice") can rescue a bare-SKU
-# title, which is the single biggest source of lexically-invisible lots.
+# included so a breadcrumb word ("Keyboards / Mice") can rescue a title that
+# carries no usable keyword.
+#
+# `model`, `size` and `notes` have been empty on every lot since 2026-08-30,
+# when HiBid moved that detail into the per-lot report image (see the
+# tools/slim.py docstring). They are left listed rather than trimmed: matching
+# against an absent field costs nothing, and the seeds start working again by
+# themselves if HiBid ever puts the fields back.
+#
+# So in practice a seed now matches title + category only. That is a real
+# narrowing, but a small one — bare-SKU titles are 0.3% of lots, not the "single
+# biggest source of lexically-invisible lots" this comment used to claim. The
+# large recall gap is elsewhere: of 234 lots actually bid on, 94 (40%) match no
+# seed at all (data/Watch/FINDINGS.md), which is why the flagging pass no longer
+# runs off this shortlist.
 HAYSTACK_FIELDS = ("title", "model", "size", "notes", "category")
 
 # HiBid joins breadcrumb segments with this exact string; `build/merge.py`

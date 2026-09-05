@@ -5,7 +5,7 @@ JSON file.
 
 | Pass | Input file | Save output as |
 |---|---|---|
-| 1. Bat's List + personal match | `auction_<ID>_candidates.json` | `auction_<ID>_flags.json` |
+| 1. Bat's List + personal match | `auction_<ID>_chunk_NN.json` (one per chunk) | `auction_<ID>_chunk_NN_flags.json` |
 | 2. Resale valuation | `auction_<ID>_for_resale.json` | `auction_<ID>_resale_deduped.json` |
 
 Pass 1 used to be two separate passes over the same 27k-row file — one for
@@ -13,11 +13,14 @@ bucket flags, one for personal match. They are now one pass, because they were
 asking the same question ("does Bat care about this, and why?") of the same
 rows, and splitting it doubled the output for nothing.
 
-Pass 1 no longer reads every lot either. `tools/prefilter.py` shortlists
-candidates per bucket and writes an all-false row for everything else, so the
-model sees roughly a third of the auction, grouped by bucket. Pass 2 reads a
-deduplicated file with one row per distinct product, since these auctions list
-the same item dozens of times.
+Neither pass reads every lot. Both run on one row per **distinct product** —
+these auctions list the same item dozens of times, and the week of 2026-08-30
+collapsed 25,195 lots to 19,250 products. `tools/chunk_flagging.py` and
+`tools/slim_resale.py` build those inputs; `tools/expand_flags.py` and
+`tools/expand_resale.py` fan the answers back out to every lot afterwards.
+
+Pass 1 is additionally cut into numbered chunk files, because a pass over the
+whole auction cannot finish in one response — see "Why pass 1 is chunked".
 
 Every prompt below is written so its output matches exactly what `build/`
 consumes. The "why this matters" notes under each prompt are the failure modes
@@ -50,9 +53,13 @@ section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
 >   as a weak hint only; trust `title` and `model` over it when they conflict.
 >
 > These appear **only when the auction house recorded something**, so an
-> absent key is itself information — it means "nothing noteworthy":
-> - `model` — manufacturer model/SKU (~79% of lots). Often the only reliable
->   way to identify what an item actually is when the title is a bare code.
+> absent key is itself information — it means "nothing noteworthy". Since
+> 2026-08-30 the auction house renders this whole block into an image instead
+> of the listing text, so in practice **none of them are present** and `title`
+> plus `condition` carry the weight. They are described here because the
+> scraper picks them up again by itself if that changes back:
+> - `model` — manufacturer model/SKU. Often the only reliable way to identify
+>   what an item actually is when the title is a bare code.
 > - `size` — verified size; may be apparel sizing, a volume, or a colourway.
 > - `notes` — free-text caveats, e.g. "20% USED", "UNKNOWN AMOUNT REMAINING",
 >   "SEE PHOTOS". Occasionally "DO NOT BID" on lots that are not real items.
@@ -74,13 +81,15 @@ section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
 - **`lot_number` is copied verbatim** from the input, including the `S-` /
   `M-` prefix on two-auction weeks. It is the only join key. A stripped or
   reformatted prefix means the row is orphaned and dropped.
-- **Every pass must return a row for every row it was given** — no skipping,
-  sampling, summarising, or stopping early. Each prompt below ends with a
-  completeness instruction; keep it.
-- **Replace `N` in that instruction with the real row count** before pasting.
-  `tools/prefilter.py` and `tools/slim_resale.py` both print it. A concrete
-  number is what makes the agent's own count checkable; leaving the literal
-  `N` in makes the instruction unenforceable.
+- **Every pass must cover every row it was given** — no skipping, sampling,
+  summarising, or stopping early. Each prompt below ends with a completeness
+  instruction; keep it. Pass 2 returns a row per input row. Pass 1 returns
+  **matches only**, plus a terminal sentinel that proves it reached the end.
+- **Replace `N` and `<LAST LOT>` in that instruction with the real values**
+  before pasting. `tools/chunk_flagging.py` prints both per chunk and
+  `tools/slim_resale.py` prints the row count. A concrete number is what makes
+  the agent's own count checkable; leaving the literal `N` in makes the
+  instruction unenforceable.
 - **Truncation is the failure mode to watch.** A run that quietly stops early
   produces valid JSON that is simply short — indistinguishable from success by
   eye. Nothing in the build catches it; `tools/verify_passes.py` and
@@ -91,83 +100,82 @@ section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
 
 ---
 
-## Pass 1 — Bat's List + personal match (now FOUR passes: 1A-1D)
+## Pass 1 — Bat's List + personal match (chunked)
 
-**Attach BOTH `buckets.yaml` and `profile.yaml` to every one of the four
-chats.** Editing them in the repo does not update what a chat sees.
-`tools/prefilter.py` prints the bucket count on every run; if a read-test in a
-fresh chat reports a different number, the file didn't attach and that whole
-pass will produce unusable bucket names.
+**Attach `data/categorized/context.yaml` to every chat.** It is
+`buckets.yaml` and `profile.yaml` concatenated by `tools/chunk_flagging.py`,
+which prints the bucket count on every run. If a read-test in a fresh chat
+reports a different number, the file did not attach and that chunk will produce
+unusable bucket names.
 
-### Why this is four prompts and not one
+### Why pass 1 is chunked
 
-Two earlier shapes both failed, in opposite directions:
+Three shapes have been tried. The first two failed in opposite directions:
 
 | shape | coverage | what went wrong |
 |---|---|---|
 | all ~27k lots, all buckets, one prompt (before 2026-08-16) | 100% | ~85% negative rate diluted it; narrow buckets starved. 77 lots had KEYBOARD in the title and **5** were flagged; storage bins scored **4 of 36**. Shipped 0% subtype coverage. |
-| prefilter shortlist only (2026-08-16) | ~44% | reaches only **77.4%** of lots actually bid on, measured against three months of real bid/watch history. One pick in four could never be seen. |
+| prefilter shortlist only (2026-08-16) | ~44% | reaches only **77.4%** of lots actually bid on. Of 234 real bids, **94 (40%) match no seed at all** (`data/Watch/FINDINGS.md`) — one pick in four could never be seen. |
+| dedup + chunk files (current) | 100% | — |
 
-Splitting by HiBid category fixes both at once: **every lot is judged exactly
-once**, and each prompt carries 13-30 relevant buckets instead of 62. Coverage
-goes to 100% while dilution goes down.
+The current shape restores full coverage without the dilution, by cutting the
+work two ways:
 
-### The four passes
+- **Dedup.** One row per distinct product, not per lot. Whether Bat wants a
+  Revlon One-Step is one judgment, not the 129 separate lots it appeared in.
+  25,195 lots became 19,250 products on 2026-08-30.
+- **Chunk files.** A pass over the whole auction cannot finish in one
+  response — the 2026-08-16 run returned 1.33 MB across 10,033 rows, roughly
+  347K output tokens. It only completed because the old prompt invited the
+  model to stop at a row boundary and report where it got to, which means the
+  model chose every boundary and nothing verified them. A chunk is a real
+  file, so a response can only name lots it was actually given.
 
-Run `python3 tools/split_passes.py <ID>` to produce the inputs. Defined in
-`passes.yaml`; volumes below are from the week of 2026-08-16.
+### The chunks
 
-| pass | input file | covers | lots | focus buckets |
-|---|---|---|---|---|
-| **1A** | `auction_<ID>_pass_a.json` | Bed / Bath Items, Linens, Carpet — **all personal care lives here** | 6,595 | 13 |
-| **1B** | `auction_<ID>_pass_b.json` | rest of Home Goods, Furniture, Business & Industrial | 7,770 | 30 |
-| **1C** | `auction_<ID>_pass_c.json` | Construction & Farm, Lawn & Garden, Sporting Goods | 4,891 | 22 |
-| **1D** | `auction_<ID>_pass_d.json` | Computers & Electronics, Kid & Baby, Toys, Fashion, tail | 7,767 | 17 |
+Run `python3 tools/chunk_flagging.py <ID>`. It prints the exact upload list,
+each chunk's row count, and each chunk's last `lot_number`. Typically **7
+chunks plus `context.yaml` — 8 uploads.**
 
-Save each as: `data/categorized/auction_<ID>_flags_<a|b|c|d>.json`
+Products are ordered by category before cutting, so a chunk boundary falls
+inside a category rather than at its edge and each chunk is mostly one kind of
+thing. Every chunk gets the **identical prompt** and the **complete**
+`buckets.yaml`; there is no per-chunk bucket list. Slicing the taxonomy per
+chunk would destroy the cross-category catches this design exists to preserve —
+a Barbie filed under Home Goods must still come back as `Barbies`, and 59% of
+hand-tool inventory sits under *Lawn & Garden*.
 
-Note the names. Step 5a chains all four onto `auction_<ID>_base.json` to produce
-`auction_<ID>_categorized.json`. Saving any of them directly as
-`_categorized.json` would drop every lot the other three passes cover.
-
-**Each pass's rows are independent** — a pass returns exactly the rows it was
-given, and nothing about another pass's lots. Never merge them by hand.
+Save each response as `data/categorized/auction_<ID>_chunk_NN_flags.json`,
+matching the chunk number. Then `python3 tools/expand_flags.py <ID>`
+reconciles them and writes `auction_<ID>_flags.json`.
 
 ### Two things that are easy to get wrong
 
-- **`focus_buckets` is advisory, not a filter.** `passes.yaml` names the
-  buckets whose inventory actually sits in that pass, so the model knows where
-  to look. It may still assign **any** bucket in `buckets.yaml`. HiBid's
-  categories are noisy — a Barbie filed under Home Goods must still come back
-  as `Barbies`, and 59% of Hand tools inventory sits under *Lawn & Garden*.
-- **Pass 1A is the one to watch.** It is the densest slice and had almost no
-  bucket coverage before 2026-08-30. If it returns near-zero flags, the
-  personal-care buckets did not attach.
+- **Save the response under its own chunk number.** `expand_flags.py` checks
+  each response against the chunk it belongs to, so a file saved under the
+  wrong number fails as "lot_numbers not in this chunk" rather than merging
+  silently.
+- **Do not regenerate the chunks mid-run.** `tools/chunk_flagging.py` rewrites
+  every chunk file and the group map. Responses already collected would then
+  be reconciled against different chunks.
 
 ### Prompt
 
-> **Run this prompt once per pass, in a separate chat each time.** Replace
-> `<PASS NAME>` and `<FOCUS BUCKETS>` with the `name` and `focus_buckets` of
-> the pass you are running, from `passes.yaml`, and attach that pass's input
-> file.
+> **Run this prompt once per chunk, in a separate chat each time.** Replace `N`
+> with that chunk's row count and `<LAST LOT>` with its last `lot_number`; both
+> are printed by `tools/chunk_flagging.py`. Attach `context.yaml` and that
+> chunk's file.
 >
 > You are judging auction lots for one specific person, against a curated
 > interest list ("Bat's List").
 >
-> These lots are one slice of a larger auction — **<PASS NAME>**. The whole
-> auction has been partitioned by category and each slice is judged separately,
-> so judge only what you are given here.
+> These lots are one chunk of a larger auction, already deduplicated to one row
+> per distinct product. Judge only what you are given here.
 >
-> The buckets whose inventory usually lands in this slice are:
-> **<FOCUS BUCKETS>**. That list tells you where to look; it does **not**
-> limit you. Assign any bucket in `buckets.yaml` that genuinely fits. The
-> auction house's own categories are unreliable — a Barbie can be filed under
-> Home Goods, and most hand tools are filed under Lawn & Garden — so trust the
-> title and model over the category.
->
-> I have attached two files. `profile.yaml` describes what this household
-> actually wants — interests, projects underway, sizes, and things explicitly
-> not wanted. `buckets.yaml` defines the complete set of buckets, each with a
+> I have attached `context.yaml`, which contains two config files concatenated.
+> The `profile.yaml` section describes what this household actually wants —
+> interests, projects underway, sizes, and things explicitly not wanted. The
+> `buckets.yaml` section defines the complete set of buckets, each with a
 > `name`, a `description`, optional `examples`, and an optional `subtypes`
 > vocabulary. **The buckets exist because of the profile**: they are the
 > navigable expression of those interests. Match lots **semantically against
@@ -177,31 +185,18 @@ given, and nothing about another pass's lots. Never merge them by hand.
 > confirm the file attached correctly.
 >
 > I will give you auction lots as JSON. See "Input fields" below for what each
-> lot contains.
+> lot contains. Every bucket in `buckets.yaml` is available on every lot — the
+> auction house's own categories are unreliable, so a Barbie can be filed under
+> Home Goods and most hand tools are filed under Lawn & Garden. Trust the title
+> over the category.
 >
-> **About `cand`.** Each lot carries `cand`: the buckets a local
-> keyword/category prefilter judged *possible*. It is where to look first, not
-> an answer.
+> Each row also carries `qty`: how many identical lots this product appears in
+> across the auction. It is context, not a judgment — 129 copies of one item is
+> a saturated local market — and your answer applies to all of them.
 >
-> - **`cand` is not permission.** A lawn mower's "IGNITION KEY SWITCH" is a
->   candidate for the keyboard bucket and is not a keyboard. Reject freely —
->   most shortlisted lots are not matches, and a bucket whose description sets
->   a quality bar ("do NOT flag generic no-brand pieces") still applies that
->   bar in full.
-> - **Judge each candidate independently.** `cand` often lists two or three.
->   Accept every one that genuinely fits — a gaming keyboard is both
->   "Keyboards & PC peripherals" *and* "Electronics". Expect roughly one in ten
->   accepted lots to carry two or more buckets. Assigning exactly one bucket to
->   almost everything is a known failure mode of this task.
-> - Assigning a bucket **not** in `cand` is allowed but should be rare — only
->   when the item unmistakably belongs there. I measure this, and it is useful
->   signal about what the prefilter is missing.
-> - Some lots carry `profile` instead of or alongside `cand`. That means the
->   lot matched a profile interest with no bucket of its own (pool upkeep,
->   work lighting, vehicle fit). Those can be a personal pick with
->   `bats_buckets: []`.
->
-> For **every** lot I give you, return one object:
+> **Return only the lots that match something.** Most will not, and a row
+> saying so costs more than it tells me. A product you do not name is recorded
+> as a judged non-match. For each lot that DOES match, return one object:
 >
 > ```json
 > {
@@ -218,23 +213,31 @@ given, and nothing about another pass's lots. Never merge them by hand.
 > ```
 >
 > Rules:
-> - Return one row for **every** input lot, including lots that match nothing.
->   For those, return exactly these four keys and nothing else:
->   `{"lot_number": "...", "is_bats_list": false, "bats_buckets": [], "personal_match": false}`.
->   Do not shorten that further — the four keys are load-bearing (see below).
+> - A lot belongs in the output if `is_bats_list` is true **or**
+>   `personal_match` is true. A personal pick with no bucket of its own (pool
+>   upkeep, work lighting, vehicle fit) is returned with `bats_buckets: []` and
+>   `is_bats_list: false`. Everything else is omitted.
 > - `bats_buckets` values must be bucket `name` strings copied **exactly** from
 >   `buckets.yaml` — same spelling, casing, spacing, and punctuation (e.g.
 >   `"Garden & lawncare misc"`, not `"Garden and lawncare misc"`). Never invent
 >   a bucket name.
 > - `is_bats_list` is `true` if and only if `bats_buckets` is non-empty.
+> - **Assign every bucket that genuinely fits, not just the best one.** A
+>   gaming keyboard is both "Keyboards & PC peripherals" *and* "Electronics".
+>   Expect roughly one in ten flagged lots to carry two or more buckets.
+>   Assigning exactly one bucket to almost everything is a known failure mode
+>   of this task.
+> - **Reject freely.** A bucket whose description sets a quality bar ("do NOT
+>   flag generic no-brand pieces") applies that bar in full. Being complete
+>   about the lots you return and being selective about which ones qualify are
+>   both required.
 > - **`bats_subtype` is required whenever `is_bats_list` is true.** It is a
 >   1-3 word lowercase label for **what the item actually is**, one level finer
 >   than the bucket. Each bucket lists a `subtypes` vocabulary — use one of
 >   those verbatim when it fits, and invent a new 1-3 word lowercase label only
 >   when none does. **Reuse wording across the whole run**: these become
 >   navigation, so `"scrub brushes"` on forty lots is useful and forty near
->   synonyms are not. Omit the key (or use `null`) only when `is_bats_list` is
->   `false`.
+>   synonyms are not.
 > - `personal_match` must be a real JSON boolean `true` — not the string
 >   `"true"`, not `1`. Only `true` counts as a pick.
 > - A lot can be on Bat's List without being a personal pick, and vice versa.
@@ -251,36 +254,43 @@ given, and nothing about another pass's lots. Never merge them by hand.
 >   `personal_reasoning`.
 > - Omit `personal_tags`, `match_strength`, `match_types`, and
 >   `personal_reasoning` entirely on lots where `personal_match` is `false`.
-> - Check `size` before flagging apparel or footwear — a great item in the
->   wrong size is not a match. Check `damage`, `missing_parts`, and the
->   `damaged` / `missing_major_parts` / `functional` flags too: do not flag a
->   broken or incomplete item as a pick unless the profile specifically wants
->   it for parts or repair.
+> - `condition` is the main quality signal available. **Brand New - Open Box is
+>   unused merchandise**, not used-in-great-shape; For Parts Only means
+>   non-functional. Do not make a broken item a personal pick unless the
+>   profile specifically wants it for parts or repair. Check `size` before
+>   flagging apparel or footwear — a great item in the wrong size is not a
+>   match.
 > - Be selective about `personal_match: true`. That list is meant to be short
->   enough to actually read. Being complete (a row per lot) and being selective
->   (few `true`s) are both required.
-> - Use `model` to identify items whose title is a bare SKU or an ambiguous
->   brand word — it is often the difference between correctly bucketing a lot
->   and missing it. Do not let a wrong `category` talk you out of a match the
->   title and model clearly support.
+>   enough to actually read.
 > - Use these keys and no others. In particular do **not** include a
 >   `bats_category`, `bats_subcategory`, `category`, `subcategory`,
 >   `reasoning`, or `confidence` key.
 > - Output a raw JSON array only — no markdown fences, no commentary.
-> - The file contains N rows. Return exactly N objects, one per row, in the
->   same order. If you cannot complete all of them in one response, stop at a
->   row boundary and tell me the last `lot_number` you finished so I can pick
->   up from there — never silently drop rows to make the output fit.
+> - The file contains N rows. Read every one of them. When you have finished
+>   the last row, append this as the final element of the array, exactly:
+>   `{"chunk_complete": "<LAST LOT>"}`. That is how I know you reached the end
+>   rather than stopping early — never omit it, and never add it before you
+>   have actually read every row. If you genuinely cannot finish in one
+>   response, say so in plain text instead of returning a partial array.
 
 ### Why this matters
 
-- **Non-match rows need all four keys, not one.** Step 5a merges this file onto
-  `_base.json` with `merge_categorized`, which replaces **whole rows** by
-  `lot_number`. A returned `{"lot_number": "X", "is_bats_list": false}` would
-  replace the base row and delete `bats_buckets` and `personal_match` with it,
-  turning `personal_match` into `null` in the bundle and quietly changing step
-  8's coverage count. `tools/verify_passes.py` checks the union of keys across
-  all rows and catches this; the four-key rule prevents it.
+- **Omitted rows are how you tell a "no" apart from a skipped lot — as long as
+  the sentinel is there.** The pass returns matches only, so a truncated
+  response and a chunk with few matches look identical in the output. Two
+  things separate them, and neither relies on the model reporting honestly:
+  the chunk is a real file, so a response can only name lots it was given; and
+  `{"chunk_complete": "<last lot_number>"}` must be the final element.
+  Truncation removes the tail, so a missing or wrong sentinel *is* the
+  truncation signal. `tools/expand_flags.py` checks both and writes nothing if
+  either fails.
+- **`expand_flags.py` writes the four-key row, the model does not.** Every
+  product not named in a response is expanded locally to
+  `{"lot_number": "...", "is_bats_list": false, "bats_buckets": [], "personal_match": false}`
+  on every lot in its group. All four keys are load-bearing:
+  `merge_categorized` replaces **whole rows** by `lot_number`, so a shorter row
+  would delete `bats_buckets` and `personal_match` and turn `personal_match`
+  into `null` in the bundle.
 - **A `bats_category` key silently changes how the file is parsed.**
   `build/transform.py` detects "Shape B" purely by that key's presence, and
   Shape B reads buckets from `bats_category`/`bats_subcategory` while

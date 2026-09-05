@@ -14,14 +14,38 @@ Price and Condition, then strips all remaining structured lines from
 `description` — which in practice leaves `description` empty for 100% of lots,
 because these listings contain no free-form prose at all.
 
-That silently discards fields the valuation and matching passes genuinely
-need: `Model` (present on ~79% of lots, often the only way to identify what an
-item actually is when the title is a bare SKU), `Verified Size` (~35%),
-`Notes` (quantity/usage caveats like "20% USED", occasionally "DO NOT BID"),
-and free-text damage / missing-parts descriptions.
+That silently discards fields the passes genuinely need: `Model`, `Verified
+Size`, `Notes` (quantity/usage caveats like "20% USED", occasionally "DO NOT
+BID"), and free-text damage / missing-parts descriptions.
 
 The cleaner long-term fix is for the scraper to emit these as first-class
 fields so this reparsing goes away. Doing it here avoids a re-scrape.
+
+HiBid moved these fields into an image (2026-08-30)
+---------------------------------------------------
+During the week of 2026-08-30 Encore stopped putting the structured detail in
+the listing and started rendering it into a per-lot "LOT SPECIFIC REPORT"
+JPEG instead. `description_raw` is now only `Condition: EXCELLENT` — median
+length 20 characters across all 25,195 lots of auction 764524, with no `Model:`
+or `Size:` marker on any of them.
+
+So `model` (was 77-80%), `size` (33%), `notes`, `damage`, `damaged`,
+`missing_major_parts` and `functional` are now 0%, and THAT IS EXPECTED. It is
+not a parser break, and this file needs no key-mapping fix. The printout below
+says so explicitly rather than leaving a wall of absent fields to interpret.
+
+What that costs, measured against 2026-08-16 (the last week with the fields):
+`model` was present on 77% of lots and added text not already in the title on
+80% of those — 62% of all lots. But titles that are a bare SKU, the reason
+PROMPTS.md gives for wanting `model`, are only 0.3% of lots. The field mattered
+for pinning an exact variant (valuation), far less for deciding which bucket
+something belongs in (flagging).
+
+The data is recoverable: the report is `additional_images[-1]` on every lot,
+already captured by the scraper, and fetchable with curl_cffi plus a Referer
+(plain curl returns `{}`). Nobody OCRs it today. If that changes, run it over
+flagged lots only — the flags do not need it, and 25k downloads a week to
+enrich lots nobody will bid on is a bad trade.
 
 Token economy
 -------------
@@ -113,6 +137,17 @@ def main(auction_id: str) -> None:
     missing = [k for k in ("lot_number", "title", "category") if counts[k] != len(slim)]
     if missing:
         sys.exit(f"Error: fields missing on some lots: {missing}")
+
+    # Absence of the whole structured block means HiBid is rendering it into
+    # the lot report image, not that the key mapping broke. Say which, because
+    # the two look identical in the coverage table above.
+    reparsed = set(TEXT_FIELDS.values()) | {n for n, _ in FLAG_FIELDS.values()}
+    if not any(counts[k] for k in reparsed):
+        print()
+        print("  note: no Model / Verified Size / Notes / damage fields on any lot.")
+        print("        Expected since 2026-08-30 — HiBid renders these into the")
+        print("        per-lot report image now. Not a parser break; see the")
+        print("        docstring. Flagging runs on title + condition + category.")
 
 
 if __name__ == "__main__":

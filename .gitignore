@@ -46,10 +46,4 @@ playwright/.cache/
 Thumbs.db
 
 # Claude
-# .claude/ is machine-local, except the committed worker definition that
-# `python -m classify` dispatches and fingerprints. Git does not descend
-# into an excluded directory, so each parent level is re-included in turn.
-.claude/*
-!.claude/agents/
-.claude/agents/*
-!.claude/agents/lot-classifier.md
+.claude/

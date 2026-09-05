@@ -42,14 +42,11 @@ from pathlib import Path
 
 import yaml
 
-# One merged pass emits both the bucket flags and the personal fields.
-# Imported rather than restated so the validator that accepts a row at ingest
-# time and the gate that accepts the merged file cannot disagree about what a
-# required field is.
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-from classify.contract import REQUIRED_FIELDS as REQUIRED  # noqa: E402
+REQUIRED = {
+    # One merged pass now emits both the bucket flags and the personal fields.
+    "categorized": {"lot_number", "is_bats_list", "bats_buckets", "personal_match"},
+    "resale": {"lot_number", "est_resale_low", "est_resale_high"},
+}
 
 # Below this share of flagged lots carrying a subtype, the drill-down's third
 # level is too sparse to navigate and the pass almost certainly ignored the

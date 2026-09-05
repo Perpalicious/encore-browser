@@ -83,14 +83,7 @@ CRUMB_SEP = " - "
 # Four keys, matching what PROMPTS.md requires of a non-match: merge_categorized
 # replaces whole rows, so a shorter row would drop bats_buckets/personal_match
 # and turn personal_match into null in the bundle.
-#
-# Imported rather than restated: classify/contract.py is the one definition of
-# a flagging row, so the shortlist's all-false row and the automated pass's
-# expansion of `no_match` cannot drift apart.
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-from classify.contract import BASE_ROW  # noqa: E402
+BASE_ROW = {"is_bats_list": False, "bats_buckets": [], "personal_match": False}
 
 DEFAULT_MAX_BUCKET_SHARE = 0.08
 # Measured normal is ~8.9k candidates from ~27.4k lots (32%). The cap is a

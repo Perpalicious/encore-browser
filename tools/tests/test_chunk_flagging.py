@@ -24,6 +24,7 @@ from pathlib import Path
 import pytest
 
 from tools import chunk_flagging, expand_flags
+from tools.chunk_flagging import boundary_key, split_rows
 
 BUCKETS = """\
 buckets:
@@ -161,6 +162,78 @@ class TestChunking:
         text = (repo / "data/categorized/context.yaml").read_text()
         assert "Bath towels" in text and "board games" in text
         assert "buckets.yaml" in text and "profile.yaml" in text
+
+
+class TestBoundarySnapping:
+    """A cut must not land inside a run of near-identical products.
+
+    Dedup guarantees that *identical* products share one judgment. Near-
+    identical ones (the FlexStyle styler and the FlexStyle filters) are
+    separate rows, and sending them to two different chats is the one place
+    this design can produce inconsistent answers for near-identical things.
+    """
+
+    def test_boundary_key_groups_leading_title_words(self):
+        a = _lot(1, "SHARK FLEXSTYLE AIR STYLING SYSTEM")
+        b = _lot(2, "SHARK FLEXSTYLE CURLY DEFINER")
+        c = _lot(3, "SHARK NAVIGATOR VACUUM")
+        assert boundary_key(a) == boundary_key(b)
+        assert boundary_key(a) != boundary_key(c)
+
+    def test_boundary_key_separates_categories(self):
+        a = _lot(1, "SHARK FLEXSTYLE", category="Home Goods")
+        b = _lot(2, "SHARK FLEXSTYLE", category="Lawn & Garden")
+        assert boundary_key(a) != boundary_key(b)
+
+    def test_a_run_is_not_split(self):
+        """Target lands at row 10, mid-run; the cut must move off it."""
+        rows = [_lot(i, f"ALPHA THING {i}") for i in range(1, 9)]
+        rows += [_lot(i, f"SHARK FLEXSTYLE VARIANT {i}") for i in range(9, 15)]
+        rows += [_lot(i, f"ZEBRA THING {i}") for i in range(15, 21)]
+        chunks, forced = split_rows(rows, 10, drift=4)
+        assert forced == 0
+        for first, second in zip(chunks, chunks[1:]):
+            assert boundary_key(first[-1]) != boundary_key(second[0])
+
+    def test_the_drift_window_bounds_how_far_a_cut_moves(self):
+        """A boundary just outside the window is not chased.
+
+        The window is what stops snapping from distorting chunk sizes: with
+        production numbers (2,750 rows, 275 window) the longest measured run
+        is 75, so it never binds — but it must still hold if that changes.
+        """
+        rows = [_lot(i, f"ALPHA THING {i}") for i in range(1, 9)]
+        rows += [_lot(i, f"SHARK FLEXSTYLE VARIANT {i}") for i in range(9, 15)]
+        rows += [_lot(i, f"ZEBRA THING {i}") for i in range(15, 21)]
+        chunks, forced = split_rows(rows, 10, drift=1)
+        assert forced == 1
+        assert len(chunks[0]) == 10
+
+    def test_snapping_preserves_every_row_exactly_once(self):
+        rows = [_lot(i, f"BRAND {i // 4} ITEM {i}") for i in range(1, 61)]
+        chunks, _ = split_rows(rows, 10)
+        seen = [r["lot_number"] for c in chunks for r in c]
+        assert sorted(seen, key=int) == [str(i) for i in range(1, 61)]
+        assert len(seen) == len(set(seen))
+
+    def test_chunk_sizes_stay_near_the_target(self):
+        rows = [_lot(i, f"BRAND {i // 3} ITEM {i}") for i in range(1, 101)]
+        chunks, _ = split_rows(rows, 20)
+        drift = max(1, int(20 * chunk_flagging.BOUNDARY_DRIFT))
+        for c in chunks[:-1]:
+            assert abs(len(c) - 20) <= drift
+
+    def test_a_run_longer_than_the_window_is_reported_not_hidden(self):
+        """No boundary reachable — cut mid-run, but say so."""
+        rows = [_lot(i, "SAME TITLE FOREVER") for i in range(1, 41)]
+        chunks, forced = split_rows(rows, 10, drift=4)
+        assert forced >= 1
+        assert sum(len(c) for c in chunks) == 40
+
+    def test_single_chunk_needs_no_snapping(self):
+        rows = [_lot(i, f"THING {i}") for i in range(1, 6)]
+        chunks, forced = split_rows(rows, 10)
+        assert len(chunks) == 1 and forced == 0
 
 
 class TestExpandHappyPath:

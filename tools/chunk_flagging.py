@@ -52,7 +52,10 @@ Ordering
 --------
 Groups are sorted by category, then title, before cutting. Chunk boundaries
 therefore fall inside a category rather than at its edge, so each chunk is
-mostly one kind of thing. That is the only benefit the old four-way
+mostly one kind of thing. Each cut is then snapped to the nearest point where
+the leading title words change, so a run of near-identical products is never
+split across two chats — see `boundary_key`. Chunk sizes vary by a few rows as
+a result. That is the only benefit the old four-way
 category split (`passes.yaml`) actually bought — its `focus_buckets` hint never
 narrowed anything, since `buckets.yaml` is attached in full to every pass
 either way (docs/PASS_SOURCES.md section 1). Here every chunk gets the
@@ -84,6 +87,18 @@ GROUP_FIELDS = [
 # output ceiling: at ~169 bytes per flagged row (measured 2026-08-16) and a
 # ~25% flag rate, 2,750 rows is roughly 30K output tokens.
 DEFAULT_ROWS = 2750
+
+# Leading title words that define a run of near-identical products. Two is
+# enough to hold "SHARK FLEXSTYLE ..." together without gluing all of "SHARK"
+# into one run: measured on 2026-08-30, one word gives runs up to 205 rows,
+# two gives 75, three gives 26.
+BOUNDARY_WORDS = 2
+
+# How far a cut may travel from the target row count to reach a run boundary,
+# as a share of the chunk size. 10% of 2,750 is 275 rows — comfortably more
+# than the longest run above, so a boundary is always reachable and the
+# fallback below never fires in practice.
+BOUNDARY_DRIFT = 0.10
 
 CONFIG_FILES = ("buckets.yaml", "profile.yaml")
 
@@ -119,6 +134,61 @@ def build_context(dst: Path) -> tuple[int, int]:
     buckets = yaml.safe_load(Path("buckets.yaml").read_text(encoding="utf-8"))
     n_buckets = len(buckets.get("buckets", buckets))
     return n_buckets, len(text)
+
+
+def boundary_key(rec: dict) -> tuple:
+    """What a chunk boundary must not cut through.
+
+    Products are sorted by category then title, so near-identical items sit
+    next to each other — the FlexStyle stylers, then the FlexStyle filters.
+    Cutting mid-run sends them to two different chats, which is the one place
+    this design can produce inconsistent answers for near-identical products:
+    dedup already guarantees that *identical* ones share a single judgment.
+    """
+    title = " ".join(str(rec.get("title") or "").upper().split())
+    return (str(rec.get("category") or ""),
+            " ".join(title.split(" ")[:BOUNDARY_WORDS]))
+
+
+def split_rows(rows: list[dict], target: int,
+               drift: int | None = None) -> tuple[list[list[dict]], int]:
+    """Cut into chunks of ~target rows, snapping each cut to a run boundary.
+
+    `drift` is how far a cut may travel to find one, defaulting to
+    BOUNDARY_DRIFT of the target. Returns (chunks, forced) where `forced`
+    counts cuts that had to land mid-run because no boundary was reachable.
+    Chunk sizes therefore vary by a few rows either side of `target`.
+    """
+    if drift is None:
+        drift = max(1, int(target * BOUNDARY_DRIFT))
+    chunks: list[list[dict]] = []
+    forced = 0
+    start = 0
+    while start < len(rows):
+        end = start + target
+        if end >= len(rows):
+            chunks.append(rows[start:])
+            break
+        if boundary_key(rows[end - 1]) == boundary_key(rows[end]):
+            snapped = None
+            for delta in range(1, drift + 1):
+                ahead = end + delta
+                if (ahead < len(rows)
+                        and boundary_key(rows[ahead - 1]) != boundary_key(rows[ahead])):
+                    snapped = ahead
+                    break
+                behind = end - delta
+                if (behind > start
+                        and boundary_key(rows[behind - 1]) != boundary_key(rows[behind])):
+                    snapped = behind
+                    break
+            if snapped is None:
+                forced += 1
+            else:
+                end = snapped
+        chunks.append(rows[start:end])
+        start = end
+    return chunks, forced
 
 
 def main(auction_id: str, rows_per_chunk: int = DEFAULT_ROWS) -> None:
@@ -157,8 +227,7 @@ def main(auction_id: str, rows_per_chunk: int = DEFAULT_ROWS) -> None:
         key=lambda r: (str(r.get("category") or ""), str(r.get("title") or ""),
                        str(r.get("lot_number"))))
 
-    chunks = [representatives[i:i + rows_per_chunk]
-              for i in range(0, len(representatives), rows_per_chunk)]
+    chunks, forced = split_rows(representatives, rows_per_chunk)
 
     out_dir = Path("data/categorized")
     for old in sorted(out_dir.glob(f"auction_{auction_id}_chunk_*.json")):
@@ -182,6 +251,11 @@ def main(auction_id: str, rows_per_chunk: int = DEFAULT_ROWS) -> None:
     print(f"  groups of 2+ : {sum(1 for v in fan_out.values() if len(v) > 1):,}")
     print(f"  largest group: {max(len(v) for v in fan_out.values()):,} lots")
     print(f"  wrote {groups_path}")
+    print()
+    if forced:
+        print(f"  NOTE: {forced} cut(s) landed mid-run — no boundary within "
+              f"{max(1, int(rows_per_chunk * BOUNDARY_DRIFT))} rows. Those "
+              f"near-identical products are split across two chats.")
     print()
     print(f"UPLOAD {len(written) + 1} FILES ({n_buckets} buckets, "
           f"{context_bytes / 1024:.0f} KB of config):")

@@ -2,8 +2,13 @@
 
 Source: 29 screenshots of the Encore "Bids" (234 lots) and "Watch List"
 (731 lots) tabs, auctions **2026-05-31 → 2026-08-24**. Transcribed and
-deduplicated to `history_2026-05-31_to_2026-08-24.tsv` — 736 unique lots
-(234 bid, 502 watch-only). Outcomes: 167 Outbid, 67 May Have Won.
+deduplicated to `data/Watch/history.tsv` — 736 unique lots (234 bid, 502
+watch-only). Outcomes: 167 Outbid, 67 May Have Won.
+
+`history.tsv` is **append-only and local** (gitignored — it is a per-lot log
+of what this household bid on, and this repo is public). This file is the
+tracked summary of it. To add a new export and refresh these numbers, follow
+"How to refresh this" at the bottom.
 
 Supply baseline: the two weeks still on disk (2026-08-08 and 2026-08-16),
 **54,463 lots**.
@@ -252,3 +257,118 @@ shortlist as `Audio & headphones` (81) or are the deliberate accessory excludes
 (2). The backtest structurally cannot credit those, because the destination
 buckets did not exist when last week's labels were written. Every other bucket
 is unchanged or better.
+
+---
+
+# How to refresh this
+
+Everything above is a **measurement**, not an opinion, and every number is
+reproducible from `history.tsv` plus a week's slimmed lots. Follow this method
+so a later refresh is comparable to this one. Deviating silently is worse than
+not refreshing at all — two numbers computed different ways look like a trend.
+
+## Cadence: monthly at the very least, quarterly is better
+
+A typical week yields only **~20-60 tracked lots, of which ~13-26 are bids**.
+The conclusions above rest on **234 bids over three months**. One week cannot
+move a lift ratio; it can only produce noise that looks like a signal.
+
+| span | ~bids | what it can honestly answer |
+|---|---|---|
+| 1 week | 13-26 | nothing — do not act on it |
+| 1 month | 60-100 | "is there a new interest with no bucket?" |
+| 1 quarter | ~250 | "should a bucket be re-ranked or retired?" |
+
+## Step 1 — capture
+
+Screenshot the **Bids** and **Watch List** tabs, range filter set to cover only
+the period *since the last export* — not the full three months again. Save to
+`data/Watch/Bids Temp/`.
+
+Two things that cost real accuracy the first time:
+
+- **Do not change browser zoom after setting the capture region.** That is what
+  truncated every title in the 2026-08-30 export and forced brand-only
+  inference on a few hundred rows.
+- **Export the same week the auction closes, if you can.** While
+  `auction_<ID>_for_agent.json` is still in `data/categorized/`, every row
+  joins on `lot_number` and yields the full untruncated title, `condition` and
+  `est_retail_price` for free. One week later that file is archived and the
+  join is *unsafe*, not merely unavailable — lot numbers are recycled across
+  weeks (93.9% overlap), so a stale join silently returns a different product.
+  Verified: of 11 lots probed against the wrong week, 10 mismatched.
+
+## Step 2 — transcribe and append
+
+Transcribe to the same five columns and **append**; never rewrite history:
+
+```
+date	lot	title	signal	outcome
+8/24/26	28267	SHARK WANDVAC HANDHELD	bid	Outbid
+```
+
+- `signal` is `bid` or `watch`. A lot that was both is `bid` — bidding is the
+  strictly stronger signal.
+- `outcome` is `Outbid` / `MayHaveWon`, empty for watch-only.
+- Deduplicate on `(date, lot)`. The Watch List is a superset of Bids, and the
+  capture regions overlap by design, so the same lot appears several times.
+
+## Step 3 — normalise against supply, always
+
+**This is the step that is easy to skip and invalidates everything if you do.**
+These auctions list the same product across dozens of lots, so raw engagement
+counts measure *what the auction over-lists*, not what is wanted. Measured:
+the Shark FlexStyle had **46 identical lots** in one week and got 2 bids;
+keyboards had 76 lots and 7 engagements, with 17 ignored despite being ≥$150
+and New/Like New.
+
+For each bucket compute:
+
+```
+lift = (bucket's share of tracked lots) / (bucket's share of supply)
+```
+
+Supply = matching the bucket's seeds over one or two weeks' `_for_agent.json`.
+**lift 1.0 = engaged with exactly as often as it appears.** Flag any bucket
+under ~50 supply lots as noisy — Hatchimals scored a lift of 222 on a supply
+of one.
+
+Normalising re-ranked the original analysis substantially: Electronics fell to
+**0.5** and Bedding & pillows to **0.3**, both of which looked like top
+interests on raw counts alone.
+
+## Step 4 — ask only what history can answer
+
+Three questions are worth the effort. The rest are noise at this sample size.
+
+1. **Is there a new interest with no bucket?** Cluster the bids matching no
+   bucket. A cluster of 5+ distinct products across 2+ auctions is a real
+   candidate; one repeated SKU is not.
+2. **Has a bucket stopped earning its place?** Low lift *plus* low supply. Low
+   lift with healthy supply is not grounds to retire anything — see §5, some
+   buckets exist to be scanned, not bid on. `Coffee & espresso` carries ~55
+   lots a week and zero bids, and stays.
+3. **Is a gate mis-tuned?** Compare condition and `est_retail_price` of
+   engaged vs ignored lots within one bucket.
+
+Then update `buckets.yaml` / `profile.yaml`, and **re-measure before trusting
+the edit**:
+
+```bash
+cp data/archive/<LAST_RUN_DATE>/auction_combined_for_agent.json \
+   data/categorized/auction_bt_for_agent.json
+python3 tools/prefilter.py bt --backtest \
+   data/archive/<LAST_RUN_DATE>/auction_combined_categorized.json
+rm data/categorized/auction_bt_for_agent.json
+```
+
+## The trap that produced a wrong answer the first time
+
+The backtest above scores seeds against **labels the flagging pass itself
+produced**. Where the seeds and the pass miss the same thing, it reports
+agreement and measures nothing. It said 97.9% recall while the real figure
+against actual bids was **77.4%**.
+
+So: use `--backtest` to check a seed edit did not *regress* anything, and use
+`history.tsv` to find what neither the seeds nor the pass has ever seen. They
+answer different questions and the first one cannot substitute for the second.

@@ -47,9 +47,11 @@ Two properties the automation must not break:
   `tools/expand_flags.py` fans each answer back out to every lot in the group.
   25,195 lots → 19,250 products on 2026-08-30.
 
-`passes.yaml` and `tools/split_passes.py` defined an earlier four-way category
-split (A–D) and are no longer in the run. They were never actually run against
-a live auction. Nothing reads `passes.yaml` except `split_passes.py`.
+An earlier four-way category split (A–D) lived in `passes.yaml` and
+`tools/split_passes.py`. It was never run against a live auction, was replaced
+by dedup + chunking in `11e383b`, and the files were deleted in the commit that
+added "How to refresh this" to `data/Watch/FINDINGS.md`. See the section below
+for why it bought less than it appeared to; `git show 99f50e3` has the code.
 
 ## The resale pass
 
@@ -88,10 +90,10 @@ Hand tools inventory sits under *Lawn & Garden*, not Construction. Narrowing
 the taxonomy to a chunk's apparent subject destroys precisely those catches.
 
 This is also why the A–D split bought less than it looked like it did. Its
-`focus_buckets` lists were advisory (`passes.yaml`, header comment) and
-`buckets.yaml` was attached in full regardless, so they narrowed nothing — they
-were a hint, and a hint keyed off an unreliable category. Chunks carry no hint
-at all and lose nothing by it.
+per-pass `focus_buckets` lists were explicitly advisory, and `buckets.yaml` was
+attached in full regardless, so they narrowed nothing — they were a hint, and a
+hint keyed off an unreliable category. Chunks carry no hint at all and lose
+nothing by it.
 
 Products are ordered by category before cutting, so a chunk is *mostly* one
 kind of thing. That is a property of the ordering, not a licence to slice the
@@ -173,11 +175,10 @@ often enough that any line table here goes stale.
 | `buckets.yaml` | 67 KB, 62 buckets | `prefilter.py`, `chunk_flagging.py`, `verify_passes.py`, `build/groups.py` | **Yes**, via `context.yaml`, every chunk |
 | `profile.yaml` | 16 KB — `sizes`, `projects`, `not_wanted`, `interests`, `proven_resale` | `prefilter.py`, `chunk_flagging.py`, `verify_passes.py` | **Yes**, via `context.yaml`, every chunk |
 | `context.yaml` | 83 KB, generated | — | **This is the file that gets uploaded.** Regenerated every run |
-| `passes.yaml` | 5.9 KB — `fallback` + 4 `passes` | `split_passes.py` only | **No** — the A–D split is not in the run |
 | `bats_list.yaml` | 6.5 KB | nothing | No |
 
 `buckets.yaml` is the file built from three months of real bid/watch history
-(see its header comment near the Personal care group, and `data/Watch/`) —
-that history is what took it from 48 buckets to 62. `passes.yaml` cites the same
-source for the 77.4% shortlist-reach figure that justifies the four-way split,
-but its content is not derived from it.
+(see its header comment near the Personal care group, and
+`data/Watch/FINDINGS.md`) — that history is what took it from 48 buckets to 62.
+`FINDINGS.md` also carries the method for refreshing it from a later export,
+including the sampling trap that made the first pass at these numbers wrong.

@@ -55,11 +55,11 @@ therefore fall inside a category rather than at its edge, so each chunk is
 mostly one kind of thing. Each cut is then snapped to the nearest point where
 the leading title words change, so a run of near-identical products is never
 split across two chats — see `boundary_key`. Chunk sizes vary by a few rows as
-a result. That is the only benefit the old four-way
-category split (`passes.yaml`) actually bought — its `focus_buckets` hint never
-narrowed anything, since `buckets.yaml` is attached in full to every pass
-either way (docs/PASS_SOURCES.md section 1). Here every chunk gets the
-identical prompt and the identical full taxonomy.
+a result. Keeping a product run intact is the only benefit the earlier
+four-way category split ever bought: its per-pass bucket hint narrowed nothing,
+because `buckets.yaml` was attached in full to every pass either way
+(docs/PASS_SOURCES.md section 1). Here every chunk gets the identical prompt
+and the identical full taxonomy.
 """
 
 from __future__ import annotations

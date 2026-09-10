@@ -282,10 +282,32 @@ move a lift ratio; it can only produce noise that looks like a signal.
 ## Step 1 — capture
 
 Screenshot the **Bids** and **Watch List** tabs, range filter set to cover only
-the period *since the last export* — not the full three months again. Save to
-`data/Watch/Bids Temp/`.
+the period *since the last export* — not the full three months again.
 
-Two things that cost real accuracy the first time:
+**Save the files to `data/Watch/Bids Temp/` — do not attach them to the chat
+instead.** They have to be croppable, and cropping is what makes the
+transcription accurate rather than approximate:
+
+- The captures are tall (1110 x 3656 in the 2026-08-30 export). Read whole,
+  they are downscaled to ~0.55x and the lot titles sit right at the edge of
+  legibility — which is how a brand gets misread and silently becomes a wrong
+  bucket.
+- Cropping each capture into vertical thirds with ~45px of overlap renders the
+  text at full resolution. The overlap matters: without it a tile row lands on
+  a cut boundary and is lost from both halves.
+- Crop bounds have to be **detected per capture, not assumed**. The page
+  shifted left partway through the 2026-08-30 set, and a fixed right edge
+  clipped the fourth column of tiles. Detecting the coloured tile borders
+  (red = Outbid, green = May Have Won, blue = watch-only) finds the real
+  extents; take the full page width on the right, because a final row with
+  fewer than four tiles otherwise reports a too-narrow bound. This took two
+  re-crop cycles to get right — all of which needs the files on disk.
+
+Roughly 29 captures covered three months. They are disposable once
+`history.tsv` is updated (~44 MB), and `data/Watch/` is gitignored apart from
+this file.
+
+Two more things that cost real accuracy the first time:
 
 - **Do not change browser zoom after setting the capture region.** That is what
   truncated every title in the 2026-08-30 export and forced brand-only

@@ -1,17 +1,28 @@
 # What the bid/watch history actually says
 
-Source: 29 screenshots of the Encore "Bids" (234 lots) and "Watch List"
-(731 lots) tabs, auctions **2026-05-31 → 2026-08-24**. Transcribed and
-deduplicated to `data/Watch/history.tsv` — 736 unique lots (234 bid, 502
-watch-only). Outcomes: 167 Outbid, 67 May Have Won.
+Source: 32 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-09-06**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 833 unique lots (279 bid, 554 watch-only).
+Outcomes: 202 Outbid, 77 May Have Won.
+
+Last refreshed **2026-09-10**, which added 97 lots (45 bid, 52 watch) from the
+auction that closed 9/6/26. All 97 joined to
+`data/categorized/auction_764523_for_agent.json` on `lot_number` with a
+matching title prefix, so that batch carries **full untruncated titles** and a
+real `condition` instead of the brand-only inference the earlier batches were
+stuck with. Doing the export in the same week is what bought that — see
+Step 1.
 
 `history.tsv` is **append-only and local** (gitignored — it is a per-lot log
 of what this household bid on, and this repo is public). This file is the
 tracked summary of it. To add a new export and refresh these numbers, follow
 "How to refresh this" at the bottom.
 
-Supply baseline: the two weeks still on disk (2026-08-08 and 2026-08-16),
-**54,463 lots**.
+Supply baseline: the four weeks still on disk (2026-08-08, 2026-08-16,
+2026-08-30, 2026-09-06), **102,350 lots**. The previous refresh used the first
+two of those (54,463 lots). Every lift below was computed against both bases;
+the ranking is unchanged and no bucket moves a tier, so the wider denominator
+is a precision gain rather than a change of method.
 
 > **Read raw counts as exposure, not preference.** These auctions run the
 > same product across dozens of lots, so a frequently-listed item collects
@@ -20,18 +31,35 @@ Supply baseline: the two weeks still on disk (2026-08-08 and 2026-08-16),
 
 ## 1. The taxonomy gap
 
-Scoring all 736 tracked lots against current `buckets.yaml` seeds *and*
+Scoring all 833 tracked lots against current `buckets.yaml` seeds *and*
 `profile.yaml` pseudo-bucket seeds:
 
 | | lots | share |
 |---|---|---|
-| matched at least one bucket / seed | 507 | 69% |
-| **matched nothing at all** | **229** | **31%** |
-| …of the 234 real *bids* | **94 unmatched** | **40%** |
+| matched at least one bucket / seed | 674 | 81% |
+| **matched nothing at all** | **159** | **19%** |
+| …of the 279 real *bids* | **55 unmatched** | **20%** |
 
-Two of every five things actually bid on have nowhere to land. That is not
-fixable in `PROMPTS.md` — a category with no bucket and no seed cannot be
-surfaced by any prompt.
+**The 2026-08-30 taxonomy expansion halved this, and the measurement is
+apples-to-apples.** Re-scoring the *same* 736 rows the original 31% / 40% was
+computed from, against the current 62-bucket taxonomy, gives 19% / 20% — so
+the improvement is the new buckets, not the new rows. The 97 rows added on
+2026-09-10 land at 22% / 20% independently, which says the gap is stable
+rather than still closing.
+
+One in five things bid on still has nowhere to land, and that is not fixable
+in `PROMPTS.md` — a category with no bucket and no seed cannot be surfaced by
+any prompt. What is left, though, is a different problem from the one this
+section originally described: it is now mostly **seeds missing from buckets
+that already exist**, not missing buckets. See §7.
+
+**This table scores on `title` alone**, because that is the only field
+`history.tsv` carries for the batches captured before 2026-09-10. Production
+also matches on the HiBid breadcrumb, which rescues some of these — a Funko Pop
+matching no seed still shortlists through `Toys - Action Figures`. Where a
+batch joins to its own week's slimmed file, score it the production way
+instead; §7 does exactly that for the 2026-09-06 rows and gets a smaller, more
+truthful gap (17.8% of bids, not 20%).
 
 ## 2. Sampling, not sweeping — the correction that re-ranks everything
 
@@ -57,37 +85,111 @@ lot`, `case pack`, `bulk lot`, `pallet`, `retail box`) match none of it.
 ## 3. Interest per unit of exposure
 
 `lift` = share of tracked lots ÷ share of supply. **1.0 = exactly as often as
-it appears.** Buckets under ~50 supply lots are noisy — flagged †.
+it appears.** Buckets under ~100 supply lots across the four weeks are noisy —
+flagged †. (The previous refresh flagged under ~50 on a two-week base; same
+threshold, wider base.)
+
+**Read this table against the current 62-bucket taxonomy.** The version it
+replaces was scored against the 48-bucket one, so buckets created or split on
+2026-08-30 — `Vacuums & floor care`, `Audio & headphones`, the Personal care
+and Food & drink groups — have no prior row to compare against, and
+`Cleaning supplies & tools` and `Electronics` lost lots to them.
 
 **Genuinely over-indexed**
 
-| bucket | supply | tracked | bid | lift |
+| bucket | supply (4 wks) | tracked | bid | lift |
 |---|---|---|---|---|
-| Hatchimals † | 1 | 3 | 1 | 222 |
-| Surprise toys † | 11 | 27 | 15 | 182 |
-| Barbies † | 49 | 31 | 12 | 47 |
-| 3D printing supplies † | 32 | 13 | 4 | 30 |
-| Tie-downs † | 23 | 7 | 1 | 23 |
-| Nightstands † | 35 | 8 | 4 | 17 |
-| Garage & tool organization † | 44 | 9 | 2 | 15 |
-| Brand chef knives | 99 | 15 | 5 | 11 |
-| Outdoor furniture & hammocks | 121 | 16 | 8 | 9.8 |
-| Keyboards & PC peripherals | 490 | 44 | 5 | **6.6** |
-| Garden hose | 232 | 15 | 3 | 4.8 |
-| BBQ accessories | 193 | 12 | 4 | 4.6 |
-| King bed frames | 154 | 8 | 7 | 3.8 |
+| Hatchimals † | 1 | 3 | 1 | 369 |
+| Surprise toys † | 32 | 27 | 15 | 104 |
+| Barbies † | 72 | 35 | 15 | 60 |
+| 3D printing supplies † | 64 | 14 | 4 | 27 |
+| Tie-downs † | 41 | 7 | 1 | 21 |
+| Kids' outdoor water play | 196 | 28 | 11 | 18 |
+| Nightstands † | 65 | 8 | 4 | 15 |
+| Garage & tool organization † | 83 | 10 | 2 | 15 |
+| Brand chef knives | 165 | 15 | 5 | 11 |
+| Laundry baskets † | 68 | 6 | 0 | 11 |
+| Outdoor furniture & hammocks | 202 | 16 | 8 | 9.7 |
+| Bath towels | 105 | 6 | 1 | 7.0 |
+| Beverages & drink mixes | 120 | 6 | 2 | 6.1 |
+| Keyboards & PC peripherals | 1,100 | 55 | 11 | 6.1 |
+| Car care & detailing | 145 | 7 | 3 | 5.9 |
+| Garden hose | 486 | 22 | 4 | 5.6 |
+| Storage bins & totes | 354 | 16 | 2 | 5.6 |
+| Lawn treatment & pest control | 181 | 8 | 3 | 5.4 |
+| **Vacuums & floor care** | 1,946 | 65 | **34** | **4.1** |
+| BBQ accessories | 374 | 12 | 4 | 3.9 |
+| King bed frames | 266 | 8 | 7 | 3.7 |
 
-**At or below baseline — raw counts flattered these**
+`Vacuums & floor care` is the one to note: split out of `Cleaning supplies &
+tools` on 2026-08-30 and now carrying **34 of the 279 bids on its own** — more
+than any other bucket, at a lift of 4.1 on the second-largest supply in the
+table. The split was justified on supply volume alone; the bid data since
+supports it independently.
 
-| bucket | supply | tracked | lift | note |
-|---|---|---|---|---|
-| Cleaning supplies & tools | 1,315 | 43 | 2.4 | looked like the #2 interest on raw count |
-| Kitchen appliances | 1,859 | 22 | 0.9 | at baseline |
-| Glassware & drinkware | 465 | 5 | 0.8 | |
-| Brand boots & shoes | 808 | 7 | 0.6 | **suppressed — `sizes.shoe` is `null`** |
-| Board games | 457 | 4 | 0.6 | |
-| Electronics | 3,015 | 22 | **0.5** | biggest supply of any bucket |
-| Bedding & pillows | 1,156 | 5 | **0.3** | |
+**Mid — above baseline, unremarkable** (lift 2.4–3.5): Power tools, Sports &
+recreation gear, Seating & occasional furniture, Brand cookware, Home gym &
+weightlifting, Kids' craft & activity, Adhesives & tape, Snacks &
+confectionery, Bed linens, Lawn equipment, Tarps, Dinnerware, Smart home,
+Cleaning supplies & tools, Kids' toys & games, Pool & hot tub, Garden &
+lawncare misc.
+
+**At or below baseline**
+
+| bucket | supply (4 wks) | tracked | bid | lift | note |
+|---|---|---|---|---|---|
+| Glassware & drinkware | 900 | 7 | 3 | 1.0 | at baseline |
+| Kitchen appliances | 3,497 | 23 | 7 | 0.8 | |
+| Batteries & chargers | 668 | 4 | 0 | 0.7 | |
+| Electronics | 4,877 | 28 | 8 | 0.7 | biggest supply of any bucket |
+| Brand boots & shoes | 1,662 | 8 | 1 | 0.6 | still suppressed — `sizes.shoe` is `null` |
+| Board games | 835 | 4 | 0 | 0.6 | |
+| Video games & VR | 496 | 2 | 0 | 0.5 | |
+| Lego | 282 | 1 | 0 | 0.4 | |
+| Oral & dental care | 1,195 | 4 | 2 | 0.4 | gated — see below |
+| Skincare & body | 2,936 | 7 | 6 | 0.3 | gated — see below |
+| Bedding & pillows | 2,261 | 5 | 0 | 0.3 | |
+| Shaving & grooming | 1,055 | 2 | 2 | 0.2 | gated — see below |
+| Hair styling tools | 2,467 | 4 | 3 | 0.2 | |
+| Hair care products | 1,528 | 2 | 2 | 0.2 | gated — see below |
+
+### The seven gated buckets need a gated denominator
+
+**This is a correction to the method, not just to a number.** Since 2026-08-30
+seven buckets carry `condition_in: [Brand New - Sealed, New (Adjusted
+Quantity), Best Before (Grocery)]`, so the shortlist never offers the opened
+stock. Scoring them against *ungated* supply divides by lots the pass was
+never shown, and understates every one of them by 4-25×:
+
+| gated bucket | ungated supply | gated supply | tracked | bid | lift (ungated) | **lift (gated)** |
+|---|---|---|---|---|---|---|
+| Cosmetics & nail | 375 | 15 | 5 | 2 | 1.6 | **41** |
+| Pantry & cooking staples | 357 | 34 | 4 | 3 | 1.4 | **15** |
+| Snacks & confectionery | 253 | 63 | 6 | 4 | 2.9 | **12** |
+| Beverages & drink mixes | 120 | 77 | 6 | 2 | 6.1 | **9.6** |
+| Skincare & body | 2,973 | 139 | 7 | 6 | 0.3 | **6.2** |
+| Supplements & protein | 227 | 43 | 2 | 2 | 1.1 | **5.7** |
+| Hair care products | 1,628 | 103 | 2 | 2 | 0.2 | **2.4** |
+
+`Skincare & body` is the clearest case: 0.3 on the ungated denominator reads
+as the second-worst bucket in the taxonomy, and 6.2 on the gated one puts it
+alongside `Garden hose`. Nothing about the household changed — only what the
+shortlist is allowed to show.
+
+Two caveats on that table. The gated supply column is scored on `title` +
+`category` (the gate needs the lot in hand), the tracked column on `title`
+alone, which inflates the denominator slightly and makes these numbers
+conservative. And `Cosmetics & nail` at a gated supply of 15 over four weeks
+is far below the † threshold — treat 41 as "clearly over-indexed", not as a
+figure.
+
+**The same reading applies to the ungated personal-care buckets.** Their lift
+is low, but almost everything tracked in them was *bid on*, not watched:
+Hair care 2/2, Shaving & grooming 2/2, Personal care & grooming 1/1, Skincare
+& body 6/7, Hair styling tools 3/4. Low exposure share, near-perfect
+conversion — the opposite shape from `Home gym & weightlifting` (20 tracked,
+**0 bids**) or `Audio & headphones` (10 tracked, 0 bids), which are watched
+and never bid.
 
 ## 4. The gate is condition, then price
 
@@ -109,6 +211,38 @@ controllers, Logitech driving-force shifters and clutch modules, USB unifying
 receivers, mousepads. Tightening `corsair` / `logitech` bare-brand seeds would
 cut that.
 
+### Half of this check stopped being runnable on 2026-08-30
+
+`est_retail_price` is **0% from the 2026-08-30 week onward** — 27,011/27,023 on
+2026-08-16, then 0/25,195 and 0/22,692. It went the same way as `model`,
+`size`, `notes` and the damage flags when HiBid moved the structured detail
+into the per-lot report image, but `tools/slim.py`'s docstring lists only the
+others, so this one went unremarked. Consequences:
+
+- the price half of "condition, then price" can no longer be measured on a
+  current week, only on the 8/08 and 8/16 archives;
+- Step 1 below used to promise the same-week join yields `est_retail_price`
+  for free. It does not any more. It still yields the full title and
+  `condition`, which is the larger part of the value;
+- in the viewer, `est_retail_price` was a displayed field, a sort key, and the
+  denominator of the `▲ VALUE` badge, so all three had been inert since
+  2026-08-30. Confirmed against the deployed bundle at the time: 0 of 22,692
+  lots carried a retail price.
+
+**Resolved the same day: the field was removed from the pipeline entirely**
+(2026-09-10). Not recovered from the report image — the call was that a
+self-reported, unverified retail reference is not worth a second money figure
+beside an actual resale estimate. Gone from the scraper parse, the Lot schema,
+the slimmed agent input, the viewer's card/row/detail, the sort control and
+the value badge. The consequence for this document is below.
+
+The condition half still works, and on the 9/6 week it still separates,
+though less sharply than on 8/08: `Keyboards & PC peripherals` engaged 11,
+**0% Fair/Heavily Used**, against 293 ignored at 6%. `Kids' toys & games`
+engaged 17 at 0% against 5%. Whole-export condition mix, all 97 lots: 41
+Excellent, 18 Brand New - Sealed, 18 Brand New - Open Box, 15 Good, 3 New
+(Adjusted Quantity), 3 Best Before, **3 Fair, 0 Heavily Used**.
+
 ## 5. Buckets with no engagement still earn their place
 
 Scan coverage and pick precision are different jobs, and a bucket doing the
@@ -124,7 +258,18 @@ first will always look dead on bid metrics. Supply over the two weeks:
 
 The first three carry real weekly inventory and should stay regardless of
 bid rate — they exist to be scanned. Only `Starbucks coffee` and
-`Shatterproof / outdoor dishware` are thin on *both* axes.
+`Shatterproof / outdoor dishware` are thin on *both* axes. (Both were merged
+away on 2026-08-30; `Specialty cooking & baking ingredients` was renamed
+`Pantry & cooking staples` and broadened.)
+
+**Confirmed over four months, not two weeks.** `Coffee & espresso` now stands
+at 233 supply lots across the four weeks on disk (~58/week) and **still zero
+tracked lots** — not one watch in 833. `Extension cords & power strips`: 156
+supply (~39/week), zero tracked. Four months of history saying "never bid on"
+is a far stronger statement than the two weeks this section was written from,
+and the conclusion is unchanged: both stay. They exist to be scanned. A bucket
+is retired for being thin on supply *and* engagement, and these are thin on
+one axis only.
 
 **Food coverage should expand, not shrink.** Untapped supply, 2 weeks:
 
@@ -146,6 +291,12 @@ Taco Bell kit **bid**, Monster Energy ×3, Ghirardelli, Thai Kitchen.
 ## 6. Missing categories, by evidence
 
 Counts are `lots (bids)` from the 736-row history.
+
+> **Mostly resolved.** Items 1-9 below were the input to the 2026-08-30
+> taxonomy expansion and all have buckets now; item 10 (apparel) is half done
+> — `sizes.apparel` is set, `sizes.shoe` is still `null`. Kept as the record of
+> what the evidence looked like before the change, and as the worked example
+> of how to read a cluster. The live version of this question is §7.
 
 1. **Personal care & grooming** — 16 (8). No bucket. Hair care is the spine:
    L'Oréal EverPure shampoo+conditioner (2 bids), Shark FlexStyle (2), Dyson
@@ -174,6 +325,56 @@ Counts are `lots (bids)` from the 736-row history.
     `sizes.apparel` are both `null`, so the pass is told to reject wrong sizes
     against a blank. `Brand boots & shoes` lift of 0.6 on 808 supply lots is
     probably this, not disinterest. Cheapest single fix on the list.
+
+## 7. The gap is now seeds, not buckets
+
+The 2026-09-06 export is the first batch that can be scored the way production
+actually scores: every row joined to `auction_764523_for_agent.json`, so each
+one carries `title`, `category` and `condition` and can be run through the real
+shortlist rule rather than the title-only proxy §1 is stuck with.
+
+Under that rule the shortlist reaches **37 of the 45 bids (82.2%)**. The eight
+it misses are seven distinct products, and **every one of them belongs to a
+bucket that already exists**:
+
+| unmatched bid | HiBid category | bucket it belongs in | why it missed |
+|---|---|---|---|
+| CHAPIN 20004 SPRAYER TANK ×2 bids (+2 watched) | `Construction & Farm - Turf Equipment - Sprayers` | `Garden & lawncare misc` / `Lawn equipment` | no `sprayer` / `chapin` seed, and no bucket claims that crumb |
+| PHILIPS ALL-IN-ONE 3000 TRIMMER, 13-PIECE KIT | `Home Goods - Bed / Bath Items` | `Shaving & grooming` | seeds miss the bucket's single most obvious product |
+| NAPOLEON BBQ HEAT PLATE 4-PACK | `Home Goods - Grills` | `BBQ accessories` | no `heat plate` / `napoleon` seed |
+| TRAMONTINA TRI-PLY WOK 12.5" (×2 bids across history) | `Home Goods - Kitchen / Housewares` | `Brand cookware` | brand not seeded |
+| GLASS TREATMENT KIT — REPELS SOAP SCUM (+1 watched) | `Home Goods - Bed / Bath Items` | `Cleaning supplies & tools` | shower/glass treatment is not a seeded form |
+| VTECH KIDI STAR DJ MIXER (+MARBLE RUSH watched; ×2 bids across history) | `Home Goods - Musical Instruments` | `Kids' toys & games` | brand not seeded |
+| GAOY MILKY WHITE & JELLY NUDE GEL SET | `Home Goods - Bed / Bath Items` | `Cosmetics & nail` | gel-polish sets not reached by the nail seeds |
+
+That is a different remedy from the one §1 originally called for. Adding
+buckets was right in August, when whole categories had nowhere to land; the
+residue is seed coverage, which is cheaper and carries no taxonomy risk.
+Brands worth seeding on this evidence: `chapin`, `tramontina`, `vtech`,
+`napoleon`. Across the full history the unmatched bids also repeat on
+SALTON ×2, METHOD ×2, GILDAN ×2, OONI ×2, FUNKO ×2.
+
+**One of these is a `categories:` fix, not a seed fix.** Both Chapin bids sit
+under `Construction & Farm - Turf Equipment - Sprayers`, a crumb no bucket
+claims. A breadcrumb prefix reaches every sprayer in that aisle including the
+bare-SKU ones a brand seed never will — which is the axis `categories:` exists
+for. The other six are ordinary seed gaps.
+
+**Do not batch these in blind.** Each one widens a shortlist, and Step 4 below
+applies: add them, then re-run `--backtest` before trusting the edit, and watch
+the `Electronics` share guard.
+
+**No new bucket is warranted by this export.** Two things look like candidates
+and are not. Home-gym equipment clusters this week — bumper plates ×2, gym
+floor mats, a plate tree rack, a walking pad — but `Home gym & weightlifting`
+already exists and across three auctions carries **20 tracked lots and zero
+bids**: watched, never bid, which is the shape §5 describes. And Funko Pop is
+2 bids in fourteen weeks, under the 5-distinct-products-across-2-auctions bar
+in Step 4; it is also *already shortlisted*, reaching `Dolls & plush` through
+the `Toys - Action Figures` crumb despite `funko` appearing in no seed list.
+Whether a vinyl collectible belongs in `Dolls & plush` is a real question, but
+it is not an urgent one and this export does not settle it.
+
 
 ---
 
@@ -260,6 +461,108 @@ is unchanged or better.
 
 ---
 
+# What the 2026-09-10 refresh found
+
+**One auction. 97 lots, 45 bids.** Per the cadence table below, a single week
+answers *coverage* questions — did a gate hide something, is a seed missing —
+and cannot move a *rate*. Every lift ratio in §3 moved because the taxonomy
+changed on 2026-08-30 and the supply base widened from two weeks to four,
+**not** because 45 new bids moved it. Do not read any single row as a trend.
+
+What this export can answer, and does:
+
+## The consumable condition gate is safe — checked on its first live run
+
+The 2026-08-30 note said the gate's justification was a condition distribution
+plus a stated rule, that `--backtest` structurally could not validate it, and
+that it was "worth re-checking after the first live run". This is that check,
+and it is the one measurement here that a single week *can* settle, because it
+is a question about coverage rather than about rates.
+
+Replaying all seven gated buckets over the 97 engaged lots of auction 764523:
+**the gate hid nothing that was engaged with.** No lot that was bid on or
+watched was seed-matched into a gated bucket and then excluded on condition.
+The engaged lots in gated buckets were 4 × `Skincare & body` at Brand New -
+Sealed (all four bid), 2 × `Snacks & confectionery` at Best Before (both bid),
+and 2 × `Beverages & drink mixes` (watched).
+
+The volume claim held too. `Skincare & body` was predicted to fall from ~920
+candidates a week to ~93; on the live week it shortlisted **83** of 22,692
+lots. Every one of its four engaged lots survived.
+
+And measured the other way round — shortlist recall over the 45 real bids,
+gate on versus gate off — the answer is identical, 37/45 either way. The gate
+removed roughly 90% of the personal-care shortlist and cost **zero** recall
+against what was actually bid on.
+
+## Sampling, not sweeping — still true, with one shift
+
+This week's repeated-SKU runs, engagement against real supply in the same
+auction:
+
+| product run | supply | tracked | bid |
+|---|---|---|---|
+| BISSELL PowerClean hand vacuum | 19 | 9 | 3 |
+| SHARK WandVac WV200C | 16 | 6 | 4 |
+| CHAPIN 20004 sprayer tank | 31 | 4 | 2 |
+| Razer (any) | 68 | 5 | 0 |
+| Logitech G515 TKL | 3 | 2 | 2 |
+
+The WandVac pattern from §2 repeats — 16 available, 6 tracked, 4 bid — and a
+second handheld vacuum now behaves the same way. **Do not promote the Bissell
+to `proven_resale` on this.** That list is for SKUs with a completed resale at
+a known price; the Bissell has engagement, which §2 is specifically about not
+mistaking for appetite. It is worth watching across the next two exports.
+
+The Razer row is the counter-example that keeps the correction honest: 68 lots
+of supply, 5 watched, nothing bid.
+
+## `est_retail_price` is gone — and has now been removed outright
+
+See §4. Zero coverage since the 2026-08-30 week, the deployed bundle included,
+which left a displayed figure, a sort order and the `▲ VALUE` badge all inert.
+
+**Removed from the tool on 2026-09-10** rather than recovered. Two reasons:
+HiBid no longer publishes it, and it was never a price anyone paid — it is the
+auction house's own unverified retail reference, and the resale pass already
+estimates what a lot is actually worth. `scraper/condition.py` carries the full
+rationale so a future run does not quietly re-add it if the line reappears.
+
+**What this costs this document.** Step 4's question 3 — "is a gate
+mis-tuned?" — was answered by comparing condition *and* `est_retail_price`
+between engaged and ignored lots within a bucket. The price half is now
+permanently unavailable on current weeks; the 8/08 and 8/16 archives are the
+last data that can answer it, and §4's keyboards table is the last time it was
+measured. Condition still separates cleanly and remains the usable half.
+
+## Numbers that moved, and why
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 736 | 833 | +97 from this export |
+| bids | 234 | 279 | +45 |
+| unmatched share (title-only) | 31% | 19% | 2026-08-30 taxonomy, not new rows |
+| unmatched bids (title-only) | 40% | 20% | same |
+| shortlist recall vs real bids | 77.4% | **82.2%** | same; scored the production way, §7 |
+| supply base | 54,463 (2 wks) | 102,350 (4 wks) | two more weeks kept on disk |
+
+## What is worth doing about it
+
+Nothing in this export justifies a new bucket or a re-ranking. Three things
+are worth acting on, in order of cheapness:
+
+1. **Seven shortlist gaps, all in buckets that already exist** (§7). Six seed
+   additions plus one `categories:` claim on `Construction & Farm - Turf
+   Equipment - Sprayers`. Re-run `--backtest` after, per Step 4.
+2. **`sizes.shoe` is still `null`** — called the cheapest single fix on the
+   list in §6 six weeks ago, still open, and `Brand boots & shoes` is still
+   sitting at a lift of 0.6 on 1,662 supply lots.
+3. ~~**Decide what to do about `est_retail_price`**~~ — **done 2026-09-10**:
+   removed from the pipeline entirely. See §4.
+
+
+---
+
 # How to refresh this
 
 Everything above is a **measurement**, not an opinion, and every number is
@@ -269,15 +572,23 @@ not refreshing at all — two numbers computed different ways look like a trend.
 
 ## Cadence: monthly at the very least, quarterly is better
 
-A typical week yields only **~20-60 tracked lots, of which ~13-26 are bids**.
-The conclusions above rest on **234 bids over three months**. One week cannot
+A typical week yields only **~20-100 tracked lots, of which ~13-45 are bids**.
+The conclusions above rest on **279 bids over fourteen weeks**. One week cannot
 move a lift ratio; it can only produce noise that looks like a signal.
 
 | span | ~bids | what it can honestly answer |
 |---|---|---|
-| 1 week | 13-26 | nothing — do not act on it |
+| 1 week | 13-45 | coverage questions only — "did a gate hide something?", "is a seed missing?" |
 | 1 month | 60-100 | "is there a new interest with no bucket?" |
 | 1 quarter | ~250 | "should a bucket be re-ranked or retired?" |
+
+The 1-week row used to read "nothing — do not act on it", which was too
+strong. One week cannot move a *rate* — a lift ratio, a bid share — because
+the sample is a rounding error against 279 bids. It answers a *coverage*
+question completely, because coverage is a yes/no per lot: the 2026-09-10
+export settled whether the condition gate hides anything engaged with (it does
+not) and surfaced seven shortlist gaps, off 45 bids. Ask which kind of question
+you have before deciding a week is too small for it.
 
 ## Step 1 — capture
 
@@ -303,9 +614,19 @@ transcription accurate rather than approximate:
   fewer than four tiles otherwise reports a too-narrow bound. This took two
   re-crop cycles to get right — all of which needs the files on disk.
 
-Roughly 29 captures covered three months. They are disposable once
-`history.tsv` is updated (~44 MB), and `data/Watch/` is gitignored apart from
-this file.
+Roughly 29 captures covered the first three months; the 2026-09-10 export of a
+single auction took 3 (969 x 3428 and similar, four tiles per row, ~9 rows per
+capture). They are disposable once `history.tsv` is updated (~44 MB), and
+`data/Watch/` is gitignored apart from this file.
+
+**Check the captures butt up against each other before transcribing.** A
+capture that ends mid-row leaves a partial row at the top of the next one; its
+border colours are legible even when its text is not, and matching that colour
+sequence against the previous capture's last row proves the two are
+contiguous. Two of the three 2026-09-10 captures chained that way. The third
+pair both ended and began on a clean row boundary, which proves nothing — a
+dropped row between them would look identical. Prefer a few pixels of overlap
+between captures for the same reason the crops overlap.
 
 Two more things that cost real accuracy the first time:
 
@@ -314,11 +635,21 @@ Two more things that cost real accuracy the first time:
   inference on a few hundred rows.
 - **Export the same week the auction closes, if you can.** While
   `auction_<ID>_for_agent.json` is still in `data/categorized/`, every row
-  joins on `lot_number` and yields the full untruncated title, `condition` and
-  `est_retail_price` for free. One week later that file is archived and the
-  join is *unsafe*, not merely unavailable — lot numbers are recycled across
-  weeks (93.9% overlap), so a stale join silently returns a different product.
-  Verified: of 11 lots probed against the wrong week, 10 mismatched.
+  joins on `lot_number` and yields the full untruncated title and `condition`
+  for free — which makes the truncation in the captures survivable, and is
+  worth more than the cropping discipline above. It no longer yields
+  `est_retail_price`; that field has been 0% since 2026-08-30 (§4). One week
+  later the file is archived and the join is *unsafe*, not merely unavailable
+  — lot numbers are recycled across weeks (93.9% overlap), so a stale join
+  silently returns a different product. Verified: of 11 lots probed against
+  the wrong week, 10 mismatched.
+
+  **Verify the join, do not assume it.** Check the transcribed truncated title
+  is a prefix of the joined full title, for every row, and only then overwrite
+  the titles. On 2026-09-10 all 97 rows passed, which is simultaneously the
+  proof that the lot numbers were read correctly off the screenshots and that
+  the right week was joined. A batch where some rows fail that check is a
+  wrong-week join, not a transcription slip — stop and re-date it.
 
 ## Step 2 — transcribe and append
 
@@ -352,8 +683,22 @@ lift = (bucket's share of tracked lots) / (bucket's share of supply)
 
 Supply = matching the bucket's seeds over one or two weeks' `_for_agent.json`.
 **lift 1.0 = engaged with exactly as often as it appears.** Flag any bucket
-under ~50 supply lots as noisy — Hatchimals scored a lift of 222 on a supply
-of one.
+under ~50 supply lots per two weeks as noisy — Hatchimals scored a lift of 222
+on a supply of one.
+
+**A bucket with `condition_in:` must be divided by its GATED supply.** The
+shortlist never offers that bucket's opened stock, so counting it in the
+denominator divides by lots the pass was never shown. Measured 2026-09-10,
+this understated the seven gated buckets by 4-25× — `Skincare & body` reads
+0.3 ungated and 6.2 gated, which is the difference between "retire it" and
+"one of the stronger buckets in the taxonomy". Apply the same `condition_in`
+allowlist to the supply scan; `tools/prefilter.py`'s `Matcher.match` already
+does this when passed a `condition`.
+
+**Also read the bid share of tracked.** Lift measures exposure-adjusted
+attention, and a bucket can be low-exposure and near-perfect conversion at the
+same time: `Hair care products` is 2/2 bids and `Home gym & weightlifting` is
+0/20, and lift alone puts them a rung apart in the wrong direction.
 
 Normalising re-ranked the original analysis substantially: Electronics fell to
 **0.5** and Bedding & pillows to **0.3**, both of which looked like top
@@ -370,8 +715,10 @@ Three questions are worth the effort. The rest are noise at this sample size.
    lift with healthy supply is not grounds to retire anything — see §5, some
    buckets exist to be scanned, not bid on. `Coffee & espresso` carries ~55
    lots a week and zero bids, and stays.
-3. **Is a gate mis-tuned?** Compare condition and `est_retail_price` of
-   engaged vs ignored lots within one bucket.
+3. **Is a gate mis-tuned?** Compare the condition of engaged vs ignored lots
+   within one bucket. This used to compare `est_retail_price` too; that field
+   was removed on 2026-09-10 and only the 8/08 and 8/16 archives still carry
+   it, so price is no longer an axis a refresh can use.
 
 Then update `buckets.yaml` / `profile.yaml`, and **re-measure before trusting
 the edit**:
@@ -394,3 +741,15 @@ against actual bids was **77.4%**.
 So: use `--backtest` to check a seed edit did not *regress* anything, and use
 `history.tsv` to find what neither the seeds nor the pass has ever seen. They
 answer different questions and the first one cannot substitute for the second.
+
+**Refreshed 2026-09-10**: replaying the current shortlist over the 45 bids of
+auction 764523 — full haystack, condition gate on, same rule production uses —
+gives **82.2% recall against real bids** (37/45), against the 77.4% measured
+before the 2026-08-30 taxonomy change. Shortlist size on that week was 10,158
+of 22,692 lots (44.8%). Turning the condition gate off changes the recall
+figure by nothing at all: 37/45 either way.
+
+That last fact is the cheapest version of this whole check, and worth
+repeating every refresh. Run the shortlist over the lots this household
+actually bid on, with the gate on and with it off. If a gate ever starts
+costing recall, this is where it shows up first, and it costs one join.

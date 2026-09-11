@@ -28,16 +28,16 @@ function compareClose(a: Lot, b: Lot): number {
 }
 
 /** The value a value-based sort ranks on, or null when the lot has no data. */
-function sortValue(lot: Lot, key: SortKey): number | null {
-  const v = key === 'retail-desc' ? lot.est_retail_price : resaleMean(lot);
+function sortValue(lot: Lot): number | null {
+  const v = resaleMean(lot);
   if (v === null || Number.isNaN(v)) return null;
   return v;
 }
 
 /**
- * Sort lots by the chosen order. Value-based sorts ('resale-*', 'retail-desc')
- * push lots without that data to the end and tie-break by lot number, so they
- * never crash on nulls. The default 'lot' order keeps the curated Bat-first /
+ * Sort lots by the chosen order. The value-based sorts ('resale-*') push lots
+ * without that data to the end and tie-break by lot number, so they never
+ * crash on nulls. The default 'lot' order keeps the curated Bat-first /
  * Sunday-first grouping.
  */
 export function sortLots(lots: Lot[], sortKey: SortKey = 'lot'): Lot[] {
@@ -46,8 +46,8 @@ export function sortLots(lots: Lot[], sortKey: SortKey = 'lot'): Lot[] {
 
   const ascending = sortKey === 'resale-asc';
   return lots.slice().sort((a, b) => {
-    const va = sortValue(a, sortKey);
-    const vb = sortValue(b, sortKey);
+    const va = sortValue(a);
+    const vb = sortValue(b);
     // Nulls always sort to the end, regardless of direction.
     if (va === null && vb === null) return a.lot_number.localeCompare(b.lot_number);
     if (va === null) return 1;

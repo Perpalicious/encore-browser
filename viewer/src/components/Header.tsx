@@ -64,7 +64,6 @@ const SORT_LABEL: Record<SortKey, string> = {
   lot: 'Lot number',
   'resale-desc': 'Resale ↓',
   'resale-asc': 'Resale ↑',
-  'retail-desc': 'Retail ↓',
   'close-asc': 'Closing soonest',
 };
 

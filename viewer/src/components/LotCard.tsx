@@ -12,8 +12,8 @@ import { TileImage } from './pills/TileImage';
  *
  * Hierarchy is thumb → title → condition → resale. Condition owns the colour
  * (the 2px lid plus the mono word); money is greyscale, separated by size and
- * weight rather than hue; retail is demoted to --dim3. The whole card is the
- * click target — the old per-card "Details" button is gone.
+ * weight rather than hue. The whole card is the click target — the old
+ * per-card "Details" button is gone.
  *
  * Height is FIXED, and the virtualiser depends on that: the title clamps to two
  * lines with a min-height, and the text block is a constant TEXT_H tall. See
@@ -65,15 +65,6 @@ const figureStyle: CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-const subFigureStyle: CSSProperties = {
-  fontFamily: MONO,
-  fontWeight: 400,
-  fontSize: '9.5px',
-  lineHeight: 1,
-  color: 'var(--dim3)',
-  fontVariantNumeric: 'tabular-nums',
-};
-
 export function LotCard({
   view,
   expanded,
@@ -94,8 +85,8 @@ export function LotCard({
   // you are looking at the page.
   const ended = now !== undefined && view.closeMs !== null && view.closeMs <= now;
   // At 4-up the title can no longer carry the lot, so the photo does: the
-  // figures move onto the image in a gradient plate, and the value tick is
-  // suppressed to keep the tile readable. At 3-up the bucket line is dropped.
+  // figure moves onto the image in a gradient plate. At 3-up the bucket line
+  // is dropped.
   const plate = mobileCols === 4;
   const showMeta = mobileCols === undefined || mobileCols === 2;
   const titleFs = mobileCols === 4 ? '10px' : mobileCols === 3 ? '11px' : '12.5px';
@@ -192,31 +183,6 @@ export function LotCard({
           />
         )}
 
-        {/* Exceptional value — top-decile resale-to-retail ratio, computed once
-            over the whole set at load (see lib/lotView.ts). */}
-        {view.tick && !plate && (
-          <span
-            data-testid="value-badge"
-            title="Top-decile resale-to-retail spread"
-            style={{
-              position: 'absolute',
-              bottom: 5,
-              left: 6,
-              fontFamily: MONO,
-              fontWeight: 700,
-              fontSize: '8.5px',
-              lineHeight: 1,
-              letterSpacing: '.06em',
-              padding: '3px 5px',
-              borderRadius: 4,
-              background: 'var(--pick)',
-              color: '#fff',
-            }}
-          >
-            ▲ VALUE
-          </span>
-        )}
-
         {plate && (
           <div
             style={{
@@ -244,20 +210,6 @@ export function LotCard({
                 }}
               >
                 {formatMoney(view.mid)}
-              </span>
-            )}
-            {view.retail !== null && (
-              <span
-                style={{
-                  fontFamily: MONO,
-                  fontWeight: 500,
-                  fontSize: '8px',
-                  lineHeight: 1,
-                  color: 'var(--ink2)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {formatMoney(view.retail)}
               </span>
             )}
           </div>
@@ -373,7 +325,7 @@ export function LotCard({
         </div>
         )}
 
-        {/* Bucket ↔ retail survives only at 2-up and on desktop. */}
+        {/* The bucket line survives only at 2-up and on desktop. */}
         {showMeta && (
         <div
           style={{
@@ -400,7 +352,6 @@ export function LotCard({
               {view.bucket ?? view.sub}
             </span>
           </span>
-          {view.retail !== null && <span style={subFigureStyle}>{formatMoney(view.retail)}</span>}
         </div>
         )}
       </div>
@@ -448,7 +399,7 @@ export function LotCard({
  * Which of the two auctions this lot belongs to.
  *
  * It used to be an 8px letter on the photo, where it went unnoticed. Here it
- * sits in the text block with the bucket and retail, as a filled box — the two
+ * sits in the text block beside the bucket, as a filled box — the two
  * accent pastels the app already defines, so it stays clear of the condition
  * ramp that owns the lid and the condition word one row above.
  */

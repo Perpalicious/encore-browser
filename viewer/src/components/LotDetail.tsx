@@ -244,26 +244,9 @@ export function LotDetail({
                 {view.closeMs <= Date.now() ? 'ENDED' : 'CLOSES'} {closeLabelLong(view.closeMs)}
               </span>
             )}
-            {view.tick && (
-              <span
-                data-testid="top-decile-badge"
-                style={{
-                  fontFamily: MONO,
-                  fontWeight: 700,
-                  fontSize: '8.5px',
-                  letterSpacing: '.08em',
-                  padding: '3px 6px',
-                  borderRadius: 4,
-                  background: 'var(--pick)',
-                  color: '#fff',
-                }}
-              >
-                ▲ TOP-DECILE SPREAD
-              </span>
-            )}
           </div>
 
-          {(view.mid !== null || view.retail !== null) && (
+          {view.mid !== null && (
             <div style={{ padding: '12px 16px 0' }}>
               <div
                 data-testid="resale-detail"
@@ -276,20 +259,10 @@ export function LotDetail({
                   background: 'var(--s2)',
                 }}
               >
-                {view.mid !== null && (
-                  <div>
-                    <div style={{ ...microLabel, marginBottom: 5 }}>RESALE</div>
-                    <div style={{ ...figure, color: 'var(--text)' }}>{rangeLabel(view)}</div>
-                  </div>
-                )}
-                {view.retail !== null && (
-                  <div>
-                    <div style={{ ...microLabel, marginBottom: 5 }}>RETAIL</div>
-                    <div style={{ ...figure, fontWeight: 400, color: 'var(--dim3)' }}>
-                      {formatMoney(view.retail)}
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <div style={{ ...microLabel, marginBottom: 5 }}>RESALE</div>
+                  <div style={{ ...figure, color: 'var(--text)' }}>{rangeLabel(view)}</div>
+                </div>
                 <div
                   style={{
                     marginLeft: 'auto',

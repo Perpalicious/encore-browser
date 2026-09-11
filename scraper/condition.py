@@ -1,16 +1,18 @@
 """
-Condition and Est. Retail Price extraction from HiBid lot descriptions.
+Condition extraction from HiBid lot descriptions.
 
 HiBid descriptions embed structured lines like:
     Condition: BRAND NEW - SEALED
-    Est. Retail Price: 55.00
     In packaging? Yes
     ...
 
 This module strips those "Key: Value" / "Key? Value" lines, returning:
     - condition: HiBid's own condition string, or None
-    - est_retail_price: float or None
     - description_remaining: the free-form text with structured lines removed
+
+`Est. Retail Price:` used to be parsed out of here too, as
+`est_retail_price`. It was dropped on 2026-09-10 — see the note at the bottom
+of this docstring.
 
 Condition is passed through 1:1. It used to be squeezed into five invented
 labels ("New", "Like New", "Good", "Fair", "Heavily Used") taken from a design
@@ -33,6 +35,34 @@ week of 2026-08-16 (30,358 lots):
 
 HiBid writes conditions in caps; we store title case and the viewer uppercases
 for display, so what renders matches the listing verbatim.
+
+Why `est_retail_price` is gone (2026-09-10)
+-------------------------------------------
+It was parsed from an `Est. Retail Price:` line and carried all the way to the
+viewer, where it was displayed on every card, was one of the sort orders, and
+was the denominator of the "top-decile spread" value badge.
+
+Two reasons it went:
+
+  1. It stopped existing. HiBid moved the structured lot detail into a per-lot
+     report image during the week of 2026-08-30, the same change that emptied
+     `model`, `size`, `notes` and the damage flags (see tools/slim.py).
+     Coverage went 27,011/27,023 on the week of 2026-08-16 to 0/25,195 and then
+     0/22,692 — so the viewer had been displaying nothing, sorting on nulls and
+     badging no lots for two weeks before anyone noticed
+     (data/Watch/FINDINGS.md §4).
+  2. It was never a price anyone paid. It is the auction house's own retail
+     reference, self-reported and unverified, and the resale pass estimates
+     what a lot is actually worth. Keeping a second, weaker money figure beside
+     it invited the comparison.
+
+Removing it is deliberate, not a reaction to the parse breaking. If HiBid ever
+restores the line, do NOT re-add this silently — the field's absence is now a
+product decision.
+
+Note that dropping the extraction does not change `description_remaining`: the
+retail line is stripped by the generic `_STRUCTURED_LINE_RE` pass below, which
+removes every "Label: Value" line whether or not anything reads it.
 """
 
 from __future__ import annotations
@@ -99,27 +129,20 @@ _CONDITION_RE = re.compile(
     re.MULTILINE | re.IGNORECASE,
 )
 
-_RETAIL_PRICE_RE = re.compile(
-    r"^Est\.\s*Retail\s*Price:\s*\$?(?P<value>[\d,]+(?:\.\d+)?)$",
-    re.MULTILINE | re.IGNORECASE,
-)
-
-
-def parse_condition(raw: Optional[str]) -> tuple[Optional[str], Optional[float], str]:
+def parse_condition(raw: Optional[str]) -> tuple[Optional[str], str]:
     """
     Parse a HiBid lot description.
 
     Returns:
-        (condition, est_retail_price, description_remaining)
+        (condition, description_remaining)
 
         - condition: HiBid's condition string in title case (normally one of
           CONDITION_LABELS, but any unrecognised value is passed through), or
           None when no Condition line is present or it holds a placeholder
-        - est_retail_price: float or None
         - description_remaining: free-form text after structured lines stripped (may be "")
     """
     if not raw:
-        return None, None, ""
+        return None, ""
 
     # HiBid descriptions use \r (lone carriage return) as the line separator.
     # Normalize to \n so the MULTILINE regexes anchor on every line.
@@ -135,15 +158,6 @@ def parse_condition(raw: Optional[str]) -> tuple[Optional[str], Optional[float],
         if raw_cond and raw_cond.upper() not in _PLACEHOLDER_VALUES:
             condition = canonical_condition(raw_cond)
 
-    # --- Extract retail price -----------------------------------------------
-    est_retail_price: Optional[float] = None
-    m2 = _RETAIL_PRICE_RE.search(raw)
-    if m2:
-        try:
-            est_retail_price = float(m2.group("value").replace(",", ""))
-        except ValueError:
-            est_retail_price = None
-
     # --- Strip structured lines ---------------------------------------------
     # Remove all lines that match the "Label: Value" or "Label? Value" pattern.
     lines = raw.splitlines()
@@ -152,4 +166,4 @@ def parse_condition(raw: Optional[str]) -> tuple[Optional[str], Optional[float],
     ]
     description_remaining = "\n".join(remaining_lines).strip()
 
-    return condition, est_retail_price, description_remaining
+    return condition, description_remaining

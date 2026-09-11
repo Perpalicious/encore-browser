@@ -80,7 +80,6 @@ The full GraphQL query string is in the design notes provided to the orchestrato
 | `description` (raw) | `description_raw` (string) | Original HiBid description text |
 | (parsed) | `description` (string) | Description with structured fields stripped out |
 | (parsed from description) | `condition` (string \| null) | See condition parsing below |
-| (parsed from description) | `est_retail_price` (float \| null) | If present in description |
 | `featuredPicture.thumbnailLocation` | `thumb_url` (string) | Smaller thumbnail |
 | `featuredPicture.fullSizeLocation` | `image_url` (string) | Full-size for expand panel |
 | `pictures[].fullSizeLocation` | `additional_images` (string[]) | All other pictures |

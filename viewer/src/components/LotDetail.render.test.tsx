@@ -30,28 +30,25 @@ describe('LotDetail resale block', () => {
       lot_number: 'S-1',
       est_resale_low: 40,
       est_resale_high: 70,
-      est_retail_price: 120,
       resale_confidence: 'medium',
       resale_outlook: 'good',
       resale_reasoning: 'Comparable units resell steadily.',
     });
     expect(html).toContain('data-testid="resale-detail"');
     expect(html).toContain('$40–$70');
-    expect(html).toContain('$120');
     expect(html).toContain('MEDIUM CONFIDENCE');
     expect(html).toContain('GOOD OUTLOOK');
     expect(html).toContain('Comparable units resell steadily.');
   });
 
-  it('omits the whole block when there is neither a resale nor a retail figure', () => {
+  it('omits the whole block when the lot was never valued', () => {
+    // Retail was removed on 2026-09-10, so resale is the only thing that can
+    // open this block — an unvalued lot has nothing to put in it, confidence
+    // and outlook included.
     expect(renderDetail({ lot_number: 'S-2' })).not.toContain('data-testid="resale-detail"');
-  });
-
-  it('shows retail alone when the lot was never valued', () => {
-    const html = renderDetail({ lot_number: 'S-3', est_retail_price: 120 });
-    expect(html).toContain('data-testid="resale-detail"');
-    expect(html).toContain('RETAIL');
-    expect(html).not.toContain('RESALE');
+    const unvalued = renderDetail({ lot_number: 'S-3', resale_confidence: 'high' });
+    expect(unvalued).not.toContain('data-testid="resale-detail"');
+    expect(unvalued).not.toContain('RETAIL');
   });
 
   it('never invents a fourth outlook step', () => {
@@ -67,25 +64,6 @@ describe('LotDetail resale block', () => {
       expect(html).toContain(`${out.toUpperCase()} OUTLOOK`);
       expect(html).not.toContain('STRONG OUTLOOK');
     }
-  });
-
-  it('flags a top-decile spread only when the lot carries the tick', () => {
-    // A single-lot set makes that lot its own 90th percentile.
-    const ticked = renderDetail({
-      lot_number: 'S-1',
-      est_resale_low: 40,
-      est_resale_high: 70,
-      est_retail_price: 120,
-    });
-    expect(ticked).toContain('data-testid="top-decile-badge"');
-
-    const noRatio = renderDetail({
-      lot_number: 'S-2',
-      est_resale_low: 40,
-      est_resale_high: 70,
-      est_retail_price: 0,
-    });
-    expect(noRatio).not.toContain('data-testid="top-decile-badge"');
   });
 });
 

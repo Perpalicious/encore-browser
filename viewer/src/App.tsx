@@ -129,10 +129,9 @@ export function App() {
   const hasCloseTimes = useMemo(() => allLots.some((l) => Boolean(l.close_at)), [allLots]);
   const now = useNow(hasCloseTimes);
 
-  // The presentation mapping runs ONCE over the whole bundle — `tick` is a
-  // top-decile threshold and has to see every lot, not whatever a filter left
-  // behind. Filtering and sorting still work on the raw lots; the grid looks
-  // each one's view up by lot number.
+  // The presentation mapping runs once over the whole bundle and is cached;
+  // filtering and sorting still work on the raw lots, and the grid looks each
+  // one's view up by lot number.
   const viewByLot = useMemo(() => indexViews(buildLotViews(allLots)), [allLots]);
 
   // The HiBid category hierarchy, fuzzy search index, and Bat's List
@@ -360,11 +359,11 @@ export function App() {
     categoryPath.length > 0 ? categoryPath[categoryPath.length - 1] : 'All categories';
 
   // The rail's sort button cycles rather than opening a menu; the explicit
-  // four-way select lives in the filters overlay.
+  // select lives in the filters overlay.
   const cycleSort = () => {
     const CYCLE: SortKey[] = hasCloseTimes
-      ? ['lot', 'close-asc', 'resale-desc', 'retail-desc']
-      : ['lot', 'resale-desc', 'retail-desc'];
+      ? ['lot', 'close-asc', 'resale-desc']
+      : ['lot', 'resale-desc'];
     const i = CYCLE.indexOf(sortKey);
     setSortKey(CYCLE[(i + 1) % CYCLE.length]);
   };

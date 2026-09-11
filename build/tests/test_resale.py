@@ -32,7 +32,6 @@ def _merged(lot_number, **extra):
         "bats_category": "",
         "bats_subcategory": "",
         "predicted_confidence": 0.5,
-        "est_retail_price": 120.0,
     }
     base.update(extra)
     return base
@@ -114,8 +113,6 @@ def test_missing_resale_transforms_to_none_fields():
     assert lot.resale_confidence is None
     assert lot.resale_outlook is None
     assert lot.resale_reasoning is None
-    # Estimated retail still comes through from the raw scrape.
-    assert lot.est_retail_price == 120.0
 
 
 def test_full_join_then_transform_validates():
@@ -132,7 +129,6 @@ def test_full_join_then_transform_validates():
     assert lot.resale_confidence == "high"
     assert lot.resale_outlook == "good"
     assert lot.resale_reasoning == "Comparable units resell steadily."
-    assert lot.est_retail_price == 120.0
 
 
 def test_empty_resale_index_attaches_nothing():

@@ -79,7 +79,10 @@ export const DEFAULT_VIEW_STATE: ViewState = {
 };
 
 const TABS: Tab[] = ['all', 'bat', 'watched'];
-const SORTS: SortKey[] = ['lot', 'resale-desc', 'resale-asc', 'retail-desc', 'close-asc'];
+// 'retail-desc' was removed on 2026-09-10. It is deliberately absent rather
+// than aliased: `oneOf` drops an unrecognised saved sort back to 'lot', which
+// is what a browser still holding the old preference should land on.
+const SORTS: SortKey[] = ['lot', 'resale-desc', 'resale-asc', 'close-asc'];
 const CONFS: ConfidenceFilter[] = ['all', 'high', 'medium-plus'];
 const OUTS: OutlookFilter[] = ['all', 'poor', 'fair', 'good'];
 const DAYS: DayFilter[] = ['Sunday', 'Monday', 'Both'];

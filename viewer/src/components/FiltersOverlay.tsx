@@ -71,7 +71,6 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: 'lot', label: 'Lot number' },
   { id: 'resale-desc', label: 'Resale high → low' },
   { id: 'resale-asc', label: 'Resale low → high' },
-  { id: 'retail-desc', label: 'Retail high → low' },
 ];
 
 /** Only offered once the bundle actually carries closing times. */

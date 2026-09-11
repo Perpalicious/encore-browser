@@ -213,7 +213,6 @@ export function LotRow({
                     {ended ? 'ENDED' : closeLabel(view.closeMs)}
                   </span>
                 )}
-                {view.tick && <ValueTick />}
               </div>
             </div>
             <div
@@ -231,11 +230,6 @@ export function LotRow({
                   style={{ ...microFigure, fontSize: '13.5px', color: 'var(--text)' }}
                 >
                   {formatMoney(view.mid)}
-                </span>
-              )}
-              {view.retail !== null && (
-                <span style={{ ...microFigure, fontSize: '10px', color: 'var(--dim3)' }}>
-                  {formatMoney(view.retail)}
                 </span>
               )}
             </div>
@@ -271,7 +265,6 @@ export function LotRow({
             <div style={{ width: 110, flex: 'none' }}>
               <ConditionDot cc={cc} cond={view.cond} />
             </div>
-            <div style={{ width: 52, flex: 'none' }}>{view.tick && <ValueTick />}</div>
             <div style={{ width: 78, flex: 'none', textAlign: 'right' }}>
               {view.mid !== null && (
                 <span
@@ -279,13 +272,6 @@ export function LotRow({
                   style={{ ...microFigure, fontSize: '13px', color: 'var(--text)' }}
                 >
                   {formatMoney(view.mid)}
-                </span>
-              )}
-            </div>
-            <div style={{ width: 66, flex: 'none', textAlign: 'right' }}>
-              {view.retail !== null && (
-                <span style={{ ...microFigure, fontSize: '11px', color: 'var(--dim3)' }}>
-                  {formatMoney(view.retail)}
                 </span>
               )}
             </div>
@@ -366,28 +352,6 @@ function ConditionDot({ cc, cond }: { cc: string; cond: string | null }) {
     >
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: cc, flex: 'none' }} />
       {cond.toUpperCase()}
-    </span>
-  );
-}
-
-function ValueTick() {
-  return (
-    <span
-      data-testid="value-badge"
-      title="Top-decile resale-to-retail spread"
-      style={{
-        fontFamily: MONO,
-        fontWeight: 700,
-        fontSize: '8.5px',
-        lineHeight: 1,
-        letterSpacing: '.06em',
-        padding: '3px 5px',
-        borderRadius: 20,
-        background: 'var(--pick)',
-        color: '#fff',
-      }}
-    >
-      ▲
     </span>
   );
 }

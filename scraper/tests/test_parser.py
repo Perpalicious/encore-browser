@@ -48,7 +48,6 @@ class TestFieldPresence:
             "description_raw",
             "description",
             "condition",
-            "est_retail_price",
             "thumb_url",
             "image_url",
             "additional_images",
@@ -177,12 +176,10 @@ class TestConditionInMappedLot:
     def test_brand_new_sealed(self, mapped_lots):
         lot = next(l for l in mapped_lots if l["id"] == 100001)
         assert lot["condition"] == "Brand New - Sealed"
-        assert lot["est_retail_price"] == 249.00
 
     def test_brand_new_open_box(self, mapped_lots):
         lot = next(l for l in mapped_lots if l["id"] == 100002)
         assert lot["condition"] == "Brand New - Open Box"
-        assert lot["est_retail_price"] == 499.99
 
     def test_good(self, mapped_lots):
         lot = next(l for l in mapped_lots if l["id"] == 100003)

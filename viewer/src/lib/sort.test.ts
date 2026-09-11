@@ -21,7 +21,6 @@ function lot(
     is_bat: false,
     bat_buckets: [],
     confidence: 'low',
-    est_retail_price: null,
     est_resale_low: null,
     est_resale_high: null,
     resale_confidence: null,
@@ -64,17 +63,6 @@ describe('sortLots', () => {
     expect(desc).toEqual(['b', 'a', 'd']); // d (null) last even descending
     const asc = sortLots([d, a, b], 'resale-asc').map((l) => l.lot_number);
     expect(asc).toEqual(['a', 'b', 'd']); // d (null) still last
-  });
-
-  it('retail high → low sorts by est_retail_price descending, nulls last', () => {
-    const lots = [
-      lot('x', { est_retail_price: 30 }),
-      lot('y', { est_retail_price: 300 }),
-      lot('z'), // null retail
-      lot('w', { est_retail_price: 150 }),
-    ];
-    const out = sortLots(lots, 'retail-desc').map((l) => l.lot_number);
-    expect(out).toEqual(['y', 'w', 'x', 'z']);
   });
 
   it('ties break by lot number; all-null falls back to lot number', () => {

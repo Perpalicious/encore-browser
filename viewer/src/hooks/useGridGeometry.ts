@@ -50,7 +50,7 @@ export const LID_H = 2;
  * 8px top padding + a 33px two-line title + 4px gap + a 13px figure row + 4px
  * gap + a 12px meta row + 9px bottom padding is 83. Every one of those element
  * specs is called final in the handoff, so the derived constant is what gives:
- * 63 would clip the retail/bucket row, and leaving the block auto-height would
+ * 63 would clip the bucket row, and leaving the block auto-height would
  * make the rendered rows ~20px taller than the pitch the scrollbar is sized
  * from, which is exactly the drift the README warns about.
  */
@@ -99,8 +99,8 @@ function cardGap(mobile: boolean, mobileCols: MobileCols): number {
 }
 
 /**
- * Card text-block height by mobile column count: the bucket/retail row is
- * dropped at 3-up, and at 4-up the figures move onto the image entirely.
+ * Card text-block height by mobile column count: the bucket row is dropped at
+ * 3-up, and at 4-up the figure moves onto the image entirely.
  */
 export function textBlockHeight(mobile: boolean, mobileCols: MobileCols): number {
   if (!mobile) return TEXT_H;

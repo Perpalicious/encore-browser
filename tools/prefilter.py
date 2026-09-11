@@ -375,8 +375,7 @@ def candidate_row(lot: dict, cand: list[str], profile: list[str]) -> dict:
     output budget, and an absent key is itself information."""
     row = {"lot_number": lot.get("lot_number"), "title": lot.get("title", "")}
     for field in ("model", "size", "condition", "category", "notes", "damage",
-                  "missing_parts", "damaged", "missing_major_parts", "functional",
-                  "est_retail_price"):
+                  "missing_parts", "damaged", "missing_major_parts", "functional"):
         value = lot.get(field)
         if value not in (None, "", []):
             row[field] = value

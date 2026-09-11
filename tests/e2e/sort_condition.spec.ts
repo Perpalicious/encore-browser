@@ -4,8 +4,9 @@ import { shownCount, inFilters, openFilters, closeFilters, clearAll, pickBatBuck
 test.use({ viewport: { width: 1280, height: 900 } });
 
 // Read the resale figure from the first visible lot card (NaN if unparseable).
-// The redesign drops the "Resale ~" label — money is greyscale and unlabelled,
-// separated from retail by size and weight — so the figure reads plain "$X".
+// The redesign drops the "Resale ~" label — money is greyscale and unlabelled —
+// so the figure reads plain "$X". Since 2026-09-10 it is also the only money
+// figure on a card; estimated retail was removed from the pipeline.
 async function firstCardResale(page: import('@playwright/test').Page): Promise<number> {
   const card = page.locator('[data-testid="lot-card"]').first();
   const summary = card.locator('[data-testid="resale-summary"]');
@@ -22,8 +23,8 @@ test('sort control reorders by resale (high→low vs low→high)', async ({ page
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
 
-  // The explicit four-way sort now lives in the filters overlay; the rail
-  // carries a button that cycles the three common orders.
+  // The explicit sort select lives in the filters overlay; the rail carries a
+  // button that cycles the common orders.
   await inFilters(page, async () => {
     await page.locator('[data-testid="sort-select"]').selectOption('resale-desc');
   });
@@ -47,13 +48,15 @@ test('sort changes order but not the result count', async ({ page }) => {
 
   const before = await shownCount(page);
   await inFilters(page, async () => {
-    await page.locator('[data-testid="sort-select"]').selectOption('retail-desc');
+    await page.locator('[data-testid="sort-select"]').selectOption('resale-asc');
   });
   const after = await shownCount(page);
   expect(after).toBe(before); // sort never filters
 });
 
-test('the rail sort button cycles lot → resale → retail', async ({ page }) => {
+test('the rail sort button cycles back to lot number, and never offers retail', async ({
+  page,
+}) => {
   await page.goto('/');
   await page.waitForSelector('[data-testid="lot-card"]', { timeout: 15000 });
   await page.waitForTimeout(500);
@@ -62,12 +65,25 @@ test('the rail sort button cycles lot → resale → retail', async ({ page }) =
   const before = await shownCount(page);
   await expect(button).toContainText('Lot number');
 
-  await button.click();
-  await expect(button).toContainText('Resale');
-  await button.click();
-  await expect(button).toContainText('Retail');
-  await button.click();
+  // The cycle's LENGTH depends on the data: 'Closing soonest' is only offered
+  // once the bundle carries closing times (App.tsx `hasCloseTimes`). So walk
+  // the cycle until it wraps rather than asserting a fixed number of clicks —
+  // the previous version of this test hard-coded a three-step cycle and failed
+  // on any bundle that had close times.
+  const labels: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    await button.click();
+    const text = ((await button.textContent()) ?? '').trim();
+    if (text.includes('Lot number')) break;
+    labels.push(text);
+  }
+
   await expect(button).toContainText('Lot number'); // wraps
+  expect(labels.length).toBeGreaterThan(0);
+  expect(labels.some((l) => l.includes('Resale'))).toBe(true);
+  // Estimated retail was removed from the pipeline on 2026-09-10; the sort it
+  // backed must not survive anywhere in the cycle.
+  expect(labels.some((l) => l.includes('Retail'))).toBe(false);
 
   expect(await shownCount(page)).toBe(before); // cycling never filters
 });

@@ -82,16 +82,15 @@ def _to_price(value: Any) -> float | None:
 
 def _resale_passthrough(item: dict[str, Any]) -> dict[str, Any]:
     """
-    Carry the estimated-retail and (optional) resale-valuation fields onto the
-    Lot shape. All resale fields are absent for lots the valuation pass did not
-    cover; they default to None and the viewer simply shows no resale info.
+    Carry the (optional) resale-valuation fields onto the Lot shape. They are
+    absent for lots the valuation pass did not cover; they default to None and
+    the viewer simply shows no resale info.
 
     Enum values (resale_confidence/resale_outlook) are passed through as-is —
     the resale join (build/resale.py) already normalises or nulls them, and the
     Lot schema validates the allowed set, so a bad value fails loudly.
     """
     return {
-        "est_retail_price": _to_price(item.get("est_retail_price")),
         "est_resale_low": _to_price(item.get("est_resale_low")),
         "est_resale_high": _to_price(item.get("est_resale_high")),
         "resale_confidence": item.get("resale_confidence") or None,

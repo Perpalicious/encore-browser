@@ -5,7 +5,7 @@ import { ready, inFilters } from './helpers';
  * Which auction a lot belongs to, on the card.
  *
  * It used to be an 8px letter on the photo that went unnoticed. It now sits in
- * the text block with the bucket and retail, as a coloured box.
+ * the text block beside the bucket, as a coloured box.
  */
 
 test.use({ viewport: { width: 1400, height: 900 } });

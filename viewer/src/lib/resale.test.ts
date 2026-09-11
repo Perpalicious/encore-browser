@@ -25,7 +25,6 @@ function lot(partial: Partial<Lot> & { lot_number: string }): Lot {
     is_bat: false,
     bat_buckets: [],
     confidence: 'low',
-    est_retail_price: null,
     est_resale_low: null,
     est_resale_high: null,
     resale_confidence: null,

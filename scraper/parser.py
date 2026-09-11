@@ -8,7 +8,6 @@ The field map is:
   description (raw)               -> description_raw (str)
   (parsed)                        -> description (str)
   (parsed)                        -> condition (str | null)
-  (parsed)                        -> est_retail_price (float | null)
   featuredPicture.thumbnailLocation -> thumb_url (str)
   featuredPicture.fullSizeLocation  -> image_url (str)
   pictures[].fullSizeLocation     -> additional_images (str[])
@@ -98,7 +97,7 @@ def map_lot(item: dict[str, Any]) -> dict[str, Any]:
     description_raw = item.get("description") or ""
 
     # Parse description
-    condition, est_retail_price, description_clean = parse_condition(description_raw)
+    condition, description_clean = parse_condition(description_raw)
 
     # Featured picture
     featured = item.get("featuredPicture") or {}
@@ -163,7 +162,6 @@ def map_lot(item: dict[str, Any]) -> dict[str, Any]:
         "description_raw": description_raw,
         "description": description_clean,
         "condition": condition,
-        "est_retail_price": est_retail_price,
         "thumb_url": thumb_url,
         "image_url": image_url,
         "additional_images": additional_images,

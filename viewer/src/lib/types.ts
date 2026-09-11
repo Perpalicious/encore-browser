@@ -26,9 +26,13 @@ export type MobileCols = 2 | 3 | 4;
  * Item-list sort order. 'lot' is the default (Bat-first / Sunday-first /
  * lot-number). The value-based orders sort lots with no data to the end.
  *  - 'resale-desc' / 'resale-asc': by resale mean (low/high midpoint)
- *  - 'retail-desc': by estimated retail price
+ *
+ * There was a 'retail-desc' here until 2026-09-10. HiBid stopped publishing an
+ * estimated retail price and it was dropped from the pipeline entirely — see
+ * scraper/condition.py. lib/persist.ts drops the stale key from a saved
+ * preference, so anyone whose browser still remembers it lands back on 'lot'.
  */
-export type SortKey = 'lot' | 'resale-desc' | 'resale-asc' | 'retail-desc' | 'close-asc';
+export type SortKey = 'lot' | 'resale-desc' | 'resale-asc' | 'close-asc';
 
 /**
  * Condition values in canonical (best → worst) order for filter chips. Mirrors
@@ -90,8 +94,6 @@ export interface Lot {
   is_bat: boolean;
   bat_buckets: string[];
   confidence: Confidence;
-  // Estimated retail price from HiBid (null when unknown).
-  est_retail_price: number | null;
   // Resale valuation — all null for lots the valuation pass did not cover.
   est_resale_low: number | null;
   est_resale_high: number | null;

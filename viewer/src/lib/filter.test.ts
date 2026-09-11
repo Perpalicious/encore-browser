@@ -18,7 +18,6 @@ function lot(lot_number: string, opts: Partial<Lot> = {}): Lot {
     is_bat: false,
     bat_buckets: [],
     confidence: 'low',
-    est_retail_price: null,
     est_resale_low: null,
     est_resale_high: null,
     resale_confidence: null,

@@ -42,11 +42,6 @@ class Lot(BaseModel):
     # is unflagged or the pass predates the key.
     bat_subtype: Optional[str] = None
 
-    # --- Estimated retail (from the scraper, may be missing) ----------------
-    # The lot's estimated retail price as listed by HiBid. None when the
-    # scraper could not extract one.
-    est_retail_price: Optional[float] = None
-
     # --- Resale valuation (optional, from the resale agent) -----------------
     # Joined in by `python -m build --resale ...`. Every field is None for the
     # (possibly large) subset of lots the valuation pass did not cover. The

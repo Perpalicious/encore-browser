@@ -12,8 +12,6 @@ import type { Lot, Condition, Confidence, ResaleOutlook } from './types';
  *    no day at all), so the day letter is derived from the lot-number prefix.
  *  - "Unvalued" resale reads as 0, never null, so a plain copy would render
  *    "$0" on lots the valuation pass could not price.
- *  - `est_retail_price` is 0 on 297 lots and null on 15, so mid/retail is an
- *    Infinity waiting to happen.
  *  - `match_strength` is the string 'none' on non-picks, not null.
  *
  * Filtering, sorting and search still operate on the raw `Lot` — this layer is
@@ -31,16 +29,10 @@ export interface LotView {
   bucket: string | null;
   buckets: string[];
   isBat: boolean;
-  /** est_retail_price, with 0 and null both normalised to null. */
-  retail: number | null;
   lo: number | null;
   hi: number | null;
   /** (lo + hi) / 2. Null when the lot has no usable resale figure. */
   mid: number | null;
-  /** mid / retail. Null when either side is missing. */
-  ratio: number | null;
-  /** ratio >= the 90th percentile over the WHOLE set (see buildLotViews). */
-  tick: boolean;
   cond: Condition | null;
   /** 'S' | 'M', derived from the lot-number prefix. */
   day: DayLetter;
@@ -74,14 +66,6 @@ export interface LotView {
 }
 
 export type DayLetter = 'S' | 'M';
-
-/** Top-decile threshold used for `tick`. */
-export const TICK_PERCENTILE = 0.9;
-
-/** 0 and null both mean "no figure" in this bundle. */
-function positive(value: number | null | undefined): number | null {
-  return typeof value === 'number' && value > 0 ? value : null;
-}
 
 /**
  * `close_at` as epoch milliseconds.
@@ -150,26 +134,19 @@ function resaleFigures(lot: Lot): { lo: number | null; hi: number | null; mid: n
   return { lo: rawLo, hi: rawHi, mid: only };
 }
 
-/** The value at the given percentile of an ascending-sorted sample. */
-function percentile(sortedAsc: number[], p: number): number | null {
-  if (sortedAsc.length === 0) return null;
-  return sortedAsc[Math.floor(p * (sortedAsc.length - 1))];
-}
-
 /**
  * Map every lot to its presentation record.
  *
- * The one piece of cross-lot state is `tick`: the resale-to-retail ratio's 90th
- * percentile is computed ONCE over the whole set here, so "exceptional value"
- * means exceptional for the auction, not exceptional among whatever 12 lots a
- * filter happened to leave on screen. Lots with no ratio (no resale, or retail
- * missing/zero) are excluded from the sample rather than counted as zero.
+ * This used to carry one piece of cross-lot state: `tick`, the top decile of
+ * the resale-to-retail ratio, which drove a "▲ VALUE" badge. It went with
+ * `est_retail_price` on 2026-09-10 — the ratio has no denominator without a
+ * retail figure, so the badge had already stopped appearing on every lot two
+ * weeks earlier (see scraper/condition.py). The mapping is now a pure per-lot
+ * transform, and callers can map a single lot without the rest of the bundle.
  */
 export function buildLotViews(lots: Lot[]): LotView[] {
-  const views: LotView[] = lots.map((src, i) => {
+  return lots.map((src, i) => {
     const { lo, hi, mid } = resaleFigures(src);
-    const retail = positive(src.est_retail_price);
-    const ratio = retail !== null && mid !== null ? mid / retail : null;
     const strength = src.match_strength && src.match_strength !== 'none' ? src.match_strength : null;
 
     return {
@@ -181,12 +158,9 @@ export function buildLotViews(lots: Lot[]): LotView[] {
       bucket: src.bat_buckets.length > 0 ? src.bat_buckets[0] : null,
       buckets: src.bat_buckets,
       isBat: src.is_bat,
-      retail,
       lo,
       hi,
       mid,
-      ratio,
-      tick: false, // filled in below, once the threshold is known
       cond: src.condition,
       day: dayLetter(src),
       closeMs: closeMs(src),
@@ -204,20 +178,6 @@ export function buildLotViews(lots: Lot[]): LotView[] {
       src,
     };
   });
-
-  const ratios: number[] = [];
-  for (const v of views) {
-    if (v.ratio !== null && Number.isFinite(v.ratio)) ratios.push(v.ratio);
-  }
-  ratios.sort((a, b) => a - b);
-  const threshold = percentile(ratios, TICK_PERCENTILE);
-  if (threshold !== null) {
-    for (const v of views) {
-      v.tick = v.ratio !== null && Number.isFinite(v.ratio) && v.ratio >= threshold;
-    }
-  }
-
-  return views;
 }
 
 /** Index the views by lot number, for lookup from the filtered `Lot[]`. */

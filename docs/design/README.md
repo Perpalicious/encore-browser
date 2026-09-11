@@ -10,7 +10,9 @@ Three problems drove the work:
 2. The header was cluttered and **scrolled out of reach**. → One 44px rail stays pinned; secondary filters live in a popover/sheet and surface as removable chips.
 3. Mobile showed **1–2 lots per screen**. → A 78px list row (~9/screen) plus a 2/3/4-up card stepper (3-up ≈ 9/screen, 4-up ≈ 16/screen).
 
-Plus a hierarchy fix: **thumb → title → condition → resale**, with retail demoted to grey and colour reserved almost entirely for condition.
+Plus a hierarchy fix: **thumb → title → condition → resale**, with colour reserved almost entirely for condition.
+
+> **Amended 2026-09-10 — estimated retail is gone.** This document was written when every lot carried an `est_retail_price`. HiBid stopped publishing it during the week of 2026-08-30 and it was removed from the pipeline entirely (see `scraper/condition.py`). Three things in the design below went with it: the grey retail figure beside resale on cards and rows, the `▲ VALUE` / `▲ TOP-DECILE SPREAD` badge (its ratio has no denominator), and the "Retail high → low" sort. Resale is now the only money figure. Everything else in this document still describes the shipped viewer; the affected lines are marked *(removed 2026-09-10)*.
 
 ## About the design files
 
@@ -74,7 +76,7 @@ Defined as CSS custom properties on `:root` and `[data-theme="light"]`. Theme sw
 | `--c-heavy` | `#ff9d9d` | Condition: Heavily Used, For Parts Only |
 | `--t0` … `--t7` | `#efedf5 #f4eef2 #eef2f6 #f2f1ec #f0eef5 #f5eff1 #edf1f3 #f3f0ec` | Image-tile tints, assigned `index % 8` |
 | `--ink` | `rgba(24,20,40,.16)` | Placeholder shape stroke on a tile |
-| `--ink2` | `rgba(24,20,40,.45)` | Day letter / retail on a tile |
+| `--ink2` | `rgba(24,20,40,.45)` | Day letter on a tile |
 | `--plate` → `--plate0` | `rgba(248,247,252,.94)` → `rgba(248,247,252,0)` | 4-up resale gradient plate |
 | `--plink` | `#16141f` | Text on the plate |
 | `--sk` / `--sk2` | `rgba(255,255,255,.05)` / `.09` | Skeleton fills |
@@ -112,7 +114,7 @@ The old design set lot titles in an all-caps display serif; that is the single b
 | Card title | Sans 600 | 12.5px/1.28 desktop & 2-up · 11px 3-up · 10px 4-up · 2-line clamp |
 | Card condition | Mono 500 | 8.5–9.5px, `letter-spacing:.05em`, uppercase, condition colour |
 | Card resale | Mono 500 | 12.5px (11.5px at 3-up), `--text`, tabular |
-| Card retail / bucket | Mono/Sans 400 | 9.5px, `--dim3` |
+| Card bucket | Sans 400 | 9.5px, `--dim3` |
 | List-row title | Sans 600 | 13px/1.25, single line + ellipsis |
 | List-row resale | Mono 500 | 13px tabular |
 | Mobile-row title | Sans 600 | 13.5px/1.28, 2-line clamp |
@@ -145,8 +147,8 @@ This is the core of the redesign. Enforce it — the old build's flat feel came 
 | **Condition** | Owns the whole colour scale: a 2px full-width coloured lid under the card image, plus a mono word (grid) or dot + word (rows) | The only place the five-step palette appears |
 | **Personal match** | 6–7px `#8b6bff` dot, top-left of the thumb, white ring | Was a full chip row; now costs zero layout |
 | **Active filter** | Blush pill with `×` | Only ever means "you narrowed something" |
-| **Money** | Greyscale, differentiated by size and weight: resale 12.5–13.5px `--text`, retail 9.5–11px `--dim3` | Never coloured. Retail's old red is gone |
-| **Exceptional value** | `▲ VALUE` badge (lavender fill) on the thumb in grid; `▲` pill in rows | Top-decile resale-to-retail ratio only, computed once at load |
+| **Money** | Greyscale: resale 12.5–13.5px `--text`. The only money figure on a lot | Never coloured. Retail's old red is gone |
+| ~~**Exceptional value**~~ | ~~`▲ VALUE` badge (lavender fill) on the thumb in grid; `▲` pill in rows~~ | *(removed 2026-09-10 — the resale-to-retail ratio lost its denominator)* |
 | **Day** | One letter (`S`/`M`) top-left on the thumb + the sticky group bar | Hide entirely when a single day is filtered |
 | **Watched** | Star, amber when set | |
 
@@ -199,13 +201,13 @@ rowH = colW + 2 + 63 + 12          // image + lid + text block + gap
    - `▲ VALUE` badge: bottom-left, mono 700 8.5px, white on `#8b6bff`, `3px 5px`, radius 4px.
    - Star: 26×26, top-right `4px`, radius 8px, `rgba(14,12,22,.45)` + `backdrop-filter: blur(6px)`; stops propagation.
 2. **Condition lid** — a 2px full-width bar in the condition colour.
-3. **Text block** — `padding: 8px 9px 9px`, `gap: 4px`: title (2-line clamp, `min-height: 33px`, `text-wrap: pretty`) · row of `CONDITION` ↔ `$resale` · row of `bucket` ↔ `$retail` (the second row is dropped at 3-up and 4-up).
+3. **Text block** — `padding: 8px 9px 9px`, `gap: 4px`: title (2-line clamp, `min-height: 33px`, `text-wrap: pretty`) · row of `CONDITION` ↔ `$resale` · row of `bucket` (the second row is dropped at 3-up and 4-up). The bucket row once carried `$retail` on its right — *(removed 2026-09-10)*; the row and its height are unchanged.
 
 ### 4. Desktop list view
 
 One row per lot, 67px, `padding: 7px 10px`, `border-bottom: 1px solid var(--line2)`, hover `--lavbg`.
 
-Columns, left to right: 52×52 thumb (radius 8px, tint, pick dot) · flexible title + bucket sub-line · 110px condition (dot + mono word) · 52px value tick · 78px resale (right-aligned, mono 13px tabular) · 66px retail (`--dim3`) · 56px lot number · 34px star.
+Columns, left to right: 52×52 thumb (radius 8px, tint, pick dot) · flexible title + bucket sub-line · 110px condition (dot + mono word) · 78px resale (right-aligned, mono 13px tabular) · 56px lot number · 34px star. *(The 52px value tick and the 66px retail column were removed 2026-09-10.)*
 
 Column headers double as the sort control; the active sort column is `--lavt` with a `↓`.
 
@@ -213,12 +215,12 @@ Column headers double as the sort control; the active sort column is `--lavt` wi
 
 **Header** — 8px/12px padding: search field (36px) + Filters button (36px, count badge) + theme toggle (36×36) on one line; tabs and the result count below.
 
-**Rows mode (default) — 78px.** `padding: 9px 13px`, `gap: 11px`: 58×58 thumb · title (2-line clamp, 13.5px) over a meta line (condition dot + word, lot no., value tick) · right-aligned resale over retail · 26px star. ~9 lots per screen.
+**Rows mode (default) — 78px.** `padding: 9px 13px`, `gap: 11px`: 58×58 thumb · title (2-line clamp, 13.5px) over a meta line (condition dot + word, lot no.) · right-aligned resale · 26px star. ~9 lots per screen. *(The value tick and the retail figure under resale were removed 2026-09-10.)*
 
 **Cards mode** — same card as desktop at 2, 3 or 4 columns; gap `10 / 8 / 6px`, text block `8px 9px 9px` / `6px 7px 7px` / `5px 6px 6px`, text-block height `63 / 48 / 33px`.
 
 - **3-up (recommended default)** — ~9 lots/screen, 113px tap targets, title survives at 11px over two lines; the bucket line is dropped.
-- **4-up** — ~16 lots/screen. The title can no longer carry the lot, so the photo does: resale and retail move **onto** the image in a bottom gradient plate (`linear-gradient(to top, var(--plate), var(--plate0))`, `padding: 10px 5px 3px`, resale mono 700 10.5px `--plink`, retail mono 500 8px `--ink2`), and the value tick is suppressed. Titles at 10px are near the legibility floor — keep it as an option, not a default.
+- **4-up** — ~16 lots/screen. The title can no longer carry the lot, so the photo does: resale moves **onto** the image in a bottom gradient plate (`linear-gradient(to top, var(--plate), var(--plate0))`, `padding: 10px 5px 3px`, resale mono 700 10.5px `--plink`). Titles at 10px are near the legibility floor — keep it as an option, not a default. *(Retail on the plate and the suppressed value tick both went 2026-09-10.)*
 - **2-up** — ~4 lots/screen; the only mode that keeps the bucket line.
 
 ### 6. Detail overlay — the fix for the inline-expand problem
@@ -316,7 +318,7 @@ If titles ever wrap to three lines, this assumption breaks: the spacer height an
 
 One pass over the array, short-circuiting in this order: hidden → tab → day → category → sub-category → condition → confidence → outlook → personal picks → potential resales → search. The result is memoised against a joined key of every filter value, so re-renders during scroll never re-filter.
 
-Sort: lot number (natural array order), resale desc, retail desc.
+Sort: lot number (natural array order), resale desc, resale asc, closing soonest. *(Retail desc removed 2026-09-10.)*
 
 **Search.** Each lot precomputes a lowercased title and a token array (split on non-alphanumerics) at parse time. *Exact* is a plain substring test. *Fuzzy* is a scored, token-AND match — **every** query token must match something, or the lot is rejected:
 
@@ -347,7 +349,7 @@ Debounced 350ms after any state change. Tab, query, fuzzy flag, category, sub-ca
 tab            'all' | 'bats' | 'watched'
 q, fuzzy       search string, boolean
 cat, sub       string | null          hierarchical category drill-down
-sort           'lot' | 'resale' | 'retail'
+sort           'lot' | 'resale-desc' | 'resale-asc' | 'close-asc'
 conds          string[]               multi-select condition
 conf           'all' | 'med' | 'high'
 out            'all' | 'Poor' | 'Fair' | 'Good' | 'Strong'
@@ -370,14 +372,15 @@ Derived per render: the filtered+sorted array (memoised), the geometry object (`
 The prototype generates lots deterministically; your real records need these fields:
 
 ```
-{ i, title, cat, sub, bucket|null, retail, lo, hi, mid,
+{ i, title, cat, sub, bucket|null, lo, hi, mid,
   cond: string,   // HiBid's grading verbatim, see CONDITION_ORDER
   day: 'S'|'M', lot: 'S-1204',
   conf: 'Low'|'Medium'|'High',
   out:  'Poor'|'Fair'|'Good'|'Strong',
-  pick: boolean, note, match, img: url|null,
-  ratio: mid / retail, tick: ratio >= p90(ratio)   // computed once at load
+  pick: boolean, note, match, img: url|null
 }
+// `retail`, `ratio` and `tick` were removed 2026-09-10. With them went the
+// only cross-lot state in this mapping — it is now a pure per-lot transform.
 ```
 
 `tick` is the 90th-percentile threshold over the whole set, computed once after parsing — not per filter result.

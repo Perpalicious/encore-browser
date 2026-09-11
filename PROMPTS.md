@@ -40,7 +40,6 @@ section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
 > - `lot_number` — the join key. Copy it back verbatim, prefix included.
 > - `title` — usually the most informative field. Often a bare SKU or brand
 >   string rather than a sentence.
-> - `est_retail_price` — the auction house's retail reference, not a sale price.
 > - `condition` — the auction house's own grading, verbatim: one of
 >   Brand New - Sealed, Brand New - Open Box, New (Adjusted Quantity),
 >   Best Before (Grocery), Excellent, Good, New With Defects, Fair,
@@ -370,8 +369,9 @@ output directly as `_resale.json` would leave most of the auction unvalued.
 >   high `qty` as local oversupply — 50 copies hitting one auction depresses
 >   what any one of them fetches. Mention it in the reasoning when it's high.
 > - Estimate what the item would realistically fetch **resold secondhand** in
->   its stated condition — not its retail price. Treat `est_retail_price` as a
->   ceiling reference, not the answer.
+>   its stated condition — not its retail price. There is no retail figure in
+>   the input to anchor on: `est_retail_price` was removed on 2026-09-10, so
+>   `title` and `condition` are the whole basis for the estimate.
 > - `est_resale_low` and `est_resale_high` are plain JSON numbers. No dollar
 >   signs, no commas, no quotes, no ranges written as text. A row needs at
 >   least one of the two to be usable.

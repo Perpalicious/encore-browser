@@ -18,7 +18,6 @@ function lot(partial: Partial<Lot> & { lot_number: string }): Lot {
     is_bat: false,
     bat_buckets: [],
     confidence: 'low',
-    est_retail_price: 100,
     est_resale_low: 40,
     est_resale_high: 60,
     resale_confidence: 'high',
@@ -41,7 +40,6 @@ describe('buildLotViews field mapping', () => {
       subcategory: 'Power Tools',
       is_bat: true,
       bat_buckets: ['Power tools', 'Garage'],
-      est_retail_price: 100,
       est_resale_low: 40,
       est_resale_high: 60,
       resale_confidence: 'medium',
@@ -58,7 +56,6 @@ describe('buildLotViews field mapping', () => {
     expect(v.bucket).toBe('Power tools');
     expect(v.buckets).toEqual(['Power tools', 'Garage']);
     expect(v.isBat).toBe(true);
-    expect(v.retail).toBe(100);
     expect(v.lo).toBe(40);
     expect(v.hi).toBe(60);
     expect(v.mid).toBe(50);
@@ -114,13 +111,12 @@ describe('day derivation', () => {
   });
 });
 
-describe('resale and retail normalisation', () => {
+describe('resale normalisation', () => {
   it('treats a 0/0 range as no resale data at all', () => {
     const v = view({ lot_number: 'S-1', est_resale_low: 0, est_resale_high: 0 });
     expect(v.lo).toBeNull();
     expect(v.hi).toBeNull();
     expect(v.mid).toBeNull();
-    expect(v.ratio).toBeNull();
   });
 
   it('keeps a 0 low bound when the high bound is real', () => {
@@ -137,78 +133,6 @@ describe('resale and retail normalisation', () => {
     expect(view({ lot_number: 'S-1', est_resale_low: null, est_resale_high: null }).mid).toBeNull();
   });
 
-  it('normalises a 0 or null retail price to null, so no ratio is Infinity', () => {
-    for (const retail of [0, null]) {
-      const v = view({ lot_number: 'S-1', est_retail_price: retail });
-      expect(v.retail).toBeNull();
-      expect(v.ratio).toBeNull();
-      expect(v.tick).toBe(false);
-    }
-  });
-
-  it('computes the ratio from the mid, not from either bound', () => {
-    const v = view({
-      lot_number: 'S-1',
-      est_resale_low: 40,
-      est_resale_high: 60,
-      est_retail_price: 200,
-    });
-    expect(v.ratio).toBeCloseTo(0.25);
-  });
-});
-
-describe('tick (top-decile resale-to-retail spread)', () => {
-  const spread = (n: number, resale: number) =>
-    lot({
-      lot_number: `S-${n}`,
-      est_resale_low: resale,
-      est_resale_high: resale,
-      est_retail_price: 100,
-    });
-
-  it('flags only the top decile of the whole set', () => {
-    // Ratios 0.01 … 0.20 over 20 lots; the 90th percentile lands at 0.18.
-    const views = buildLotViews(Array.from({ length: 20 }, (_, i) => spread(i, i + 1)));
-    const ticked = views.filter((v) => v.tick).map((v) => v.lot);
-    expect(ticked).toEqual(['S-17', 'S-18', 'S-19']);
-  });
-
-  it('is computed over the whole set, so filtering cannot change it', () => {
-    const all = Array.from({ length: 20 }, (_, i) => spread(i, i + 1));
-    const whole = buildLotViews(all);
-    const wholeTicked = new Set(whole.filter((v) => v.tick).map((v) => v.lot));
-
-    // The same lots re-mapped from a narrowed set would move the threshold —
-    // which is exactly why the mapping runs once, over `allLots`, at load.
-    const narrowed = buildLotViews(all.slice(0, 5));
-    const narrowedTicked = new Set(narrowed.filter((v) => v.tick).map((v) => v.lot));
-    expect(narrowedTicked).not.toEqual(wholeTicked);
-    expect(wholeTicked.has('S-19')).toBe(true);
-    expect(wholeTicked.has('S-4')).toBe(false);
-  });
-
-  it('excludes lots with no ratio from the sample rather than counting them as zero', () => {
-    const views = buildLotViews([
-      ...Array.from({ length: 10 }, (_, i) => spread(i, i + 1)),
-      lot({ lot_number: 'S-noretail', est_retail_price: 0 }),
-      lot({ lot_number: 'S-noresale', est_resale_low: 0, est_resale_high: 0 }),
-    ]);
-    const byLot = indexViews(views);
-    expect(byLot.get('S-noretail')!.tick).toBe(false);
-    expect(byLot.get('S-noresale')!.tick).toBe(false);
-    // The threshold still comes from the 10 lots that do have a ratio: the
-    // 90th percentile of those is 0.09, so the top two clear it. Had the two
-    // ratio-less lots been counted as 0, the threshold would have shifted down.
-    expect(views.filter((v) => v.tick).map((v) => v.lot)).toEqual(['S-8', 'S-9']);
-  });
-
-  it('flags nothing when no lot has a usable ratio', () => {
-    const views = buildLotViews([
-      lot({ lot_number: 'S-1', est_retail_price: null }),
-      lot({ lot_number: 'S-2', est_resale_low: 0, est_resale_high: 0 }),
-    ]);
-    expect(views.every((v) => !v.tick)).toBe(true);
-  });
 });
 
 describe('personal-match normalisation', () => {

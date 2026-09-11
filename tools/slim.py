@@ -88,7 +88,6 @@ def slim_item(item: dict) -> dict:
     rec = {
         "lot_number": item.get("lot_number"),
         "title": item.get("title", ""),
-        "est_retail_price": item.get("est_retail_price"),
         "condition": item.get("condition"),
         "category": item.get("hibid_category_path"),
     }

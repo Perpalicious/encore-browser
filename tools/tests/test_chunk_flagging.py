@@ -50,7 +50,6 @@ def _lot(n, title, condition="Excellent", category="Home Goods & Decor - Home Go
         "title": title,
         "condition": condition,
         "category": category,
-        "est_retail_price": 10.0,
     }
 
 

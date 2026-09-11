@@ -24,47 +24,32 @@ function renderCard(l: Lot): string {
 }
 
 describe('LotCard resale summary', () => {
-  it('renders the resale mean and the retail figure when the lot is valued', () => {
-    const html = renderCard(
-      lot({ lot_number: '1', est_resale_low: 40, est_resale_high: 70, est_retail_price: 120 })
-    );
+  it('renders the resale mean when the lot is valued', () => {
+    const html = renderCard(lot({ lot_number: '1', est_resale_low: 40, est_resale_high: 70 }));
     expect(html).toContain('data-testid="resale-summary"');
     expect(html).toContain('$55'); // mean of 40 and 70
-    expect(html).toContain('$120');
     // Money is greyscale and unlabelled in the redesign — size and weight carry
-    // the distinction, so the "Resale"/"Retail" words are deliberately gone.
+    // the distinction, so the "Resale" word is deliberately gone.
     expect(html).not.toContain('Resale');
-    expect(html).not.toContain('Retail');
   });
 
   it('omits the resale figure entirely when the lot is not valued', () => {
-    const html = renderCard(lot({ lot_number: '2', est_retail_price: 120 }));
+    const html = renderCard(lot({ lot_number: '2' }));
     expect(html).not.toContain('data-testid="resale-summary"');
-    expect(html).toContain('$120'); // retail still shows
   });
 
   it('treats a 0 resale range as unvalued rather than printing $0', () => {
-    const html = renderCard(
-      lot({ lot_number: '3', est_resale_low: 0, est_resale_high: 0, est_retail_price: 120 })
-    );
+    const html = renderCard(lot({ lot_number: '3', est_resale_low: 0, est_resale_high: 0 }));
     expect(html).not.toContain('data-testid="resale-summary"');
     expect(html).not.toContain('$0');
   });
 
-  it('omits retail when it is 0 or null, without disturbing resale', () => {
-    for (const retail of [0, null]) {
-      const html = renderCard(
-        lot({
-          lot_number: '4',
-          est_resale_low: 40,
-          est_resale_high: 70,
-          est_retail_price: retail,
-        })
-      );
-      expect(html).toContain('data-testid="resale-summary"');
-      expect(html).toContain('$55');
-      expect(html).not.toContain('$0');
-    }
+  it('is the only money figure on the card', () => {
+    // Estimated retail was removed on 2026-09-10 (scraper/condition.py). Resale
+    // is now the single money figure, so a second "$" on a valued card means
+    // something has crept back in.
+    const html = renderCard(lot({ lot_number: '4', est_resale_low: 40, est_resale_high: 70 }));
+    expect(html.match(/\$\d/g)).toEqual(['$5']);
   });
 
   it('shows the condition word and the bucket, falling back to the subcategory', () => {

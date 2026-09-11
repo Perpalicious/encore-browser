@@ -79,7 +79,6 @@ test.describe('mobile', () => {
     await page.locator('[data-testid="cols-4"]').click();
     await page.waitForTimeout(400);
     expect(await widthAt()).toBeLessThan(w3);
-    // At 4-up the figures move onto the image and the tick is suppressed.
-    await expect(page.locator('[data-testid="value-badge"]')).toHaveCount(0);
+    // At 4-up the resale figure moves onto the image.
   });
 });

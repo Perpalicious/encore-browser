@@ -129,6 +129,17 @@ _CONDITION_RE = re.compile(
     re.MULTILINE | re.IGNORECASE,
 )
 
+# Since the week of 2026-09-13 HiBid emits the condition as the ENTIRE
+# description — a bare "EXCELLENT" / "BRAND NEW - SEALED" with no "Condition:"
+# label and nothing else (the free-form text now lives in the lot report
+# image, like everything else that used to be structured here). Recognise
+# that shape by matching the whole trimmed description against the known
+# vocabulary, so a free-form description that happens to be one line is
+# never mistaken for a grading.
+_BARE_CONDITION_VALUES: frozenset[str] = frozenset(
+    label.upper() for label in CONDITION_LABELS
+)
+
 def parse_condition(raw: Optional[str]) -> tuple[Optional[str], str]:
     """
     Parse a HiBid lot description.
@@ -150,6 +161,12 @@ def parse_condition(raw: Optional[str]) -> tuple[Optional[str], str]:
 
     # --- Extract condition --------------------------------------------------
     condition: Optional[str] = None
+    bare = raw.strip()
+    if bare.upper() in _BARE_CONDITION_VALUES:
+        # The whole description is the grading (HiBid's format since the
+        # week of 2026-09-13); nothing free-form remains.
+        return canonical_condition(bare), ""
+
     m = _CONDITION_RE.search(raw)
     if m:
         raw_cond = m.group("value").strip()

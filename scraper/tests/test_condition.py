@@ -3,7 +3,7 @@ Tests for scraper/condition.py — condition extraction and description parsing.
 """
 
 import pytest
-from scraper.condition import CONDITION_LABELS, parse_condition
+from scraper.condition import CONDITION_LABELS, canonical_condition, parse_condition
 
 
 class TestConditionPassthrough:
@@ -61,6 +61,21 @@ class TestConditionPassthrough:
         description = "Some free-form text with no condition line."
         condition, _ = parse_condition(description)
         assert condition is None
+
+    @pytest.mark.parametrize("raw_value", ["EXCELLENT", "BRAND NEW - SEALED",
+                                           "NEW (ADJUSTED QUANTITY)", "Excellent",
+                                           "  FOR PARTS ONLY \r\n"])
+    def test_bare_condition_is_whole_description(self, raw_value: str) -> None:
+        """Since 2026-09-13 HiBid emits the grading with no 'Condition:' label."""
+        condition, remaining = parse_condition(raw_value)
+        assert condition == canonical_condition(raw_value.strip())
+        assert condition in CONDITION_LABELS
+        assert remaining == ""
+
+    def test_bare_unknown_line_is_not_a_condition(self) -> None:
+        condition, remaining = parse_condition("SEE LAST IMAGE FOR DETAILS")
+        assert condition is None
+        assert remaining == "SEE LAST IMAGE FOR DETAILS"
 
     def test_empty_string_returns_none(self) -> None:
         condition, remaining = parse_condition("")

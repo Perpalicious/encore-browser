@@ -129,13 +129,23 @@ def main(auction_id: str) -> None:
     dst.write_text(json.dumps(slim), encoding="utf-8")
 
     print(f"{len(slim)} lots -> {dst}")
-    counts = Counter(key for rec in slim for key in rec)
+    # Count values, not keys: `condition` is always emitted and was None on
+    # every lot the week HiBid dropped the "Condition:" label (2026-09-13),
+    # which a key count reported as 100%.
+    counts = Counter(key for rec in slim for key, value in rec.items()
+                     if value not in (None, ""))
     for key, n in counts.most_common():
         print(f"  {key:20s} {n:>6} ({100 * n / len(slim):.1f}%)")
 
     missing = [k for k in ("lot_number", "title", "category") if counts[k] != len(slim)]
     if missing:
         sys.exit(f"Error: fields missing on some lots: {missing}")
+    # HiBid leaves a fraction ungraded (0.2% on 2026-09-06, 18.7% on 2026-09-13),
+    # so require most lots rather than all. Zero means the parser broke.
+    if counts["condition"] < 0.5 * len(slim):
+        sys.exit(f"Error: condition present on only {counts['condition']}/{len(slim)} "
+                 "lots — scraper/condition.py did not recognise HiBid's format. "
+                 "Both ChatGPT passes and slim_resale's grouping depend on it.")
 
     # Absence of the whole structured block means HiBid is rendering it into
     # the lot report image, not that the key mapping broke. Say which, because

@@ -400,6 +400,7 @@ rm -f data/raw/auction_*.json
 - `_for_resale.json`, `_resale_groups.json`, `_candidates.json`, `_base.json`,
   `_sweep.json`, `_prefilter.json`, `_flags.json`, `_chunk_NN.json`,
   `_chunk_NN_flags.json`, `_chunk_NN_prompt.md`, `_resale_prompt.md`,
+  `_resale_fix*`, `_resale_deduped_before_fix.json`,
   `_flag_groups.json` and `context.yaml` from any prior week — and `_categorized.json` / `_for_agent.json` from any week before last.
 
 The `_chunk_*` files are also the largest of these after the raw scrape (~0.55
@@ -490,6 +491,17 @@ git config --global user.email "<their email>"
   descriptions say "QUALITY or BRANDED ... do NOT flag generic" rely on the
   model applying that bar. Seed them with plain type words so the shortlist
   stays wide; turning the gate into a keyword rule destroys the curation.
+- **`slim.py` must show `condition` on most lots, and it now fails if it
+  doesn't.** On 2026-09-13 HiBid dropped the `Condition:` label and made the
+  grading the whole description; `condition` parsed as None everywhere, and
+  the old key-count check still printed 100%. `scraper/condition.py` handles
+  the bare form now. If it ever breaks again, the passes still see the grading
+  (it falls through into `description`), but `tools/slim_resale.py` groups
+  on the field and collapses to title-only — 16% of lots then inherit a
+  valuation from a different condition. `tools/regroup_resale.py <ID> plan`
+  / `apply` repairs that after the fact with one ~3,000-row chat instead of a
+  full re-run; it keeps every valuation whose representative still lands in
+  the corrected group.
 - **The build is lenient by design** (`--drop-orphans`, tolerant of
   missing optional fields) — this is good for robustness but means
   mistakes fail silently rather than loudly. Verification steps exist

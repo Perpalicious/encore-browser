@@ -3,10 +3,27 @@
 The two ChatGPT passes referenced in `CLAUDE.md` step 4. Each returns one
 JSON file.
 
-| Pass | Input file | Save output as |
-|---|---|---|
-| 1. Bat's List + personal match | `auction_<ID>_chunk_NN.json` (one per chunk) | `auction_<ID>_chunk_NN_flags.json` |
-| 2. Resale valuation | `auction_<ID>_for_resale.json` | `auction_<ID>_resale_deduped.json` |
+**The prompt text lives in `prompts/`, not here.** This file is the rationale:
+what each pass is for, why it is shaped the way it is, and which mistakes fail
+silently. The prompts themselves are templates —
+
+| Pass | Template | Rendered per run as | Attach | Save reply as |
+|---|---|---|---|---|
+| 1. Bat's List + personal match | `prompts/flagging.md` | `auction_<ID>_chunk_NN_prompt.md` (one per chunk) | `context.yaml` + `auction_<ID>_chunk_NN.json` | `auction_<ID>_chunk_NN_flags.json` |
+| 2. Resale valuation | `prompts/resale.md` | `auction_<ID>_resale_prompt.md` | `auction_<ID>_for_resale.json` only | `auction_<ID>_resale_deduped.json` |
+
+— and `tools/render_prompts.py` fills them in. `tools/chunk_flagging.py` and
+`tools/slim_resale.py` both call it at the end of their run, so the rendered
+files appear in `data/categorized/` next to the inputs they belong to. Each
+rendered prompt is **complete and specific to one chat**: it names the file to
+attach, the row count, the last `lot_number` for the `chunk_complete`
+sentinel, the bucket count the read-test must report, and the exact name the
+reply must be saved under. Paste the whole file; nothing in it needs editing.
+
+Both templates end with `prompts/input_fields.md`, the shared description of
+what each lot row contains. Edit a template to change a prompt — the next run
+picks it up — and keep the `{{PLACEHOLDERS}}`: the renderer refuses to write a
+prompt with one unfilled.
 
 Pass 1 used to be two separate passes over the same 27k-row file — one for
 bucket flags, one for personal match. They are now one pass, because they were
@@ -22,7 +39,7 @@ collapsed 25,195 lots to 19,250 products. `tools/chunk_flagging.py` and
 Pass 1 is additionally cut into numbered chunk files, because a pass over the
 whole auction cannot finish in one response — see "Why pass 1 is chunked".
 
-Every prompt below is written so its output matches exactly what `build/`
+Every prompt is written so its output matches exactly what `build/`
 consumes. The "why this matters" notes under each prompt are the failure modes
 that fail *silently* — the build won't crash, the data just quietly goes
 missing.
@@ -31,43 +48,17 @@ missing.
 
 ## Input fields
 
-Paste this block into each chat alongside the prompt. Both files share this
-shape, and neither pass works well without knowing that an absent key is
-meaningful. (Pass 2's rows carry one extra field, `qty`, described in its own
-section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
+`prompts/input_fields.md` — appended to every rendered prompt. It says what
+each lot row contains, which `condition` grades mean what (**Brand New - Open
+Box is unused merchandise**; For Parts Only is non-functional), that
+`category` is HiBid's and frequently wrong, and that an absent key means
+"nothing noteworthy" rather than "unknown". Since 2026-08-30 HiBid renders
+`model`, `size`, `notes` and the damage flags into an image, so in practice
+`title` + `condition` carry the weight; the fields stay documented because the
+scraper picks them up again by itself if that changes back.
 
-> **Input fields.** Every lot has:
-> - `lot_number` — the join key. Copy it back verbatim, prefix included.
-> - `title` — usually the most informative field. Often a bare SKU or brand
->   string rather than a sentence.
-> - `condition` — the auction house's own grading, verbatim: one of
->   Brand New - Sealed, Brand New - Open Box, New (Adjusted Quantity),
->   Best Before (Grocery), Excellent, Good, New With Defects, Fair,
->   Heavily Used, For Parts Only, Do Not Bid, or null. Note that
->   **Brand New - Open Box is unused merchandise**, not used-in-great-shape —
->   Excellent is the used grade. For Parts Only means non-functional, not
->   merely worn. Best Before (Grocery) is new stock near its expiry date.
-> - `category` — HiBid's own category breadcrumb. **Frequently wrong** (a
->   Lenovo Yoga laptop is filed under "Fitness & Exercise Equipment"). Use it
->   as a weak hint only; trust `title` and `model` over it when they conflict.
->
-> These appear **only when the auction house recorded something**, so an
-> absent key is itself information — it means "nothing noteworthy". Since
-> 2026-08-30 the auction house renders this whole block into an image instead
-> of the listing text, so in practice **none of them are present** and `title`
-> plus `condition` carry the weight. They are described here because the
-> scraper picks them up again by itself if that changes back:
-> - `model` — manufacturer model/SKU. Often the only reliable way to identify
->   what an item actually is when the title is a bare code.
-> - `size` — verified size; may be apparel sizing, a volume, or a colourway.
-> - `notes` — free-text caveats, e.g. "20% USED", "UNKNOWN AMOUNT REMAINING",
->   "SEE PHOTOS". Occasionally "DO NOT BID" on lots that are not real items.
-> - `damage` / `missing_parts` — free-text detail on what is wrong.
-> - `damaged`, `missing_major_parts`, `functional` — flags present only when
->   the answer is notable (`"Yes"`, `"Unknown"`, `"No"`, `"Unable to Test"`).
->   **No `damaged` key means the item is not damaged.** Do not treat an absent
->   flag as unknown or as a defect.
-> - `description` — free-form prose. Almost always absent for these listings.
+Both passes' rows carry `qty` — how many identical lots the product appears
+in — because both run on one row per distinct product.
 
 ---
 
@@ -81,14 +72,21 @@ section. Pass 1's rows carry `cand` and sometimes `profile`, described in its.)
   `M-` prefix on two-auction weeks. It is the only join key. A stripped or
   reformatted prefix means the row is orphaned and dropped.
 - **Every pass must cover every row it was given** — no skipping, sampling,
-  summarising, or stopping early. Each prompt below ends with a completeness
+  summarising, or stopping early. Each template ends with a completeness
   instruction; keep it. Pass 2 returns a row per input row. Pass 1 returns
   **matches only**, plus a terminal sentinel that proves it reached the end.
-- **Replace `N` and `<LAST LOT>` in that instruction with the real values**
-  before pasting. `tools/chunk_flagging.py` prints both per chunk and
-  `tools/slim_resale.py` prints the row count. A concrete number is what makes
-  the agent's own count checkable; leaving the literal `N` in makes the
-  instruction unenforceable.
+- **The row count and last `lot_number` in that instruction are real values,
+  filled in by `tools/render_prompts.py`** from the input file on disk — not
+  by the model reading the attachment, and not by hand. A concrete number is
+  what makes the model's own count checkable, and the last lot is what
+  `tools/expand_flags.py` compares the sentinel against. If the model
+  supplied either itself, a run that read 2,000 of 2,750 rows could honestly
+  report the last lot *it* saw and nothing would notice.
+- **Every prompt names its own output file** (`auction_<ID>_chunk_03_flags.json`,
+  `auction_<ID>_resale_deduped.json`). ChatGPT is asked to return a file under
+  that name if it can; if it prints the JSON instead, save it under the name
+  the prompt gives. `tools/expand_flags.py` reconciles each response against
+  the chunk its number says it came from.
 - **Truncation is the failure mode to watch.** A run that quietly stops early
   produces valid JSON that is simply short — indistinguishable from success by
   eye. Nothing in the build catches it; `tools/verify_passes.py` and
@@ -132,9 +130,9 @@ work two ways:
 
 ### The chunks
 
-Run `python3 tools/chunk_flagging.py <ID>`. It prints the exact upload list,
-each chunk's row count, and each chunk's last `lot_number`. Typically **7
-chunks plus `context.yaml` — 8 uploads.**
+Run `python3 tools/chunk_flagging.py <ID>`. It writes the chunk files, renders
+one prompt per chunk, and prints a paste / attach / save checklist for every
+chat. Typically **7 chunks plus `context.yaml` — 8 uploads.**
 
 Products are ordered by category before cutting, so a chunk boundary falls
 inside a category rather than at its edge and each chunk is mostly one kind of
@@ -160,117 +158,21 @@ reconciles them and writes `auction_<ID>_flags.json`.
 
 ### Prompt
 
-> **Run this prompt once per chunk, in a separate chat each time.** Replace `N`
-> with that chunk's row count and `<LAST LOT>` with its last `lot_number`; both
-> are printed by `tools/chunk_flagging.py`. Attach `context.yaml` and that
-> chunk's file.
->
-> You are judging auction lots for one specific person, against a curated
-> interest list ("Bat's List").
->
-> These lots are one chunk of a larger auction, already deduplicated to one row
-> per distinct product. Judge only what you are given here.
->
-> I have attached `context.yaml`, which contains two config files concatenated.
-> The `profile.yaml` section describes what this household actually wants —
-> interests, projects underway, sizes, and things explicitly not wanted. The
-> `buckets.yaml` section defines the complete set of buckets, each with a
-> `name`, a `description`, optional `examples`, and an optional `subtypes`
-> vocabulary. **The buckets exist because of the profile**: they are the
-> navigable expression of those interests. Match lots **semantically against
-> the `description`** — `examples` are illustrative hints, not an exhaustive
-> whitelist. A generic or off-brand item still matches if it fits the
-> description. Before you begin, tell me how many buckets you read so I can
-> confirm the file attached correctly.
->
-> I will give you auction lots as JSON. See "Input fields" below for what each
-> lot contains. Every bucket in `buckets.yaml` is available on every lot — the
-> auction house's own categories are unreliable, so a Barbie can be filed under
-> Home Goods and most hand tools are filed under Lawn & Garden. Trust the title
-> over the category.
->
-> Each row also carries `qty`: how many identical lots this product appears in
-> across the auction. It is context, not a judgment — 129 copies of one item is
-> a saturated local market — and your answer applies to all of them.
->
-> **Return only the lots that match something.** Most will not, and a row
-> saying so costs more than it tells me. A product you do not name is recorded
-> as a judged non-match. For each lot that DOES match, return one object:
->
-> ```json
-> {
->   "lot_number": "S-1a",
->   "is_bats_list": true,
->   "bats_buckets": ["Keyboards & PC peripherals", "Electronics"],
->   "bats_subtype": "mechanical keyboards",
->   "personal_match": true,
->   "personal_tags": ["pc_gaming"],
->   "match_strength": "strong",
->   "match_types": ["personal_use"],
->   "personal_reasoning": "Enthusiast mechanical board for the desk setup in the profile."
-> }
-> ```
->
-> Rules:
-> - A lot belongs in the output if `is_bats_list` is true **or**
->   `personal_match` is true. A personal pick with no bucket of its own (pool
->   upkeep, work lighting, vehicle fit) is returned with `bats_buckets: []` and
->   `is_bats_list: false`. Everything else is omitted.
-> - `bats_buckets` values must be bucket `name` strings copied **exactly** from
->   `buckets.yaml` — same spelling, casing, spacing, and punctuation (e.g.
->   `"Garden & lawncare misc"`, not `"Garden and lawncare misc"`). Never invent
->   a bucket name.
-> - `is_bats_list` is `true` if and only if `bats_buckets` is non-empty.
-> - **Assign every bucket that genuinely fits, not just the best one.** A
->   gaming keyboard is both "Keyboards & PC peripherals" *and* "Electronics".
->   Expect roughly one in ten flagged lots to carry two or more buckets.
->   Assigning exactly one bucket to almost everything is a known failure mode
->   of this task.
-> - **Reject freely.** A bucket whose description sets a quality bar ("do NOT
->   flag generic no-brand pieces") applies that bar in full. Being complete
->   about the lots you return and being selective about which ones qualify are
->   both required.
-> - **`bats_subtype` is required whenever `is_bats_list` is true.** It is a
->   1-3 word lowercase label for **what the item actually is**, one level finer
->   than the bucket. Each bucket lists a `subtypes` vocabulary — use one of
->   those verbatim when it fits, and invent a new 1-3 word lowercase label only
->   when none does. **Reuse wording across the whole run**: these become
->   navigation, so `"scrub brushes"` on forty lots is useful and forty near
->   synonyms are not.
-> - `personal_match` must be a real JSON boolean `true` — not the string
->   `"true"`, not `1`. Only `true` counts as a pick.
-> - A lot can be on Bat's List without being a personal pick, and vice versa.
->   The bucket answers "is this a type Bat collects?"; the pick answers "does
->   Bat want *this one*, now?" — which is where `profile.yaml`'s projects,
->   sizes, and `not_wanted` list do their work.
-> - `match_strength` is one lowercase word — `"strong"`, `"moderate"`, or
->   `"weak"`. It is rendered into the badge as "PERSONAL PICK · {STRENGTH}
->   MATCH".
-> - `personal_tags` and `match_types` are short arrays of plain strings shown
->   as chips. **Draw `personal_tags` from the `tags` vocabulary in
->   `profile.yaml`** rather than inventing new wording per lot.
-> - `personal_reasoning` is one short sentence, and the key must be named
->   `personal_reasoning`.
-> - Omit `personal_tags`, `match_strength`, `match_types`, and
->   `personal_reasoning` entirely on lots where `personal_match` is `false`.
-> - `condition` is the main quality signal available. **Brand New - Open Box is
->   unused merchandise**, not used-in-great-shape; For Parts Only means
->   non-functional. Do not make a broken item a personal pick unless the
->   profile specifically wants it for parts or repair. Check `size` before
->   flagging apparel or footwear — a great item in the wrong size is not a
->   match.
-> - Be selective about `personal_match: true`. That list is meant to be short
->   enough to actually read.
-> - Use these keys and no others. In particular do **not** include a
->   `bats_category`, `bats_subcategory`, `category`, `subcategory`,
->   `reasoning`, or `confidence` key.
-> - Output a raw JSON array only — no markdown fences, no commentary.
-> - The file contains N rows. Read every one of them. When you have finished
->   the last row, append this as the final element of the array, exactly:
->   `{"chunk_complete": "<LAST LOT>"}`. That is how I know you reached the end
->   rather than stopping early — never omit it, and never add it before you
->   have actually read every row. If you genuinely cannot finish in one
->   response, say so in plain text instead of returning a partial array.
+`prompts/flagging.md`, rendered once per chunk as
+`data/categorized/auction_<ID>_chunk_NN_prompt.md`. Each rendering carries:
+
+- the chunk file name and `context.yaml` as the two attachments
+- the row count and last `lot_number`, both in the description of the input
+  and again in the completeness rule with the `chunk_complete` sentinel
+- the bucket count from `buckets.yaml`, so the opening read-test ("tell me
+  how many buckets") has a stated right answer and the model is told to stop
+  if it reads a different one — a missing attachment ends the chat before any
+  lots are judged, instead of producing unusable bucket names
+- the output name, `auction_<ID>_chunk_NN_flags.json`
+
+Run one fresh chat per rendered prompt. Attach `context.yaml` and that
+chunk's `.json`, paste the prompt whole, save the reply under the name it
+gives.
 
 ### Why this matters
 
@@ -345,64 +247,12 @@ output directly as `_resale.json` would leave most of the auction unvalued.
 
 ### Prompt
 
-> You are estimating secondhand resale value for auction lots.
->
-> I will give you auction lots as JSON. See "Input fields" below for what each
-> lot contains. Each row is one distinct product; `lot_number` identifies it.
->
-> For **every** row, return one object:
->
-> ```json
-> {
->   "lot_number": "S-4471",
->   "est_resale_low": 40,
->   "est_resale_high": 70,
->   "resale_confidence": "medium",
->   "resale_outlook": "good",
->   "reasoning": "Comparable cordless drills in this condition sell for $40-70 on local marketplaces."
-> }
-> ```
->
-> Rules:
-> - Each row is one **distinct product**, not one lot. `qty` says how many
->   identical lots of it are in this auction. Value a single unit, but treat a
->   high `qty` as local oversupply — 50 copies hitting one auction depresses
->   what any one of them fetches. Mention it in the reasoning when it's high.
-> - Estimate what the item would realistically fetch **resold secondhand** in
->   its stated condition — not its retail price. There is no retail figure in
->   the input to anchor on: `est_retail_price` was removed on 2026-09-10, so
->   `title` and `condition` are the whole basis for the estimate.
-> - `est_resale_low` and `est_resale_high` are plain JSON numbers. No dollar
->   signs, no commas, no quotes, no ranges written as text. A row needs at
->   least one of the two to be usable.
-> - `resale_confidence` must be exactly `"low"`, `"medium"`, or `"high"` — how
->   sure you are of the dollar range.
-> - `resale_outlook` must be exactly `"good"`, `"fair"`, or `"poor"` — how
->   readily the item actually sells. These are independent: a used pair of
->   shoes can be `"high"` confidence and `"poor"` outlook.
-> - `reasoning` is one short sentence. The key must be named `reasoning`.
-> - Use `model` to find the actual product before pricing it — a bare SKU
->   title plus a model number usually identifies the item exactly, and pricing
->   the wrong product is the main way this pass goes wrong.
-> - Discount for `damage`, `missing_parts`, `damaged`, `missing_major_parts`,
->   and `functional` when present. An item that is damaged, non-functional, or
->   missing major parts is usually worth parts value at most — say so in the
->   reasoning. Also read `notes`: "20% USED" or "UNKNOWN AMOUNT REMAINING" on
->   a consumable materially cuts what it fetches, and a lot whose notes say
->   "DO NOT BID" is not a real item — value it at 0 and say why.
-> - **Value every row. Do not skip any.** Low-value, junk, damaged, and
->   unidentifiable items still get a real numeric range — estimate low (even
->   `0` to `5`) rather than omitting the row or returning `null`. A row that is
->   missing, or has `null` for both bounds, is discarded by the build and those
->   lots show no resale info at all.
-> - For obvious low-value lots keep `reasoning` to a short clause ("bulk
->   plastic organizers, minimal secondhand demand"). Spend the detailed
->   reasoning on lots where the number is actually arguable.
-> - Output a raw JSON array only — no markdown fences, no commentary.
-> - The file contains N rows. Return exactly N objects, one per row, in the
->   same order. If you cannot complete all of them in one response, stop at a
->   row boundary and tell me the last `lot_number` you finished so I can pick
->   up from there — never silently drop rows to make the output fit.
+`prompts/resale.md`, rendered as
+`data/categorized/auction_<ID>_resale_prompt.md` by `tools/slim_resale.py`.
+It carries the input file name, the row count (stated twice: "contains N
+rows" and "return exactly N objects"), the last `lot_number`, and the output
+name `auction_<ID>_resale_deduped.json`. Attach `auction_<ID>_for_resale.json`
+and nothing else — no `context.yaml`, no `buckets.yaml`, no `profile.yaml`.
 
 ### Why this matters
 
@@ -428,5 +278,5 @@ output directly as `_resale.json` would leave most of the auction unvalued.
   site.
 ---
 
-Once both files are saved, tell Claude and it will pick up at
-`CLAUDE.md` step 5.
+Once every reply is saved under the name its prompt gave, tell Claude and it
+will pick up at `CLAUDE.md` step 5.

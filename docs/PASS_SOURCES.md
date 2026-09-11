@@ -25,16 +25,18 @@ One call per chunk. Every chunk gets the **identical** prompt and the
 
 | Source | Path | Role |
 |---|---|---|
-| Prompt template | `PROMPTS.md` § *Pass 1 → Prompt* | The blockquote body. Substitute `N` and `<LAST LOT>` |
+| Prompt template | `prompts/flagging.md` | `{{PLACEHOLDERS}}` for the per-chat values |
+| Rendered prompt | `data/categorized/auction_<ID>_chunk_NN_prompt.md` | Written by `tools/render_prompts.py` (called from `chunk_flagging.py`). Complete: paste whole |
 | Config | `data/categorized/context.yaml` | `buckets.yaml` + `profile.yaml` concatenated by `tools/chunk_flagging.py`. Attach to every chat |
-| Row schema | `PROMPTS.md` § *Input fields* | Must be in the prompt; an absent key is meaningful and the model needs telling |
-| Output contract | `PROMPTS.md` § *Shared rules* | Must be in the prompt |
+| Row schema | `prompts/input_fields.md` | Appended to every rendered prompt; an absent key is meaningful and the model needs telling |
+| Rationale | `PROMPTS.md` | Why the prompt is shaped as it is and what fails silently. Not itself a source of prompt text |
 | Data in | `data/categorized/auction_<ID>_chunk_NN.json` | Written by `tools/chunk_flagging.py` |
 | Data out | `data/categorized/auction_<ID>_chunk_NN_flags.json` | Consumed by `tools/expand_flags.py` |
 
-`tools/chunk_flagging.py` prints the substitutions per chunk: row count for `N`
-and last `lot_number` for `<LAST LOT>`. Typically 7 chunks of 2,750 products
-plus `context.yaml` — 8 uploads.
+Each rendered prompt carries its own chunk's row count, last `lot_number`
+(the `chunk_complete` value), the bucket count for the attachment read-test,
+and its output name `auction_<ID>_chunk_NN_flags.json`. Typically 7 chunks of
+2,750 products plus `context.yaml` — 8 uploads.
 
 Two properties the automation must not break:
 
@@ -57,8 +59,8 @@ for why it bought less than it appeared to; `git show 99f50e3` has the code.
 
 | Source | Path |
 |---|---|
-| Prompt template | `PROMPTS.md` § *Pass 2 → Prompt* |
-| Row schema + output contract | `PROMPTS.md` § *Input fields* and § *Shared rules* |
+| Prompt template | `prompts/resale.md` (+ `prompts/input_fields.md`) |
+| Rendered prompt | `data/categorized/auction_<ID>_resale_prompt.md`, written by `tools/slim_resale.py` |
 | Data in | `data/categorized/auction_<ID>_for_resale.json` (from `tools/slim_resale.py`) |
 | Data out | `data/categorized/auction_<ID>_resale_deduped.json` |
 
@@ -115,14 +117,16 @@ reconciled against chunks they were never judged from.
 in `_prefilter.json`), left over from the older shortlist flow. Those are not
 the chunk boundaries and nothing reads them.
 
-### 3. Substitute the real row count and last lot
+### 3. The row count and last lot come from disk, not from the model
 
-`PROMPTS.md` § *Shared rules* requires replacing the literal `N` and
-`<LAST LOT>` before sending. A concrete number is what makes the model's own
-count checkable, and `<LAST LOT>` is what the sentinel is compared against —
-leaving either placeholder in makes the completeness rule unenforceable.
-`tools/chunk_flagging.py` prints both per chunk; `tools/slim_resale.py` prints
-the resale row count.
+The completeness rule in each prompt states a real row count and the real
+last `lot_number`, and `tools/render_prompts.py` fills both from the input
+file on disk. A concrete number is what makes the model's own count checkable,
+and the last lot is what `tools/expand_flags.py` compares the sentinel
+against. Do not let the model supply either from its own reading of the
+attachment — a run that read 2,000 of 2,750 rows would honestly report the
+last lot *it* saw. The renderer also refuses to write a prompt with any
+`{{PLACEHOLDER}}` left unfilled.
 
 ### 4. Wire into the existing verification, do not reimplement it
 
@@ -149,22 +153,16 @@ which the bucket-count read-test at the top of the prompt is there to catch.
 
 ---
 
-## Known friction: the prompts are prose
+## The prompts are templates (resolved 2026-09-11)
 
-The prompt bodies live as markdown blockquotes embedded in explanatory prose in
-`PROMPTS.md`. Extracting them means stripping `> ` prefixes out of a document
-that also explains itself, and the surrounding rationale is genuinely worth
-keeping for humans.
-
-If this proves fragile, the clean fix is to split the prompt text into
-`prompts/flagging.md` and `prompts/resale.md` and have `PROMPTS.md` keep the
-rationale and link to them. It was tried once, as part of an automated-run
-experiment that was reverted for unrelated reasons (cost), and the extraction
-itself was not the problem. Still not done — flagged so the decision stays
-deliberate.
-
-Match on the `##` / `###` headings rather than line numbers; the file is edited
-often enough that any line table here goes stale.
+The prompt bodies used to be markdown blockquotes embedded in `PROMPTS.md`,
+which meant stripping `> ` prefixes out of a document that also explains
+itself. They now live in `prompts/flagging.md`, `prompts/resale.md` and the
+shared `prompts/input_fields.md`, with `{{PLACEHOLDERS}}` for the per-chat
+values; `PROMPTS.md` keeps the rationale. `tools/render_prompts.py` fills them
+in — an automated run wants `render_flagging()` / `render_resale()` from that
+module, or the rendered `_prompt.md` files that `chunk_flagging.py` and
+`slim_resale.py` leave next to their inputs.
 
 ---
 

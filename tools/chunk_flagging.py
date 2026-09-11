@@ -4,9 +4,13 @@ Deduplicate the auction by product and cut it into upload-sized flagging chunks.
     python3 tools/chunk_flagging.py <ID> [--rows 2750]
 
 Reads  data/categorized/auction_<ID>_for_agent.json
-Writes data/categorized/auction_<ID>_chunk_NN.json     (one upload each)
-       data/categorized/auction_<ID>_flag_groups.json  (fan-out map)
-       data/categorized/context.yaml                   (buckets + profile, one upload)
+Writes data/categorized/auction_<ID>_chunk_NN.json         (one upload each)
+       data/categorized/auction_<ID>_chunk_NN_prompt.md    (the prompt for that chunk)
+       data/categorized/auction_<ID>_flag_groups.json      (fan-out map)
+       data/categorized/context.yaml                       (buckets + profile, one upload)
+
+The prompts are rendered by `tools/render_prompts.py` from `prompts/flagging.md`
+with every per-chunk value filled in — see that file for why.
 
 Why dedup
 ---------
@@ -68,6 +72,11 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+try:
+    from tools import render_prompts
+except ImportError:  # run directly as `python3 tools/<script>.py`
+    import render_prompts
 
 # Every field that can change whether Bat wants this, or which bucket it is.
 # Title is handled separately. Mirrors tools/slim_resale.py VALUE_FIELDS.
@@ -262,11 +271,15 @@ def main(auction_id: str, rows_per_chunk: int = DEFAULT_ROWS) -> None:
     print(f"  {context_path}   <- attach to EVERY chat")
     for path, n, last in written:
         print(f"  {path}   {n:,} rows, last lot_number {last}")
+
+    # One ready-to-paste prompt per chunk, with the row count, last lot,
+    # bucket count and output name already filled in. Rendering reads the
+    # chunk files just written and never touches them.
+    flagging = render_prompts.render_flagging(auction_id, out_dir, n_buckets=n_buckets)
+    render_prompts.print_handoff(auction_id, flagging,
+                                 render_prompts.render_resale(auction_id, out_dir))
     print()
-    print("Each chunk is judged with the same prompt (PROMPTS.md) and the same "
-          "context.yaml.\nSave each response as "
-          f"auction_{auction_id}_chunk_NN_flags.json, then run:")
-    print(f"  python3 tools/expand_flags.py {auction_id}")
+    print(f"When every reply is saved, run:  python3 tools/expand_flags.py {auction_id}")
 
 
 if __name__ == "__main__":

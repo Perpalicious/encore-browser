@@ -6,6 +6,7 @@ Collapse the slimmed file to one row per distinct product for the resale pass.
 Reads  data/categorized/auction_<ID>_for_agent.json
 Writes data/categorized/auction_<ID>_for_resale.json      (the agent's input)
        data/categorized/auction_<ID>_resale_groups.json   (fan-out map)
+       data/categorized/auction_<ID>_resale_prompt.md     (the prompt, values filled in)
 
 Why
 ---
@@ -38,6 +39,11 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+try:
+    from tools import render_prompts
+except ImportError:  # run directly as `python3 tools/<script>.py`
+    import render_prompts
 
 # Every field that can move the price. Title is handled separately.
 VALUE_FIELDS = [
@@ -100,6 +106,10 @@ def main(auction_id: str) -> None:
     print(f"  largest group: {max(len(v) for v in fan_out.values())} lots")
     print(f"  wrote {out_items}")
     print(f"  wrote {out_groups}")
+
+    # The resale prompt with the row count, last lot and output name filled in.
+    render_prompts.print_handoff(
+        auction_id, None, render_prompts.render_resale(auction_id, out_items.parent))
 
 
 if __name__ == "__main__":

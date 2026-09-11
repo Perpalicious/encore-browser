@@ -133,21 +133,26 @@ so the resale pass values one representative per distinct product and the
 result is fanned back out in step 5. Expect ~15-25% fewer rows. This is a
 pure dedup, not a junk filter — every lot still ends up valued, and the
 grouping key includes condition and damage so a sealed unit is never averaged
-with a broken one.
+with a broken one. It also writes `auction_<ID>_resale_prompt.md`, the resale
+chat's prompt with the row count, last lot and output name filled in.
 
 Then build the flagging pass's chunks:
 ```bash
 python3 tools/chunk_flagging.py <ID>
 ```
 Dedups the auction to one row per distinct product, cuts it into numbered
-chunk files, and concatenates `buckets.yaml` + `profile.yaml` into a single
-`data/categorized/context.yaml`. Check its printout:
+chunk files, concatenates `buckets.yaml` + `profile.yaml` into a single
+`data/categorized/context.yaml`, and renders one ready-to-paste prompt per
+chunk (`auction_<ID>_chunk_NN_prompt.md`, via `tools/render_prompts.py` from
+`prompts/flagging.md`). Check its printout:
 - **the exact upload list** — normally 7 chunks plus `context.yaml`, 8 files
-- the bucket count (62 as of 2026-08-30). If a read-test in a fresh ChatGPT
-  chat reports a different number, `context.yaml` did not attach
+- the bucket count (62 as of 2026-08-30). Each rendered prompt states this
+  number and tells the model to stop if its read-test disagrees, so a
+  `context.yaml` that failed to attach ends the chat before any lots are judged
 - dedup normally collapses 20-25% of lots (25,195 → 19,250 on 2026-08-30)
-- each chunk's row count and last `lot_number` — both go into that chunk's
-  prompt, replacing `N` and `<LAST LOT>`
+- the **paste / attach / save checklist** at the end — one entry per chat.
+  Every per-chat value (row count, last `lot_number`, bucket count, output
+  file name) is already inside the prompt file; nothing is substituted by hand
 
 `--rows N` changes the chunk size; the default 2,750 is sized so one response
 stays inside a single-response output ceiling. Do **not** re-run this
@@ -196,20 +201,21 @@ the shortlist never showed the model. The bid history can.
 
 ### 4. STOP — hand off to the user
 
-Tell the user: *"Eight files are ready — `tools/chunk_flagging.py` printed the
-exact list.
+Tell the user: *"Everything is rendered — `tools/chunk_flagging.py` printed
+the paste / attach / save checklist. One fresh ChatGPT chat per prompt:
 
-**Attach `data/categorized/context.yaml` to EVERY chat.** It is `buckets.yaml`
-and `profile.yaml` in one file.
+- paste the whole of `data/categorized/auction_<ID>_chunk_NN_prompt.md`
+- attach `data/categorized/context.yaml` **and** `auction_<ID>_chunk_NN.json`
+- save the reply as `auction_<ID>_chunk_NN_flags.json` — the prompt says
+  which name; ChatGPT will name the file itself if it returns one
 
-Then run one chat per chunk, same prompt every time:
-- `auction_<ID>_chunk_01.json` → save as `auction_<ID>_chunk_01_flags.json`
-- ...and so on for each chunk
+...for each chunk. The prompt already contains that chunk's row count, last
+`lot_number`, the bucket count (62) and its output name, so nothing in it
+needs editing. Let me know when they're saved and I'll continue."*
 
-`PROMPTS.md` § Pass 1 has the prompt. Replace `N` with that chunk's row count
-and `<LAST LOT>` with its last `lot_number` — both printed above.
-
-Let me know when they're saved and I'll continue."*
+If in doubt, `python3 tools/render_prompts.py <ID>` re-prints the checklist
+and re-renders the prompts from the chunk files on disk without touching them
+— it is safe mid-pass, unlike `chunk_flagging.py`.
 
 The names matter. Each response must be saved under **its own chunk number**;
 `tools/expand_flags.py` checks every response against the chunk it belongs to,
@@ -220,9 +226,10 @@ The pass returns **matches only** and must end with
 detector — a response that stops early loses its tail, so a missing or wrong
 sentinel is caught in step 5.
 
-If the week also needs resale, hand off `auction_<ID>_for_resale.json` → save
-as `auction_<ID>_resale_deduped.json` in its own chat, with **no** config files
-attached (`docs/PASS_SOURCES.md`: the resale pass has no notion of buckets).
+If the week also needs resale, the same checklist ends with the resale chat:
+paste `auction_<ID>_resale_prompt.md`, attach `auction_<ID>_for_resale.json`
+with **no** config files (`docs/PASS_SOURCES.md`: the resale pass has no
+notion of buckets), save as `auction_<ID>_resale_deduped.json`.
 
 Do not proceed past this point until the user confirms the files exist.
 
@@ -392,8 +399,8 @@ rm -f data/raw/auction_*.json
   nothing reads them after step 7. Delete once the deploy is verified.
 - `_for_resale.json`, `_resale_groups.json`, `_candidates.json`, `_base.json`,
   `_sweep.json`, `_prefilter.json`, `_flags.json`, `_chunk_NN.json`,
-  `_chunk_NN_flags.json`, `_flag_groups.json` and `context.yaml` from any prior
-  week — and `_categorized.json` / `_for_agent.json` from any week before last.
+  `_chunk_NN_flags.json`, `_chunk_NN_prompt.md`, `_resale_prompt.md`,
+  `_flag_groups.json` and `context.yaml` from any prior week — and `_categorized.json` / `_for_agent.json` from any week before last.
 
 The `_chunk_*` files are also the largest of these after the raw scrape (~0.55
 MB each, ~4 MB a week). `context.yaml` is regenerated from `buckets.yaml` and
@@ -463,9 +470,13 @@ git config --global user.email "<their email>"
 - **`context.yaml` must be re-attached to every flagging chat** — editing
   `buckets.yaml` or `profile.yaml` in the repo does not update what a chat
   sees. `tools/chunk_flagging.py` regenerates `context.yaml` from both and
-  prints the bucket count; if a read-test in a fresh chat returns a different
-  number, flag it to the user before they run the full pass. Concatenating the
-  two removes the older trap of attaching one and forgetting the other.
+  bakes the bucket count into every rendered prompt, which tells the model to
+  stop if its own count differs. Concatenating the two removes the older trap
+  of attaching one and forgetting the other.
+- **The prompt text is in `prompts/`, not `PROMPTS.md`.** Edit
+  `prompts/flagging.md` / `prompts/resale.md` to change what a chat is told;
+  `PROMPTS.md` is the rationale. Never hand-edit a rendered
+  `_prompt.md` — re-run `tools/render_prompts.py <ID>` instead.
 - **Never re-run `tools/chunk_flagging.py` mid-pass.** It rewrites every chunk
   file and the group map, so responses already collected would be reconciled
   against chunks they were never judged from. `tools/expand_flags.py` catches

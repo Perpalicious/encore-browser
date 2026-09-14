@@ -125,3 +125,9 @@ class TestResolveBucketGroups:
         assert groups == {}
         assert groups_present == []
         assert ungrouped == []
+
+    def test_mapping_key_order_is_stable_for_set_input(self):
+        mapping = {"A": "G", "B": "G", "C": "G"}
+        first, _, _ = resolve_bucket_groups(set(["C", "A", "B"]), mapping, ["G"])
+        second, _, _ = resolve_bucket_groups(set(["B", "C", "A"]), mapping, ["G"])
+        assert list(first) == list(second) == ["A", "B", "C"]

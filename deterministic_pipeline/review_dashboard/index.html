@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Encore human gold review</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="stylesheet" href="/assets/visibility.css">
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <p class="watermark">HUMAN GOLD REVIEW · LOCAL DRAFT</p>
+      <h1>Classifier accuracy review</h1>
+      <p>Label each source listing independently. Machine predictions and legacy labels stay hidden until you reveal them for this item.</p>
+    </div>
+    <div class="privacy-note"><strong>Source first</strong><span>Feedback is saved separately from gold truth and never changes rules or published data.</span></div>
+  </header>
+
+  <section class="toolbar" aria-label="Review controls">
+    <label class="search">Search queue<input id="search" type="search" placeholder="Lot, title, condition, category…"></label>
+    <label>Status<select id="status-filter"><option value="all">All</option><option value="unreviewed">Unreviewed</option><option value="reviewed">Reviewed</option></select></label>
+    <label>Bucket<select id="bucket-filter"><option value="">All buckets</option></select></label>
+    <label>Condition<select id="condition-filter"><option value="">All conditions</option></select></label>
+    <label>Selection reason<select id="stratum-filter"><option value="">Revealed items: any</option></select></label>
+    <label>Feedback<select id="feedback-filter"><option value="">All dispositions</option><option value="none">No feedback</option></select></label>
+    <label class="check"><input id="personal-filter" type="checkbox"> Personal only</label>
+    <label class="check"><input id="critical-filter" type="checkbox"> Critical only</label>
+    <button id="next-unreviewed" type="button">Next unreviewed <kbd>N</kbd></button>
+    <button id="reload-conflict" type="button" hidden>Reload server version</button>
+    <span id="save-status" class="save-status" role="status" aria-live="polite">Loading…</span>
+  </section>
+
+  <section class="summary" aria-label="Review progress">
+    <div class="progress-copy"><strong id="progress-label">0 / 0 reviewed</strong><span id="export-blocker"></span></div>
+    <div class="progress-track" role="progressbar" aria-label="Gold review completion" aria-valuemin="0" aria-valuemax="100"><span id="progress-fill"></span></div>
+    <details><summary>Coverage and export readiness</summary><div id="coverage"></div></details>
+  </section>
+
+  <main class="workspace">
+    <aside class="queue" aria-label="Candidate queue">
+      <div class="queue-head"><strong id="queue-count">0 candidates</strong><span>↑/↓ moves</span></div>
+      <ol id="queue-list"></ol>
+    </aside>
+
+    <article class="record" aria-live="polite">
+      <div id="empty" class="empty">No candidates match these filters.</div>
+      <div id="record-content" hidden>
+        <section class="source-card">
+          <div class="record-title"><span id="lot-number" class="lot-number"></span><h2 id="title"></h2><span id="review-state" class="pill"></span></div>
+          <div id="source-meta" class="meta"></div>
+          <p id="description" class="description"></p>
+          <a id="source-link" target="_blank" rel="noopener noreferrer">Open original listing</a>
+          <p class="remote-note">Images below use source URLs already present in the scrape. Your browser may request them from HiBid.</p>
+          <div id="images" class="images"></div>
+        </section>
+
+        <section class="blind-card">
+          <div><p class="eyebrow">Hidden machine context</p><p id="selection-notice">Review the listing before looking at classifier output.</p></div>
+          <button id="reveal" type="button">Reveal for this item</button>
+          <pre id="prediction" hidden></pre>
+        </section>
+
+        <form id="gold-form" class="panel">
+          <div class="panel-head"><div><p class="eyebrow">Authoritative human labels</p><h3>Gold truth</h3></div><button id="save-gold" class="primary" type="submit">Save gold labels <kbd>Ctrl S</kbd></button></div>
+          <p class="help">For each bucket, choose Expected, Forbidden, or Neither. Forbidden means this item is a deliberate near-negative for that bucket.</p>
+          <label>Find a bucket<input id="bucket-search" type="search" placeholder="Filter the bucket controls"></label>
+          <div id="bucket-controls" class="bucket-controls"></div>
+          <div class="form-grid">
+            <label>Expected subtype<select id="subtype"><option value="">None</option></select></label>
+            <label>Personal match<select id="personal"><option value="">Choose…</option><option value="true">Yes</option><option value="false">No</option></select></label>
+          </div>
+          <fieldset><legend>Expected evidence</legend><div id="evidence" class="checks"></div></fieldset>
+          <fieldset><legend>Critical assertions</legend><div id="critical" class="checks"></div></fieldset>
+          <label>Human rationale<textarea id="rationale" rows="3" placeholder="Explain the source evidence and why this label is correct."></textarea></label>
+          <label class="completion"><input id="reviewed" type="checkbox"> Reviewed and complete</label>
+        </form>
+
+        <form id="feedback-form" class="panel feedback-panel">
+          <div class="panel-head"><div><p class="eyebrow">Separate improvement note</p><h3>Owner feedback</h3></div><button id="save-feedback" type="submit">Save feedback</button></div>
+          <p class="help">This audited note helps revise seeds, exclusions, taxonomy, and subtypes. It does not alter the gold labels above.</p>
+          <div class="form-grid">
+            <label>Disposition<select id="disposition"><option value="">No feedback</option></select></label>
+            <label>Reason<select id="feedback-reason"><option value="">Choose…</option></select></label>
+          </div>
+          <label>Suggested buckets<select id="suggested-buckets" multiple size="5"></select></label>
+          <div class="form-grid three">
+            <label>Suggested seed<input id="suggested-seed" maxlength="5000"></label>
+            <label>Suggested exclusion<input id="suggested-exclusion" maxlength="5000"></label>
+            <label>Suggested subtype<select id="suggested-subtype"><option value="">None</option></select></label>
+          </div>
+          <label>Notes<textarea id="feedback-notes" rows="3" maxlength="5000" placeholder="Concise explanation for the eventual rule owner."></textarea></label>
+          <p id="feedback-audit" class="audit-note"></p>
+        </form>
+
+        <details class="panel"><summary>Rare-bucket exemptions</summary><p class="help">Advanced evaluator override. A reason must be at least 20 characters and both minimums must be 1–19.</p><textarea id="exemptions" rows="7"></textarea><button id="save-exemptions" type="button">Save exemptions</button></details>
+      </div>
+    </article>
+  </main>
+
+  <footer><button id="download-feedback" type="button">Download feedback JSON</button><span>Human feedback export is separate from the gold dataset and cannot publish the viewer.</span></footer>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

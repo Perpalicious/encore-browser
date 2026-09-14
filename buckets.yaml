@@ -99,7 +99,7 @@ buckets:
             "apple watch", "ipod", "macbook", "laptop", "wifi adapter",
             "usb adapter", "bluetooth adapter", "ethernet adapter", "wifi extender",
             "router", "modem", "tp link", "garmin", "dji ", "usb c to",
-            "phone case", "screen protector", "smart ring", "magic mouse",
+            "smart ring", "magic mouse",
             "magic keyboard", "airtag", "magsafe", "tile tracker", "mouse",
             "usb receiver", "sd card", "memory card", "external drive", "ssd "]
     # Deliberately NOT the whole "Computers & Electronics" tree: that is 1,245
@@ -495,7 +495,7 @@ buckets:
             "laundry detergent", "bleach",
             "swiffer", "scotch-brite", "libman", "clorox", "lysol", "oxo ",
             "rubbermaid", "cleaning cloth", "paper towel", "trash bag", "garbage bag",
-            "dish rack", "drying rack", "steam cleaner", "carpet cleaner",
+            "dish rack", "drying rack", "steam cleaner",
             "stain remover", "fabric softener", "dryer sheet", "toilet brush",
             "dust pan", "dustpan", "lint roller", "air freshener"]
     # Vacuums, steam mops and carpet machines moved to "Vacuums & floor care".

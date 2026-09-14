@@ -1,5 +1,63 @@
 # Encore Lot Browser — Project Instructions
 
+## Deterministic replacement is in shadow evaluation
+
+The repository now has a model-free middle pipeline:
+
+```bash
+python -m deterministic_pipeline --auction-id <ID>
+```
+
+It writes `auction_<ID>_categorized.json`, `_provenance.json`, `_report.json`,
+and `_report.md` under `data/deterministic/`. It normalizes, deduplicates,
+classifies, validates total coverage, and reports unresolved evidence locally.
+The classifier package contains no model or network client and is shadow-only
+by default. A disposable bundle requires an explicit
+`--build-output /tmp/bundle.json`. The CLI rejects the production viewer path
+and exposes no publication action. Publication code will be added only after a
+real Bat-reviewed gold fixture is committed and reviewed. Resale input is
+deliberately absent, so generated resale fields are empty.
+
+Consumable personal picks require a boolean `seal_intact: true`. The current
+scraper does not provide that field, so those listings remain bucketed for
+browsing but their personal intent is unresolved and false. An auction
+condition label alone is not accepted as proof of an intact seal.
+
+Do not publish its bundle yet. The 2026-09-14 baseline over 28,034 lots reached
+only 70.3% precision agreement and 63.6% recall agreement with prior generated
+bucket pairs. The local pass completed in 10.45 seconds; source inspection
+guarantees that this classifier path imports no model or network client.
+Prior generated labels are not human ground truth, but this is
+well below the replacement plan's gates. First create a human-reviewed gold
+set, then run:
+
+```bash
+python -m deterministic_pipeline.evaluate --gold tests/fixtures/<gold>.json
+```
+
+That command also requires at least 20 positive and 20 reviewed near-negative
+examples per bucket, unless a rare-bucket exemption records a justification
+and smaller nonzero counts. It exits non-zero below 98% micro precision, 95%
+micro recall, 90% per-bucket recall, perfect personal hard-gate behavior, or
+on subtype, provenance, and critical-example failures. Until it passes, the
+manual process below remains the production
+fallback. See `docs/DETERMINISTIC_PIPELINE_PLAN.md` for the cutover rules.
+
+Use `docs/GOLD_DATASET_REVIEW.md` to create that fixture. The commands are
+`python -m deterministic_pipeline.review generate`, `serve`, and `export`.
+Candidate predictions and old labels are context only and stay hidden until
+explicitly revealed for one item. The local dashboard supports a filtered
+queue, controlled multi-bucket labels, export-readiness coverage, and separate
+audited owner feedback. Its feedback JSON excludes gold labels and machine
+context and cannot change rules or publish data. Sessions and exports live
+under ignored `data/review/`.
+Export refuses incomplete or coverage-inadequate records before writing,
+requires the structured `--reviewed-on` / `--attest-human-review` attestation,
+and protects repository/input paths. Once coverage passes it preserves a gold
+dataset even when accuracy fails, since that evidence is needed for tuning.
+The attestation is process evidence rather than cryptographic proof. The
+workflow cannot build or publish a viewer bundle.
+
 This repo scrapes weekly HiBid/Encore auctions, runs them through two
 ChatGPT passes (combined Bat's List + personal match, and resale
 valuation), builds a static bundle, and deploys it to GitHub Pages via a local

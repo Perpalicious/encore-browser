@@ -79,7 +79,7 @@ def resolve_bucket_groups(
     present_bucket_groups: dict[str, str] = {}
     ungrouped: list[str] = []
 
-    for bucket in present_buckets:
+    for bucket in sorted(present_buckets):
         group = bucket_to_group.get(bucket)
         if group is None:
             present_bucket_groups[bucket] = UNGROUPED

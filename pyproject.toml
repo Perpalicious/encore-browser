@@ -21,7 +21,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["scraper/tests", "build/tests", "tools/tests"]
+testpaths = ["scraper/tests", "build/tests", "tools/tests", "deterministic_pipeline/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -29,4 +29,7 @@ addopts = "-v"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["scraper*", "build*", "diff_categorized*", "merge_categorized*"]
+include = ["scraper*", "build*", "deterministic_pipeline*", "diff_categorized*", "merge_categorized*"]
+
+[tool.setuptools.package-data]
+deterministic_pipeline = ["review_dashboard/*.html", "review_dashboard/*.css", "review_dashboard/*.js"]

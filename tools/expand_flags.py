@@ -83,32 +83,37 @@ def as_items(data, path: Path, label: str) -> list[dict]:
 
 
 def check_chunk(n: int, chunk: list[dict], returned: list[dict],
-                path: Path) -> tuple[dict[str, dict], list[str]]:
-    """Validate one response against the chunk it was given."""
+                path: Path, label: str | None = None) -> tuple[dict[str, dict], list[str]]:
+    """Validate one response against the chunk it was given.
+
+    `label` names the response in problem reports; it defaults to the chunk
+    number. tools/recall_check.py reuses this for its single repair chat.
+    """
     problems: list[str] = []
     expected = {str(r["lot_number"]) for r in chunk}
     last_lot = str(chunk[-1]["lot_number"])
+    tag = label or f"chunk {n:02d}"
 
     if not returned:
-        return {}, [f"chunk {n:02d}: response is empty"]
+        return {}, [f"{tag}: response is empty"]
 
     sentinel_at = [i for i, r in enumerate(returned)
                    if isinstance(r, dict) and SENTINEL_KEY in r]
     if not sentinel_at:
         problems.append(
-            f"chunk {n:02d}: no {{'{SENTINEL_KEY}': '{last_lot}'}} at the end. "
+            f"{tag}: no {{'{SENTINEL_KEY}': '{last_lot}'}} at the end. "
             f"The response was truncated, or the prompt's final rule was dropped."
         )
     else:
         if sentinel_at[-1] != len(returned) - 1:
             problems.append(
-                f"chunk {n:02d}: {SENTINEL_KEY} is not the last element "
+                f"{tag}: {SENTINEL_KEY} is not the last element "
                 f"(at index {sentinel_at[-1]} of {len(returned)})."
             )
         got = str(returned[sentinel_at[-1]].get(SENTINEL_KEY))
         if got != last_lot:
             problems.append(
-                f"chunk {n:02d}: {SENTINEL_KEY} says {got!r} but the chunk ends "
+                f"{tag}: {SENTINEL_KEY} says {got!r} but the chunk ends "
                 f"at {last_lot!r}. The pass stopped early."
             )
 
@@ -116,39 +121,39 @@ def check_chunk(n: int, chunk: list[dict], returned: list[dict],
     unknown: list[str] = []
     for i, row in enumerate(returned):
         if not isinstance(row, dict):
-            problems.append(f"chunk {n:02d}: element {i} is not an object")
+            problems.append(f"{tag}: element {i} is not an object")
             continue
         if SENTINEL_KEY in row:
             continue
         bad = FORBIDDEN_KEYS & row.keys()
         if bad:
             problems.append(
-                f"chunk {n:02d}: row {i} carries forbidden key(s) "
+                f"{tag}: row {i} carries forbidden key(s) "
                 f"{sorted(bad)}. build/transform.py changes shape on these."
             )
             continue
         missing = REQUIRED_KEYS - row.keys()
         if missing:
             problems.append(
-                f"chunk {n:02d}: row {i} is missing {sorted(missing)}")
+                f"{tag}: row {i} is missing {sorted(missing)}")
             continue
         lot = str(row["lot_number"])
         if lot not in expected:
             unknown.append(lot)
             continue
         if lot in matches:
-            problems.append(f"chunk {n:02d}: lot {lot} returned twice")
+            problems.append(f"{tag}: lot {lot} returned twice")
             continue
         if bool(row.get("is_bats_list")) != bool(row.get("bats_buckets")):
             problems.append(
-                f"chunk {n:02d}: lot {lot} breaks `is_bats_list == "
+                f"{tag}: lot {lot} breaks `is_bats_list == "
                 f"(bats_buckets is non-empty)`")
             continue
         matches[lot] = row
 
     if unknown:
         problems.append(
-            f"chunk {n:02d}: {len(unknown)} returned lot_numbers were not in "
+            f"{tag}: {len(unknown)} returned lot_numbers were not in "
             f"this chunk — a hallucinated row, or the wrong file saved. "
             f"First few: {unknown[:5]}"
         )

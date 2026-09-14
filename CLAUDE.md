@@ -250,6 +250,42 @@ If it fails, report exactly which chunks it named and have the user re-run
 those chats. Do not hand-patch the file — a partial `_flags.json` builds
 cleanly and is quietly missing its flags.
 
+#### 5a. Recall repair — one more chat, then STOP again
+
+The pass reads type words well and product names badly: on 2026-09-13 it
+flagged every Logitech lot whose title said KEYBOARD or MOUSE and none of the
+ones that said only "MX KEYS FOR MAC", and it put "PHYLOSAL A3 LED LIGHT PAD
+FOR DIAMOND PAINTING" in Kids' craft 44 times while leaving 64 lots of the
+same pad titled "ULTRA-THIN BOX" unflagged. Those misses are detectable from
+the run's own answers, so find them and re-judge only those:
+```bash
+python3 tools/recall_check.py <ID> plan
+```
+It lists every unflagged product that either shares its leading title words
+with a product the pass DID flag, or matches a bucket's seed inside a HiBid
+category that bucket dominates this week — normally 400-500 products, under
+a fifth of one chunk — prints a per-bucket table, and writes
+`auction_<ID>_recall.json` plus its rendered prompt. Then hand off:
+
+*"One more chat: paste `auction_<ID>_recall_prompt.md`, attach
+`context.yaml` **and** `auction_<ID>_recall.json`, save the reply as
+`auction_<ID>_recall_flags.json`."*
+
+Wait for the user, then fold the confirmations in:
+```bash
+python3 tools/recall_check.py <ID> apply
+```
+It validates the response exactly as `expand_flags.py` does (sentinel,
+foreign lot_numbers, forbidden keys), refuses to run twice, keeps the
+original as `_flags_before_recall.json`, and rewrites `_flags.json` in place
+— so everything from here on is unchanged. Report how many suspects it
+confirmed versus refused; a run that confirms nearly all of them means the
+main pass regressed, not that the check is generous.
+
+If the user wants to skip the chat this week, that is fine: `_flags.json` is
+already complete without it. Never skip `plan` — its table is the cheapest
+recall measurement there is.
+
 Then merge onto the all-false base so the `lot_set_sha` is carried through:
 ```bash
 python -m merge_categorized --existing data/categorized/auction_<ID>_base.json \
@@ -400,6 +436,8 @@ rm -f data/raw/auction_*.json
 - `_for_resale.json`, `_resale_groups.json`, `_candidates.json`, `_base.json`,
   `_sweep.json`, `_prefilter.json`, `_flags.json`, `_chunk_NN.json`,
   `_chunk_NN_flags.json`, `_chunk_NN_prompt.md`, `_resale_prompt.md`,
+  `_recall.json`, `_recall_flags.json`, `_recall_prompt.md`,
+  `_flags_before_recall.json`,
   `_resale_fix*`, `_resale_deduped_before_fix.json`,
   `_flag_groups.json` and `context.yaml` from any prior week — and `_categorized.json` / `_for_agent.json` from any week before last.
 

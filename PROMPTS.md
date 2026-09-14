@@ -11,6 +11,7 @@ silently. The prompts themselves are templates —
 |---|---|---|---|---|
 | 1. Bat's List + personal match | `prompts/flagging.md` | `auction_<ID>_chunk_NN_prompt.md` (one per chunk) | `context.yaml` + `auction_<ID>_chunk_NN.json` | `auction_<ID>_chunk_NN_flags.json` |
 | 2. Resale valuation | `prompts/resale.md` | `auction_<ID>_resale_prompt.md` | `auction_<ID>_for_resale.json` only | `auction_<ID>_resale_deduped.json` |
+| 1a. Recall repair (after pass 1) | `prompts/recall.md` | `auction_<ID>_recall_prompt.md` (one chat) | `context.yaml` + `auction_<ID>_recall.json` | `auction_<ID>_recall_flags.json` |
 
 — and `tools/render_prompts.py` fills them in. `tools/chunk_flagging.py` and
 `tools/slim_resale.py` both call it at the end of their run, so the rendered
@@ -280,3 +281,35 @@ and nothing else — no `context.yaml`, no `buckets.yaml`, no `profile.yaml`.
 
 Once every reply is saved under the name its prompt gave, tell Claude and it
 will pick up at `CLAUDE.md` step 5.
+
+## Pass 1a — recall repair (`prompts/recall.md`)
+
+`tools/recall_check.py <ID> plan` runs after `expand_flags.py` and builds this
+chat from the pass's own output. It exists because the flagging pass reads
+type words far better than product names. Measured on 2026-09-13 (auction
+774972): every Logitech lot whose title said KEYBOARD or MOUSE was flagged,
+and none of the seven that said only "MX KEYS FOR MAC" or "MX ANYWHERE 3S MAC
+COMPACT WIRELESS" — one of them between two flagged MX Keys rows in the same
+chunk. Same run, larger: "PHYLOSAL A3 LED LIGHT PAD FOR DIAMOND PAINTING"
+went to Kids' craft 44 times; the 64 lots of the identical pad titled
+"ULTRA-THIN BOX" or "RECHARGEABLE LIGHT BOARD" went nowhere.
+
+Both shapes are visible without a model: an unflagged product that shares
+its leading title words with a flagged one, or that matches a bucket's own
+seed inside a HiBid category the bucket dominates. Neither is proof — a toy
+Dyson matches "vacuum" — so the suspects go to a chat that is asked a much
+narrower question than the pass was: here is the lot, here is the flagged
+sibling or the keyword that made it suspect, confirm or refuse against the
+bucket description. That is a pairwise judgment the model does well; the
+pass's task — spot one unrecognised row in 2,750 — is the one it does badly.
+
+The output schema is identical to pass 1 and `apply` validates it with the
+same code, so nothing downstream changes. The chat sees only products with
+**no** bucket; adding a second bucket to something already flagged is a
+different, smaller problem and would have the repair rewriting rows the pass
+got right. What the check cannot see is a product with no flagged sibling and
+no seed match — that residual is real and only a person noticing shrinks it.
+
+The same 2026-09-13 run also motivated the "product line or model name"
+rule now in `prompts/flagging.md`; the repair exists for whatever leaks past
+it, and its per-bucket table is the measure of how much that is.

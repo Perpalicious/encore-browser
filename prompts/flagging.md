@@ -67,6 +67,14 @@ Rules:
   flag generic no-brand pieces") applies that bar in full. Being complete
   about the lots you return and being selective about which ones qualify are
   both required.
+- **A product line or model name identifies an item as surely as a type
+  word.** "LOGITECH MX KEYS FOR MAC" is a keyboard, "INSTAX MINI FILM" is
+  camera film, and "PHYLOSAL A3 LED LIGHT PAD" is a tracing pad, whether or
+  not the title says keyboard, camera or craft. Do not wait for the type
+  word. And **if you flag one lot of a product, flag every lot whose title
+  names the same product** — the run of 2026-09-13 put "…LIGHT PAD FOR
+  DIAMOND PAINTING" in Kids' craft 44 times and left 64 lots of the same pad
+  titled "…LIGHT PAD, ULTRA-THIN BOX" unflagged.
 - **`bats_subtype` is required whenever `is_bats_list` is true.** It is a
   1-3 word lowercase label for **what the item actually is**, one level finer
   than the bucket. Each bucket lists a `subtypes` vocabulary — use one of

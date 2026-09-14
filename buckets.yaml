@@ -802,10 +802,14 @@ buckets:
   - name: "Kitchen appliances"
     group: "Kitchen & dining"
     description: >
-      Countertop and small kitchen appliances — stand mixers, blenders,
-      food processors, air fryers, toasters, coffee makers, electric
-      kettles, multi-cookers/Instant Pots. Favor recognizable brands and
-      quality/working units over generic or non-working items.
+      Countertop and small kitchen appliances — stand mixers, hand mixers,
+      blenders and immersion blenders, food processors, air fryers,
+      toasters, coffee makers, electric kettles, multi-cookers/Instant Pots,
+      rice cookers, sandwich and waffle makers, popcorn makers. Branded or
+      generic: flag every working countertop appliance. This is NOT a brand
+      gate — on 2026-09-13 "favor recognizable brands" was read as one, and
+      Black+Decker toasters, Braun food processors, Breville sandwich makers
+      and Cuckoo rice cookers were all left out. Only skip non-working units.
     examples: ["KitchenAid", "Vitamix", "Breville", "Cuisinart", "Ninja"]
     subtypes: ["stand mixers", "blenders", "air fryers", "coffee makers",
                "toasters", "multi-cookers", "food processors", "kettles"]

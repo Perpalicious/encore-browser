@@ -38,6 +38,24 @@ Each rendered prompt carries its own chunk's row count, last `lot_number`
 and its output name `auction_<ID>_chunk_NN_flags.json`. Typically 7 chunks of
 2,750 products plus `context.yaml` — 8 uploads.
 
+### The recall repair (one chat, after `expand_flags.py`)
+
+Same inputs as a flagging chunk — `context.yaml` **is** required — but the
+rows come from the pass's own output rather than the auction. Built by
+`tools/recall_check.py <ID> plan`, folded back by `... apply`.
+
+| Source | Path | Role |
+|---|---|---|
+| Prompt template | `prompts/recall.md` | Same output schema and sentinel as flagging |
+| Rendered prompt | `data/categorized/auction_<ID>_recall_prompt.md` | Written by `recall_check.py plan`. Complete: paste whole |
+| Config | `data/categorized/context.yaml` | The same file the flagging chats used. Attach |
+| Data in | `data/categorized/auction_<ID>_recall.json` | Unflagged products with a `suspect` list: the bucket and the evidence (a flagged sibling, or a seed in a dominated category) |
+| Data out | `data/categorized/auction_<ID>_recall_flags.json` | Consumed by `recall_check.py apply`, which rewrites `_flags.json` in place |
+
+Typically 400-500 rows. The chat may confirm a bucket outside the `suspect`
+list; it may not touch a product that is not in its input, and `apply`
+refuses a response that tries.
+
 Two properties the automation must not break:
 
 - **The pass returns matches only**, then `{"chunk_complete": "<LAST LOT>"}` as

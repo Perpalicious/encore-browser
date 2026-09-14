@@ -11,10 +11,12 @@ from typing import Any
 
 from .classifier import DeterministicClassifier
 from .config import ConfigError, Rules, load_rules
+from .normalize import normalize_text
 
 MIN_POSITIVES = 20
 MIN_NEGATIVES = 20
 REQUIRED_CRITICAL = {"keyboard", "proven_resale", "personal_hard_gate"}
+EVIDENCE_KINDS = {"title_seed", "category_prefix", "subtype_terms"}
 
 
 class GoldError(ValueError):
@@ -59,16 +61,24 @@ def validate_coverage(rows: list[dict[str, Any]], rules: Rules,
             value = row.get(field)
             if not isinstance(value, list) or any(not isinstance(v, str) or not v for v in value):
                 failures.append(f"gold row {index}.{field} must be a list of nonempty strings")
+            elif len(value) != len(set(value)):
+                failures.append(f"gold row {index}.{field} contains duplicate values")
         expected = row.get("expected_buckets") if isinstance(row.get("expected_buckets"), list) else []
         forbidden = row.get("forbidden_buckets") if isinstance(row.get("forbidden_buckets"), list) else []
         unknown = (set(expected) | set(forbidden)) - known
         if unknown:
             failures.append(f"gold row {index} references unknown buckets: {sorted(unknown)}")
-        positive.update(expected)
-        negative.update(forbidden)
+        positive.update(set(expected))
+        negative.update(set(forbidden))
         if set(expected) & set(forbidden):
             failures.append(f"gold row {index} cannot expect and forbid the same bucket")
-        critical.update(row.get("critical_assertions") or [])
+        evidence = set(row.get("expected_evidence_kinds") or [])
+        if evidence - EVIDENCE_KINDS:
+            failures.append(f"gold row {index} has unknown evidence kinds: {sorted(evidence - EVIDENCE_KINDS)}")
+        assertions = set(row.get("critical_assertions") or [])
+        if assertions - REQUIRED_CRITICAL:
+            failures.append(f"gold row {index} has unknown critical assertions: {sorted(assertions - REQUIRED_CRITICAL)}")
+        critical.update(assertions)
         if not isinstance(row.get("expected_personal"), bool):
             failures.append(f"gold row {index}.expected_personal must be boolean")
         if expected and "expected_subtype" not in row:
@@ -85,7 +95,6 @@ def validate_coverage(rows: list[dict[str, Any]], rules: Rules,
                 failures.append(f"gold row {index} subtype is not controlled by an expected bucket")
             else:
                 subtype_covered.update(expected)
-        assertions = set(row.get("critical_assertions") or [])
         if "personal_hard_gate" in assertions:
             triggers_gate = (
                 row.get("condition") in rules.personal_gates.reject_conditions
@@ -94,6 +103,17 @@ def validate_coverage(rows: list[dict[str, Any]], rules: Rules,
             )
             if row.get("expected_personal") is not False or not triggers_gate:
                 failures.append(f"gold row {index} personal_hard_gate lacks a typed rejecting input")
+        source_text = normalize_text(" ".join(str(row.get(field) or "") for field in
+                                               ("title", "category", "hibid_category_path")))
+        if "keyboard" in assertions and (
+                "Keyboards & PC peripherals" not in expected or "keyboard" not in source_text):
+            failures.append(f"gold row {index} keyboard assertion lacks source semantics/expected bucket")
+        if "proven_resale" in assertions:
+            resale_terms = {normalize_text(term.strip()) for product in rules.proven_resale
+                            for term in product.include_any}
+            if row.get("expected_personal") is not True or not any(
+                    term and term in source_text for term in resale_terms):
+                failures.append(f"gold row {index} proven_resale lacks source semantics/personal match")
         if not isinstance(row.get("rationale"), str) or len(row["rationale"].strip()) < 10:
             failures.append(f"gold row {index} needs a human rationale of at least 10 characters")
 
@@ -114,10 +134,10 @@ def validate_coverage(rows: list[dict[str, Any]], rules: Rules,
             if not isinstance(reason, str) or len(reason.strip()) < 20:
                 failures.append(f"{bucket} exemption needs a justification of at least 20 characters")
                 continue
-            if not isinstance(min_positive, int) or not 1 <= min_positive < MIN_POSITIVES:
+            if type(min_positive) is not int or not 1 <= min_positive < MIN_POSITIVES:
                 failures.append(f"{bucket} exemption min_positive must be 1..{MIN_POSITIVES - 1}")
                 continue
-            if not isinstance(min_negative, int) or not 1 <= min_negative < MIN_NEGATIVES:
+            if type(min_negative) is not int or not 1 <= min_negative < MIN_NEGATIVES:
                 failures.append(f"{bucket} exemption min_negative must be 1..{MIN_NEGATIVES - 1}")
                 continue
             required_positive, required_negative = min_positive, min_negative

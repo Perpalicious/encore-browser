@@ -14,6 +14,11 @@ disposable build; the CLI rejects the production viewer path. Publication code
 will be considered only after a real Bat-reviewed gold fixture is committed
 and reviewed.
 
+Create that fixture with the local workflow in
+[`docs/GOLD_DATASET_REVIEW.md`](docs/GOLD_DATASET_REVIEW.md). It keeps machine
+predictions hidden by default, records review edits locally, and exports into
+the existing evaluator. It has no AI or publication step.
+
 ## What this is
 
 The Encore Lot Browser replaces the slow, hard-to-use HiBid website with a fast, searchable browser you run on your own computer. Each week you scrape the auction's lot data directly from HiBid, send it through your ChatGPT Auction Agent to flag Bat's List items, then build and open the viewer — a clean three-tab grid (All / Bat's List / Watched) that lets you search, drill through HiBid's category tree, star lots, and flip between light and dark mode.

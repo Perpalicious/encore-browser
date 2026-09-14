@@ -6,7 +6,7 @@ import pytest
 from deterministic_pipeline.classifier import Classification, DeterministicClassifier
 from deterministic_pipeline.config import load_rules
 from deterministic_pipeline.evaluate import (
-    GoldError, evaluate, evaluate_gold, load_gold, passes_gates,
+    GoldError, evaluate, evaluate_gold, load_gold, passes_gates, validate_coverage,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -91,3 +91,23 @@ def test_rare_bucket_exemption_must_be_explicit_and_justified(tmp_path):
     }))
     report = evaluate_gold(path, rules)
     assert any("justification" in failure for failure in report["coverage_failures"])
+
+
+def test_coverage_rejects_duplicate_values_and_unknown_vocab():
+    rules = load_rules(ROOT / "buckets.yaml", ROOT / "profile.yaml")
+    fixture = row(1, ["Keyboards & PC peripherals", "Keyboards & PC peripherals"], [])
+    fixture.update({"title": "Keyboard", "expected_evidence_kinds": ["made_up"],
+                    "critical_assertions": ["made_up"]})
+    failures = validate_coverage([fixture], rules, {})
+    assert any("duplicate values" in failure for failure in failures)
+    assert any("unknown evidence" in failure for failure in failures)
+    assert any("unknown critical" in failure for failure in failures)
+
+
+def test_coverage_rejects_boolean_exemption_counts():
+    rules = load_rules(ROOT / "buckets.yaml", ROOT / "profile.yaml")
+    fixture = row(1, [], [])
+    failures = validate_coverage([fixture], rules, {
+        "Smart locks": {"reason": "Reviewed supply is genuinely too small for normal coverage.",
+                        "min_positive": True, "min_negative": False}})
+    assert any("min_positive" in failure for failure in failures)

@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "lot_number": "1",
+      "title": "Razer mechanical gaming keyboard",
+      "condition": "Excellent",
+      "hibid_category_path": "Computers & Electronics - Computers - Peripherals - Keyboards / Mice",
+      "description": "Working keyboard",
+      "image_url": "https://example.test/keyboard.jpg"
+    },
+    {
+      "lot_number": "2",
+      "title": "Under-desk keyboard tray",
+      "condition": "Excellent",
+      "hibid_category_path": "Home Goods - Furniture",
+      "description": "Mounting hardware"
+    },
+    {
+      "lot_number": "3",
+      "title": "Shark WandVac handheld vacuum",
+      "condition": "Excellent",
+      "hibid_category_path": "Home Goods - Vacuums",
+      "description": "Handheld vacuum"
+    },
+    {
+      "lot_number": "4",
+      "title": "Bulk lot pool pump",
+      "condition": "Excellent",
+      "functional": "No",
+      "hibid_category_path": "Lawn & Garden - Pools",
+      "description": "For parts"
+    },
+    {
+      "lot_number": "5",
+      "title": "Razer mechanical gaming keyboard",
+      "condition": "Excellent",
+      "hibid_category_path": "Computers & Electronics - Computers - Peripherals - Keyboards / Mice",
+      "description": "Working keyboard",
+      "image_url": "https://example.test/keyboard.jpg"
+    },
+    {
+      "lot_number": "6",
+      "title": "Logitech G wireless mouse",
+      "condition": "Excellent",
+      "hibid_category_path": "Computers & Electronics - Computers - Peripherals - Keyboards / Mice",
+      "description": "Wireless mouse"
+    }
+  ]
+}

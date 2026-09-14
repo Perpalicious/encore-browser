@@ -43,6 +43,17 @@ on subtype, provenance, and critical-example failures. Until it passes, the
 manual process below remains the production
 fallback. See `docs/DETERMINISTIC_PIPELINE_PLAN.md` for the cutover rules.
 
+Use `docs/GOLD_DATASET_REVIEW.md` to create that fixture. The commands are
+`python -m deterministic_pipeline.review generate`, `serve`, and `export`.
+Candidate predictions and old labels are context only and stay hidden until
+explicitly revealed. Sessions and exports live under ignored `data/review/`.
+Export refuses incomplete or coverage-inadequate records before writing,
+requires the structured `--reviewed-on` / `--attest-human-review` attestation,
+and protects repository/input paths. Once coverage passes it preserves a gold
+dataset even when accuracy fails, since that evidence is needed for tuning.
+The attestation is process evidence rather than cryptographic proof. The
+workflow cannot build or publish a viewer bundle.
+
 This repo scrapes weekly HiBid/Encore auctions, runs them through two
 ChatGPT passes (combined Bat's List + personal match, and resale
 valuation), builds a static bundle, and deploys it to GitHub Pages via a local

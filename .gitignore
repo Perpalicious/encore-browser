@@ -23,6 +23,11 @@ data/raw/
 data/categorized/*
 !data/categorized/README.md
 !data/categorized/auction_703264_categorized.json
+# Shadow classifier output and reports; regenerated from the saved raw file.
+data/deterministic/
+# Review sessions/exports contain reviewer identity and source details.
+data/review/
+tests/fixtures/deterministic_classification_gold.json
 # Prior weeks, moved out of the working folder (see "Data retention" in CLAUDE.md)
 data/archive/
 # Bid/watch history exports. The RAW history is a per-lot log of what this

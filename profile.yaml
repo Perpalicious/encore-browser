@@ -302,6 +302,24 @@ interests:
       Tesla-fit parts appeared once.
     seeds: ["tesla", "model 3", "ev charger", "nema 14-50", "j1772"]
 
+# Typed hard gates used by the local deterministic classifier. The prose in
+# `not_wanted` remains the explanation; only these explicit values execute.
+deterministic:
+  project_buckets:
+    "Home gym build-out — rack, bar, plates, flooring, accessories.":
+      ["Home gym & weightlifting"]
+    "Garage/workshop organisation and tooling.":
+      ["Power tools", "Hand tools", "Garage & tool organization", "Adhesives & tape", "Batteries & chargers", "Extension cords & power strips", "Tie-downs"]
+    "3D printing: filament, spare parts, consumables.":
+      ["3D printing supplies"]
+    "Yard and lawn upkeep on an ongoing basis.":
+      ["Lawn equipment", "Garden hose", "Gardening tools", "Garden & lawncare misc", "Tarps", "Lawn treatment & pest control"]
+  hard_gates:
+    reject_conditions: ["For Parts Only", "Do Not Bid"]
+    reject_functional: ["No", "Unable to Test"]
+    reject_missing_major_parts: ["Yes", "Unknown"]
+    generic_accessory_terms: ["adapter", "cable", "charger", "case", "cover", "holder", "mount", "single utensil"]
+
 # Products already resold at a profit, so the margin is known rather than
 # guessed. Flag every reappearance. Keep this list short and user-maintained
 # — it is high precision by construction and worthless if it drifts into a
@@ -309,6 +327,9 @@ interests:
 proven_resale:
   - product: "Shark WandVac handheld vacuum"
     seeds: ["wandvac", "wand vac"]
+    # A model-name hit on a replacement part must not inherit the completed
+    # whole-product resale decision.
+    exclude: ["filter", "battery", "charger", "adapter", "attachment", "accessory", "replacement"]
     note: >
       Resold once already. 21 bids across the history, 16 in the 2026-07-19
       auction alone — the one same-product run in the data that reflects

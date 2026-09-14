@@ -1,5 +1,24 @@
 # Encore Lot Browser — Operator Manual
 
+> **Migration status (2026-09-14):** A local, zero-model classification path
+> is available with `python -m deterministic_pipeline --auction-id <ID>`.
+> It writes complete classifications, provenance, and an evidence
+> report without a chat handoff. It remains a shadow path until the
+> human-reviewed accuracy gates in `docs/DETERMINISTIC_PIPELINE_PLAN.md` pass;
+> current comparisons to legacy generated labels are diagnostic agreement,
+> not proof of accuracy.
+
+The command is shadow-only by default and writes under `data/deterministic/`.
+It has no publication capability. Use `--build-output /tmp/bundle.json` for a
+disposable build; the CLI rejects the production viewer path. Publication code
+will be considered only after a real Bat-reviewed gold fixture is committed
+and reviewed.
+
+Create that fixture with the local workflow in
+[`docs/GOLD_DATASET_REVIEW.md`](docs/GOLD_DATASET_REVIEW.md). It keeps machine
+predictions hidden by default, records review edits locally, and exports into
+the existing evaluator. It has no AI or publication step.
+
 ## What this is
 
 The Encore Lot Browser replaces the slow, hard-to-use HiBid website with a fast, searchable browser you run on your own computer. Each week you scrape the auction's lot data directly from HiBid, send it through your ChatGPT Auction Agent to flag Bat's List items, then build and open the viewer — a clean three-tab grid (All / Bat's List / Watched) that lets you search, drill through HiBid's category tree, star lots, and flip between light and dark mode.

@@ -46,7 +46,11 @@ fallback. See `docs/DETERMINISTIC_PIPELINE_PLAN.md` for the cutover rules.
 Use `docs/GOLD_DATASET_REVIEW.md` to create that fixture. The commands are
 `python -m deterministic_pipeline.review generate`, `serve`, and `export`.
 Candidate predictions and old labels are context only and stay hidden until
-explicitly revealed. Sessions and exports live under ignored `data/review/`.
+explicitly revealed for one item. The local dashboard supports a filtered
+queue, controlled multi-bucket labels, export-readiness coverage, and separate
+audited owner feedback. Its feedback JSON excludes gold labels and machine
+context and cannot change rules or publish data. Sessions and exports live
+under ignored `data/review/`.
 Export refuses incomplete or coverage-inadequate records before writing,
 requires the structured `--reviewed-on` / `--attest-human-review` attestation,
 and protects repository/input paths. Once coverage passes it preserves a gold

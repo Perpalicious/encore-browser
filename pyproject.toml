@@ -30,3 +30,6 @@ addopts = "-v"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["scraper*", "build*", "deterministic_pipeline*", "diff_categorized*", "merge_categorized*"]
+
+[tool.setuptools.package-data]
+deterministic_pipeline = ["review_dashboard/*.html", "review_dashboard/*.css", "review_dashboard/*.js"]

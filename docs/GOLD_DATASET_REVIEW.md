@@ -43,19 +43,54 @@ python -m deterministic_pipeline.review serve \
   --reviewer "Bat" --open
 ```
 
-The server binds only to IPv4 loopback (`127.0.0.1` or `localhost`). It shows source text, condition, category,
-structured gate fields, and image links. Predictions are absent from the first
-API response and appear only after **Reveal predictions** is selected. Review
-the source before revealing them.
+The server binds only to IPv4 loopback (`127.0.0.1` or `localhost`). Its local
+dashboard has a searchable queue and a detail workspace with source text,
+condition, category, structured gate fields, and image links. Filter by review
+status, human-labelled bucket, condition, personal/critical status, or feedback
+disposition. Selection-reason filtering becomes available only for records
+whose context you explicitly revealed in that browser session. **Next unreviewed** and the queue keep
+large sessions manageable.
 
-Enter expected and forbidden buckets one per line, controlled subtype,
-expected provenance kinds, personal decision, critical assertions, and a
-specific rationale. Check **Reviewed and complete** only afterward. Save with
-Ctrl/Command+S and navigate with Alt+arrow. Saves use revision checks so a
+Predictions and legacy labels are absent from the session response. **Reveal
+for this item** requests machine context for that record alone; neither the
+default response nor save responses expose it. Review the source before using
+that control. The header watermark and amber context panel distinguish hidden
+machine context from authoritative human labels.
+
+For each controlled bucket, select **Expected**, **Forbidden**, or neither.
+Then select a controlled subtype, expected provenance kinds, personal decision,
+critical assertions, and a specific rationale. Check **Reviewed and complete**
+only afterward. Save with Ctrl/Command+S; use N for the next unreviewed record
+or Alt+up/down to move in the queue. The sticky status area reports saves,
+validation errors, conflicts, and unsaved work. Closing, refreshing, or moving
+records with unsaved changes prompts before discarding them. Saves use revision checks so a
 stale tab cannot overwrite newer work, atomically replace the session, retain
 a `.bak` recovery copy, and record actor, UTC time, and changed values. The
 local server validates Host, Origin, JSON content type, and a session CSRF
-token on mutations. This is an audit trail, not cryptographic proof.
+token on mutations. Static assets have a restrictive content security policy;
+listing text is rendered as text rather than HTML. This is an audit trail, not
+cryptographic proof.
+
+## Record improvement feedback
+
+The **Owner feedback** panel is separate from gold truth. Use its controlled
+disposition (`correct`, `rule miss`, `overmatch`, `taxonomy issue`, `source
+insufficient`, or `revisit`) and reason, then optionally suggest buckets, a
+seed, an exclusion, or a subtype. Feedback has its own optimistic revision and
+audit trail. Saving it never changes expected/forbidden labels, classifier
+rules, or evaluator exports.
+
+**Download feedback JSON** creates a local, feedback-only artifact containing
+source identifiers, typed suggestions, and feedback audit entries. It excludes
+gold labels, machine predictions, and legacy labels. It is evidence for a
+later, separately reviewed rules change; it has no import or publication path.
+
+The readiness panel uses only completed human labels. It reports completion,
+positive and near-negative coverage against static evaluator minimums, subtype
+gaps, missing human critical assertions, and feedback counts. It does not expose
+candidate selection strata or infer coverage from hidden predictions. These are
+live diagnostics; the export command below remains the authoritative validation
+gate.
 
 Rare exemptions use this evaluator contract and must be written through the
 local `/api/exemptions` endpoint so the session records their audit entry:

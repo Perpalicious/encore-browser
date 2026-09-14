@@ -6,13 +6,15 @@ import threading
 from datetime import date
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 
 from deterministic_pipeline.config import load_rules
 from deterministic_pipeline.review import (
     ATTESTATION_STATEMENT, ConflictError, ReviewError, SessionStore,
-    atomic_json, export_gold, generate_session, handler, load_session,
+    atomic_json, export_gold, feedback_export, generate_session, handler, load_session,
+    progress, validate_feedback,
     validate_export_path, validate_generation_path, validate_review,
 )
 
@@ -88,6 +90,47 @@ def test_atomic_backup_resume_audit_and_optimistic_concurrency(tmp_path, rules):
         store.update(item["id"], complete(item["review"]), "Bat", 0)
     path.write_text("broken")
     assert load_session(path, rules)["schema_version"] == 2
+
+
+def feedback(**overrides):
+    return {"disposition": "rule_miss", "reason": "seed_missing",
+            "notes": "The exact product family needs a controlled seed.",
+            "suggested_buckets": ["Keyboards & PC peripherals"],
+            "suggested_seed": "specific keyboard family", "suggested_exclusion": "",
+            "suggested_subtype": "", **overrides}
+
+
+def test_feedback_is_controlled_separate_audited_and_revision_protected(tmp_path, rules):
+    path = tmp_path / "session.json"; session = generate_session(RAW, path, rules, "Bat")
+    item = session["items"][0]; original_review = copy.deepcopy(item["review"])
+    store = SessionStore(path, rules); saved = store.update_feedback(item["id"], feedback(), "Bat", 0)
+    assert saved["feedback_revision"] == 1
+    assert saved["feedback_audit"][0]["changes"]["disposition"]["after"] == "rule_miss"
+    assert saved["review"] == original_review and saved["revision"] == 0
+    with pytest.raises(ConflictError, match="stale feedback"):
+        store.update_feedback(item["id"], feedback(notes="second tab"), "Bat", 0)
+    with pytest.raises(ReviewError, match="reason is not controlled"):
+        validate_feedback(feedback(reason="invented"), rules)
+    with pytest.raises(ReviewError, match="requires a controlled reason"):
+        validate_feedback(feedback(reason=None), rules)
+    with pytest.raises(ReviewError, match="suggested_subtype is not controlled"):
+        validate_feedback(feedback(suggested_subtype="invented"), rules)
+    exported = feedback_export(load_session(path, rules))
+    assert exported["items"][0]["feedback"]["notes"].startswith("The exact")
+    assert "review" not in exported["items"][0] and "prediction" not in exported["items"][0]
+
+
+def test_progress_reports_coverage_critical_feedback_and_export_blockers(tmp_path, rules):
+    path = tmp_path / "session.json"; session = generate_session(RAW, path, rules, "Bat")
+    store = SessionStore(path, rules); item = session["items"][0]
+    store.update_feedback(item["id"], feedback(), "Bat", 0)
+    summary = progress(store.read(), rules)
+    assert summary["export_blocked"] and summary["remaining"] == summary["total"]
+    assert summary["critical_gaps"] == sorted(["keyboard", "personal_hard_gate", "proven_resale"])
+    assert summary["feedback_counts"]["rule_miss"] == 1
+    assert not ({"sampling", "strata", "empty_strata", "unresolved_strata"} & set(summary))
+    assert set(summary["by_bucket"]["Smart locks"]) >= {
+        "positive", "negative", "target_positive", "target_negative", "subtype_gap"}
 
 
 def test_validation_rejects_duplicates_vocab_subtype_and_bad_critical(tmp_path, rules):
@@ -195,20 +238,41 @@ def test_server_protects_origin_csrf_content_type_blindness_and_stale_writes(tmp
     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
     try:
         connection = http.client.HTTPConnection("127.0.0.1", server.server_port)
-        status, body = web_request(connection, server, "GET", "/api/session")
-        item = body["items"][0]; assert status == 200 and "prediction" not in item and "selection_keys" not in item
+        status, body = web_request(connection, server, "GET", "/api/session?reveal=1")
+        item = body["items"][0]; encoded_id = quote(item["id"], safe="")
+        assert item["id"].startswith("strict-v1:") and "%3A" in encoded_id
+        assert status == 200 and "prediction" not in item and "selection_keys" not in item
+        assert not ({"sampling", "strata", "empty_strata", "unresolved_strata"} & set(body["progress"]))
+        serialized = json.dumps(body)
+        assert "legacy_disagreement" not in serialized and "positive:" not in serialized
+        assert "near_negative:" not in serialized and '"available"' not in serialized
+        status, revealed = web_request(connection, server, "GET", f"/api/item/{encoded_id}/prediction")
+        assert status == 200 and revealed["id"] == item["id"] and "prediction" in revealed
+        assert all("prediction" not in other for other in body["items"])
         token, origin = body["csrf_token"], f"http://127.0.0.1:{server.server_port}"
         payload = json.dumps({"review": complete(item["review"]), "expected_revision": 0})
-        status, _ = web_request(connection, server, "POST", f"/api/item/{item['id']}", payload,
+        status, _ = web_request(connection, server, "POST", f"/api/item/{encoded_id}", payload,
                                 {"Content-Type": "text/plain", "Origin": origin, "X-CSRF-Token": token})
         assert status == 415
-        status, _ = web_request(connection, server, "POST", f"/api/item/{item['id']}", payload,
+        status, _ = web_request(connection, server, "POST", f"/api/item/{encoded_id}", payload,
                                 {"Content-Type": "application/json", "Origin": "https://evil.test", "X-CSRF-Token": token})
         assert status == 403
         headers = {"Content-Type": "application/json", "Origin": origin, "X-CSRF-Token": token}
-        status, saved = web_request(connection, server, "POST", f"/api/item/{item['id']}", payload, headers)
+        status, saved = web_request(connection, server, "POST", f"/api/item/{encoded_id}", payload, headers)
         assert status == 200 and "prediction" not in saved["item"] and "selection_keys" not in saved["item"]
-        assert web_request(connection, server, "POST", f"/api/item/{item['id']}", payload, headers)[0] == 409
+        assert web_request(connection, server, "POST", f"/api/item/{encoded_id}", payload, headers)[0] == 409
+        feedback_payload = json.dumps({"feedback": feedback(), "expected_revision": 0})
+        status, saved_feedback = web_request(
+            connection, server, "POST", f"/api/feedback/{encoded_id}", feedback_payload, headers)
+        assert status == 200 and "prediction" not in saved_feedback["item"]
+        assert web_request(connection, server, "POST", f"/api/feedback/{encoded_id}",
+                           feedback_payload, headers)[0] == 409
+        assert web_request(connection, server, "GET", "/api/item/strict-v1%ZZbad/prediction")[0] == 400
+        assert web_request(connection, server, "GET", "/api/item/strict-v1%2Fbad/prediction")[0] == 400
+        assert web_request(connection, server, "POST", "/api/item/strict-v1%ZZbad",
+                           payload, headers)[0] == 400
+        assert web_request(connection, server, "POST", "/api/feedback/strict-v1%ZZbad",
+                           feedback_payload, headers)[0] == 400
         for invalid_length in ("abc", "-1"):
             bad_length = http.client.HTTPConnection("127.0.0.1", server.server_port)
             bad_length.request("POST", "/api/exemptions", "{}", {
@@ -219,6 +283,37 @@ def test_server_protects_origin_csrf_content_type_blindness_and_stale_writes(tmp
             assert json.loads(response.read())["error"]
         bad = http.client.HTTPConnection("127.0.0.1", server.server_port)
         bad.request("GET", "/api/session", headers={"Host": "evil.test"}); assert bad.getresponse().status == 400
+    finally:
+        server.shutdown(); server.server_close(); thread.join()
+
+
+def test_dashboard_assets_csp_xss_and_feedback_download(tmp_path, rules):
+    path = tmp_path / "session.json"; session = generate_session(RAW, path, rules, "Bat")
+    session["items"][0]["source"]["title"] = "<script>alert('source')</script>"
+    atomic_json(path, session); store = SessionStore(path, rules)
+    store.update_feedback(session["items"][0]["id"], feedback(), "Bat", 0)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler(store, "Bat"))
+    thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+    try:
+        connection = http.client.HTTPConnection("127.0.0.1", server.server_port)
+        connection.request("GET", "/", headers={"Host": f"127.0.0.1:{server.server_port}"})
+        response = connection.getresponse(); html = response.read().decode()
+        assert response.status == 200 and "script-src 'self'" in response.headers["Content-Security-Policy"]
+        assert "<script>alert('source')</script>" not in html
+        assert '<script src="/assets/app.js" defer></script>' in html
+        assert '<link rel="stylesheet" href="/assets/visibility.css">' in html
+        connection.request("GET", "/assets/visibility.css",
+                           headers={"Host": f"127.0.0.1:{server.server_port}"})
+        response = connection.getresponse(); visibility = response.read().decode()
+        assert response.status == 200 and "[hidden]" in visibility and "!important" in visibility
+        connection.request("GET", "/assets/app.js", headers={"Host": f"127.0.0.1:{server.server_port}"})
+        response = connection.getresponse(); javascript = response.read().decode()
+        assert response.status == 200 and "textContent" in javascript
+        assert 'input.setAttribute("aria-label",`${label}: ${bucket}`)' in javascript
+        assert "Your draft is preserved" in javascript and "if(!dirty)renderRecord()" in javascript
+        status, download = web_request(connection, server, "GET", "/api/feedback-export.json")
+        assert status == 200 and len(download["items"]) == 1
+        assert "review" not in download["items"][0] and "prediction" not in download["items"][0]
     finally:
         server.shutdown(); server.server_close(); thread.join()
 

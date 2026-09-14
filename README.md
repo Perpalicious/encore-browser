@@ -16,8 +16,9 @@ and reviewed.
 
 Create that fixture with the local workflow in
 [`docs/GOLD_DATASET_REVIEW.md`](docs/GOLD_DATASET_REVIEW.md). It keeps machine
-predictions hidden by default, records review edits locally, and exports into
-the existing evaluator. It has no AI or publication step.
+predictions hidden per item, provides a searchable local review dashboard,
+records gold labels and separately audited rule feedback, and exports into the
+existing evaluator. It has no AI or publication step.
 
 ## What this is
 

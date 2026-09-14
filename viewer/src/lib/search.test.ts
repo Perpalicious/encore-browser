@@ -51,6 +51,12 @@ const LOTS: Lot[] = [
     category_path: ['Kitchen', 'Utensils'],
     description: 'Set of six spoons; includes a colander.',
   }),
+  lot({
+    lot_number: '5',
+    title: 'Logitech M330 Silent Wireless Mouse',
+    subcategory: 'Keyboards / Mice',
+    category_path: ['Computers', 'Peripherals', 'Keyboards / Mice'],
+  }),
 ];
 const index = buildSearchIndex(LOTS);
 
@@ -74,9 +80,10 @@ describe('exact search (default mode)', () => {
     expect(exactMatchLotNumbers(index, 'cordless mixer').size).toBe(0);
   });
 
-  it('still covers description and category_path', () => {
+  it('covers descriptions without treating category labels as product text', () => {
     expect(exactMatchLotNumbers(index, 'colander').has('4')).toBe(true); // description
-    expect(exactMatchLotNumbers(index, 'utensils').has('4')).toBe(true); // category_path
+    expect(exactMatchLotNumbers(index, 'utensils').has('4')).toBe(false); // category_path
+    expect(exactMatchLotNumbers(index, 'keyboard').has('5')).toBe(false);
   });
 
   it('returns an empty set for a blank query', () => {
@@ -103,9 +110,10 @@ describe('fuzzy search (opt-in mode)', () => {
     expect(fuzzyMatchLotNumbers(index, 'kitchenad').has('3')).toBe(true);
   });
 
-  it('still finds description / category_path matches via substring union', () => {
+  it('still finds description matches without category-label leakage', () => {
     expect(fuzzyMatchLotNumbers(index, 'colander').has('4')).toBe(true); // description
-    expect(fuzzyMatchLotNumbers(index, 'utensils').has('4')).toBe(true); // category_path
+    expect(fuzzyMatchLotNumbers(index, 'utensils').has('4')).toBe(false); // category_path
+    expect(fuzzyMatchLotNumbers(index, 'keyboard').has('5')).toBe(false);
   });
 
   it('returns an empty set for a blank query', () => {

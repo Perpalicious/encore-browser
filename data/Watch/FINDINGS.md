@@ -1,17 +1,18 @@
 # What the bid/watch history actually says
 
-Source: 32 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-09-06**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 833 unique lots (279 bid, 554 watch-only).
-Outcomes: 202 Outbid, 77 May Have Won.
+Source: 35 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-09-13**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 913 unique lots (304 bid, 609 watch-only).
+Outcomes: 222 Outbid, 82 May Have Won.
 
-Last refreshed **2026-09-10**, which added 97 lots (45 bid, 52 watch) from the
-auction that closed 9/6/26. All 97 joined to
-`data/categorized/auction_764523_for_agent.json` on `lot_number` with a
-matching title prefix, so that batch carries **full untruncated titles** and a
-real `condition` instead of the brand-only inference the earlier batches were
-stuck with. Doing the export in the same week is what bought that — see
-Step 1.
+Last refreshed **2026-09-15**, which added 80 lots (25 bid, 55 watch) from
+auction 774972, closed 9/13/26. All 80 joined to
+`data/categorized/auction_774972_for_agent.json` on `lot_number` with a
+matching title prefix. The 2026-09-10 refresh (97 lots, 45 bid, auction
+764523) did the same, so the two most recent batches carry **full untruncated
+titles** and a real `condition` instead of the brand-only inference the
+earlier batches were stuck with. Doing the export in the same week is what
+buys that — see Step 1.
 
 `history.tsv` is **append-only and local** (gitignored — it is a per-lot log
 of what this household bid on, and this repo is public). This file is the
@@ -31,21 +32,24 @@ is a precision gain rather than a change of method.
 
 ## 1. The taxonomy gap
 
-Scoring all 833 tracked lots against current `buckets.yaml` seeds *and*
+Scoring all 913 tracked lots against current `buckets.yaml` seeds *and*
 `profile.yaml` pseudo-bucket seeds:
 
 | | lots | share |
 |---|---|---|
-| matched at least one bucket / seed | 674 | 81% |
-| **matched nothing at all** | **159** | **19%** |
-| …of the 279 real *bids* | **55 unmatched** | **20%** |
+| matched at least one bucket / seed | 743 | 81% |
+| **matched nothing at all** | **170** | **19%** |
+| …of the 304 real *bids* | **56 unmatched** | **18%** |
 
 **The 2026-08-30 taxonomy expansion halved this, and the measurement is
 apples-to-apples.** Re-scoring the *same* 736 rows the original 31% / 40% was
 computed from, against the current 62-bucket taxonomy, gives 19% / 20% — so
 the improvement is the new buckets, not the new rows. The 97 rows added on
 2026-09-10 land at 22% / 20% independently, which says the gap is stable
-rather than still closing.
+rather than still closing. The 80 rows added on 2026-09-15 land at 14% / 4%
+— but scored against the 63-bucket taxonomy that had just been edited
+*around* this week's bundle (see the 2026-09-15 section), so that batch
+cannot be read as the gap closing on its own.
 
 One in five things bid on still has nowhere to land, and that is not fixable
 in `PROMPTS.md` — a category with no bucket and no seed cannot be surfaced by
@@ -563,6 +567,164 @@ are worth acting on, in order of cheapness:
 
 ---
 
+# What the 2026-09-15 refresh found
+
+**One auction (774972, closed 9/13/26). 80 lots, 25 bids.** Same rule as
+last time: one week answers coverage questions and cannot move a rate. No
+lift ratio in §3 was recomputed for this refresh; the supply base is still
+the four weeks listed at the top. This week's slimmed file adds 28,034 lots
+to what is on disk, so the next refresh that *does* recompute lifts has
+130,384 lots of supply to divide by.
+
+**Taxonomy caveat.** The working tree carried an uncommitted edit to
+`buckets.yaml` when this refresh ran — `Glassware & drinkware` split into
+glass-only plus a new `Insulated drinkware` bucket (63 buckets). Everything
+below is scored against that 63-bucket version, because it is what the next
+run will use. The bundle this week's *pass* produced was judged on the
+62-bucket taxonomy; the five Stanley / Owala / Contigo lots therefore show
+up as `Glassware & drinkware` in the pass column and as `Insulated drinkware`
+in the shortlist column. Both are right for their moment.
+
+## The pass now reaches nearly everything that was bid on
+
+This is the first refresh since the shortlist stopped deciding what the
+model sees (2026-08-30) *and* the recall-repair chat was added (2026-09-14),
+so for the first time there are two separate recall figures to keep apart:
+
+| measured against the 25 real bids | recall |
+|---|---|
+| shortlist (`tools/prefilter.py`, gate on) | 23/25 = 92.0% |
+| shortlist, gate off | 24/25 = 96.0% |
+| **the flagging pass as shipped** (`_categorized.json`, after recall repair) | **24/25 = 96.0%** |
+
+Over all 80 tracked lots the pass flagged **79**; the shortlist reached 73
+(91.2%). The pass's one miss, on both counts, is the Kimberly-Clark WyPall
+X70 wiper box (Brand New - Sealed, bid, outbid) — a shop consumable that no
+bucket describes and no seed names. One SKU in one week is not a bucket.
+
+Read the shortlist row against history, not the pass row: 77.4% before the
+2026-08-30 taxonomy, 82.2% on the 2026-09-06 week, 92.0% now. That is two
+consecutive weeks of the coverage question ("is a seed missing?") answering
+"less and less". Shortlist size this week was 12,989 of 28,034 lots
+(46.3%), against 44.8% last week, so the recall did not come from widening
+the net.
+
+The pass row is the one production cares about and it has no prior figure
+to compare to — treat 24/25 as the baseline for the next export.
+
+## The consumable condition gate hid one bid — and it was won
+
+The 2026-09-10 check found the gate hid nothing engaged with. This week it
+hid exactly one lot: **7888, Neutrogena Ultra Sheer SPF 60 sunscreen,
+graded "Brand New - Open Box"**, seed-matched into `Skincare & body` and
+gated out because that bucket allows only Sealed / Adjusted Quantity /
+Best Before. It was bid on and it is the batch's "May Have Won".
+
+Two things make this smaller than it looks:
+
+- `condition_in` is enforced **only** in `tools/prefilter.py`. It shapes the
+  shortlist and the `--backtest` figure and nothing else; `chunk_flagging.py`
+  and `recall_check.py` never read it. The pass saw the lot and flagged it
+  (`Skincare & body` / `sunscreen`). Cost to production: zero. Cost to the
+  shortlist metric: the one-bid gap between the gate-on and gate-off rows
+  above.
+- The bucket description's own rule — "Brand New - Open Box … on a bottle
+  almost always means opened, which is an automatic pass" — is stated for a
+  single bottle. This listing is a **twin-pack**: the outer box is opened,
+  the bottles inside are sealed. The pass applied the description with that
+  nuance (it flagged 5 Open Box lots in `Skincare & body` this week, against
+  67 Sealed and 15 Adjusted Quantity), and the household agreed with it.
+
+Not worth changing on one lot. Worth watching: if a second Open Box multipack
+gets engaged with, add "Brand New - Open Box" to `Skincare & body`'s
+`condition_in` so the shortlist metric stops under-reporting, and tighten the
+description to say "opened *bottle*", not "opened box". The gate's other six
+buckets hid nothing: the other engaged consumables were 4 × Scotts EZ Seed
+(watched, ungated bucket), 3 × Meguiar's (watched, ungated), and the 3M Aura
+N95 20-pack (bid, won, Brand New - Sealed, not a gated bucket either).
+
+## Sampling, not sweeping — the WandVac run again, and one new run
+
+| product run | supply | tracked | bid |
+|---|---|---|---|
+| SHARK WandVac WV200C | 20 | 10 | 6 |
+| STANLEY Quencher / IceFlow | 26 | 3 | 3 |
+| SHARK FlexStyle HD430C | 22 | 2 | 1 |
+| PHILIPS OneBlade Intimate | 9 | 2 | 2 |
+| AMAZON BASICS wet/dry vac | 5 | 3 | 1 |
+| BISSELL vacuums (any) | 46 | 3 | 1 |
+| SCOTTS EZ Seed | 4 | 4 | 0 |
+| Keyboards & keycaps (any) | 121 | 5 | 1 |
+| Logitech (any) | 233 | 2 | 0 |
+| Razer (any) | 86 | 0 | 0 |
+| Barbie (any) | 31 | 1 | 0 |
+
+The WandVac is the `proven_resale` SKU and behaves like it: half the supply
+tracked, six bids, one May Have Won. It is the only run on this list where
+engagement tracks supply, and §2 already explains why.
+
+The Bissell question from 2026-09-10 answers itself the way that note hoped:
+46 lots of supply this week, 3 tracked, 1 bid. It was never appetite — do
+not promote it.
+
+**Insulated drinkware is the new run and it is a bids run, not a watch run.**
+Five bids (two Stanley Quencher H2.0, a Stanley IceFlow, an Owala FreeSip
+kids' bottle, a Contigo Streeterville), zero watch-only, all outbid. Against
+26 lots of Stanley supply that is 3 tracked / 3 bid — no browsing, straight
+to bidding. History had only a hint of this before: one bid (a Hydro Flask
+mug, 9/6) and two watches (a Stanley Quencher 9/6, a Thermos Funtainer 8/9).
+With this week that is five distinct products bid on across two auctions —
+the "5+ distinct products across 2+ auctions" bar from Step 4, met exactly
+and no more, for a category that until the pending edit shared a bucket with
+wine glasses and was seeded on "tumbler" alone. The edit was made from the bundle before this export was
+transcribed; this export is the independent confirmation.
+
+Keyboards keep doing what §2 said: 121 lots, 5 tracked, one bid — and the
+bid was a keycap set, not a keyboard. Logitech at 233 lots and 2 watches is
+the widest exposure-to-interest gap on the board.
+
+## Numbers that moved, and why
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 833 | 913 | +80 from this export |
+| bids | 279 | 304 | +25 |
+| unmatched share (title-only) | 19% | 19% | unchanged |
+| unmatched bids (title-only) | 20% | 18% | this batch landed at 4%; small against 304 |
+| shortlist recall vs real bids, same-week | 82.2% (37/45) | **92.0%** (23/25) | seeds; net did not widen (44.8% → 46.3%) |
+| pass recall vs real bids, same-week | — | **96.0%** (24/25) | first measurement; new baseline |
+| supply on disk | 102,350 (4 wks) | 130,384 (5 wks) | this week's `_for_agent.json`; lifts not recomputed |
+
+## What is worth doing about it
+
+1. **Nothing to the taxonomy.** The one pending edit (`Insulated drinkware`)
+   is confirmed by this export, not contradicted. Commit it.
+2. **The 2026-09-10 list is still open.** The Chapin sprayer was watched
+   again (10372, Excellent, `Construction & Farm - Turf Equipment -
+   Sprayers`) and is still unmatched by any seed or `categories:` claim —
+   the pass caught it anyway (`Lawn treatment & pest control` / `spreaders
+   & sprayers`), which is the pattern for every one of this week's shortlist
+   misses. Same for the Kryptonite U-lock, the Lacoste towels, the Gardena
+   auto-reel and the Method cleaner: all unmatched, all flagged. The
+   shortlist gap is now purely a *measurement* gap. Close it when convenient;
+   it no longer costs a lot.
+3. **`sizes.shoe` is still `null`.** Ten weeks now. A UGG kids' clog was
+   watched this week, and the profile still cannot say whether it fits
+   anyone.
+
+**Superseded the same day.** Items 1 and 3 were written before the
+2026-09-15 rescope landed: the user narrowed Bat's List from a 40%-of-auction
+scan to a targeted list (63 → 72 buckets; catch-alls retired, most buckets
+brand-gated, the best ones split — see SCOPE POLICY in `buckets.yaml`), and
+`sizes.shoe` is now deliberately `null` because footwear is brand-gated
+instead of size-gated (listings mislabel sizes). The lift table in §3 and the
+shortlist figures above are scored against the pre-rescope taxonomy; the
+next refresh should recompute them against the 72-bucket one. Measured at
+the time of the rescope: seed reach over all 913 tracked lots 81% → 83%,
+over the 304 bids 81% → 84%, while the shortlist fell 12,989 → 8,712.
+
+---
+
 # How to refresh this
 
 Everything above is a **measurement**, not an opinion, and every number is
@@ -616,8 +778,25 @@ transcription accurate rather than approximate:
 
 Roughly 29 captures covered the first three months; the 2026-09-10 export of a
 single auction took 3 (969 x 3428 and similar, four tiles per row, ~9 rows per
-capture). They are disposable once `history.tsv` is updated (~44 MB), and
-`data/Watch/` is gitignored apart from this file.
+capture), and so did 2026-09-15 (980 x 3437, 1009 x 3351, 980 x 1130). They
+are disposable once `history.tsv` is updated (~47 MB), and `data/Watch/` is
+gitignored apart from this file.
+
+The 2026-09-15 captures were pasted into the chat instead of saved, so no
+cropping was possible. It worked — 79 of 80 rows joined on the first pass —
+but only because the same-week join below existed to prove it, and because
+three captures at ~1000px wide are legible where the 2026-08-30 set's 1110 x
+3656 were not. Do not read that as the cropping discipline being optional:
+a single misread digit in a lot number joins to a *different product* and
+the prefix check is the only thing that catches it. Save to disk when the
+capture is tall.
+
+**A tile can clip the lot number.** HiBid keys a small number of lots with a
+letter suffix (`14418a`), and the tile renders "Lot 14418". The join then
+returns the wrong product (here a sequin dress for an Amazon Basics wet/dry
+vac) and the prefix check fails on that one row. The fix is to search the
+slimmed file by title, take the suffixed key, and log *that* — it is the
+`lot_number` every downstream file uses.
 
 **Check the captures butt up against each other before transcribing.** A
 capture that ends mid-row leaves a partial row at the top of the next one; its

@@ -32,7 +32,7 @@ class TestLoadBucketGroups:
         assert len(order) >= 8  # the curated file defines at least the 8 documented groups
 
     def test_bucket_count_and_integrity(self):
-        """The curated file holds exactly 62 buckets, every one grouped, no
+        """The curated file holds exactly 72 buckets, every one grouped, no
         duplicate names. Guards accidental drops/dupes when buckets evolve.
 
         Bump this deliberately when a bucket is added or removed — a stale
@@ -50,10 +50,19 @@ class TestLoadBucketGroups:
         # "Starbucks coffee" into
         # "Coffee & espresso" and "Shatterproof / outdoor dishware" into
         # "Dinnerware". See data/Watch/FINDINGS.md.
-        assert len(names) == 62
+        # 2026-09-14: 62 -> 63. Split "Insulated drinkware" (Stanley, Owala,
+        # Hydro Flask, S'well, Thermos...) out of "Glassware & drinkware",
+        # which held ~180 insulated lots against ~20 of actual glass.
+        # 2026-09-15: 63 -> 72. Bat's List narrowed to a targeted list (see the
+        # SCOPE POLICY in buckets.yaml). Retired Electronics, Batteries &
+        # chargers, Tarps, Sports & recreation gear; split Keyboards/PC
+        # peripherals, Home gym, Vacuums (x3), Boots (adult/kids), Kitchen
+        # appliances; added Monitors, Networking, Backyard games, Nets/goals,
+        # Bikes, Pool & hot tub care, Playroom & active play.
+        assert len(names) == 72
         assert len(names) == len(set(names)), "duplicate bucket names"
         assert all(b.get("group") for b in raw["buckets"]), "a bucket is missing its group"
-        assert len(mapping) == 62
+        assert len(mapping) == 72
 
     def test_new_outdoor_furniture_bucket(self):
         """The 'Outdoor furniture & hammocks' bucket exists in Outdoor & garden."""
@@ -63,10 +72,36 @@ class TestLoadBucketGroups:
     def test_keyboards_bucket_renamed_and_broadened(self):
         """"Mechanical keyboards" asked a question titles cannot answer — you
         cannot tell mechanical from membrane from "KLIM CHROMA WIRELESS GAMING
-        KEYBOARD RGB" — so it hedged into Electronics or nothing."""
+        KEYBOARD RGB" — so it hedged into Electronics or nothing. On
+        2026-09-15 keyboards got their own bucket again (keycaps and switches
+        included), mice moved to "PC peripherals", and the "Electronics"
+        catch-all was retired."""
         mapping, _ = load_bucket_groups(BUCKETS_YAML)
-        assert mapping["Keyboards & PC peripherals"] == "Electronics & gaming"
+        assert mapping["Keyboards, keycaps & switches"] == "Electronics & gaming"
+        assert mapping["PC peripherals"] == "Electronics & gaming"
         assert "Mechanical keyboards" not in mapping
+        assert "Keyboards & PC peripherals" not in mapping
+        assert "Electronics" not in mapping
+
+    def test_scope_narrowing_2026_09_15(self):
+        """Bat's List was narrowed to a targeted list: zero-engagement
+        catch-alls retired, the best buckets split so the wanted half is
+        not buried. See SCOPE POLICY in buckets.yaml."""
+        mapping, _ = load_bucket_groups(BUCKETS_YAML)
+        for retired in ("Electronics", "Batteries & chargers", "Tarps",
+                        "Sports & recreation gear", "Video games & VR",
+                        "Kitchen appliances", "Brand boots & shoes",
+                        "Home gym & weightlifting"):
+            assert retired not in mapping, retired
+        assert mapping["Handheld & cordless vacs"] == "Cleaning & storage"
+        assert mapping["Robot vacuums & mops"] == "Cleaning & storage"
+        assert mapping["Weights, bars & racks"] == "Sports & fitness"
+        assert mapping["Gym accessories"] == "Sports & fitness"
+        assert mapping["Brand shoes (adult)"] == "Footwear"
+        assert mapping["Brand shoes (kids)"] == "Footwear"
+        assert mapping["Pool & hot tub care"] == "Outdoor & garden"
+        assert mapping["Playroom & active play"] == "Toys & games"
+        assert mapping["VR headsets & accessories"] == "Electronics & gaming"
 
     def test_buckets_added_for_previously_unbucketed_picks(self):
         """Hand tools, dolls/plush and non-Starbucks coffee had no bucket, so
@@ -77,7 +112,7 @@ class TestLoadBucketGroups:
         guards; only its group changed."""
         mapping, _ = load_bucket_groups(BUCKETS_YAML)
         assert mapping["Hand tools"] == "Tools & garage"
-        assert mapping["Dolls & plush"] == "Toys & games"
+        assert mapping["Dolls, plush & playsets"] == "Toys & games"
         assert mapping["Coffee & espresso"] == "Food & drink"
         # Folded-in buckets must be gone, not silently duplicated.
         assert "Starbucks coffee" not in mapping

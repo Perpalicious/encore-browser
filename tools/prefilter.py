@@ -109,8 +109,15 @@ DEFAULT_MAX_BUCKET_SHARE = 0.08
 # week of 2026-08-16 lands at 11,891 (44.0%). That is only ~1% under the old
 # cap, close enough that ordinary week-to-week variance would trip it and block
 # step 3 of the runbook on a perfectly good config.
+# Raised from 13000 to 14000 on 2026-09-14 when "Insulated drinkware" was split
+# out of "Glassware & drinkware". The week of 2026-09-06 (28,034 lots, the
+# largest yet) landed at 12,955 BEFORE that split and 12,989 after — 11 rows
+# under the cap, so the next slightly bigger auction would have blocked step 5's
+# `_base.json` on a good config. The shortlist has not fed the model since
+# 2026-08-30 (the flagging pass is chunked over every lot), so this cap now only
+# guards the diagnostics; the runaway-seed tripwire it exists for still fires.
 # Bump deliberately, and only with a measured reason.
-DEFAULT_MAX_ROWS = 13000
+DEFAULT_MAX_ROWS = 14000
 DEFAULT_SWEEP = 500
 SWEEP_SEED = 20260815
 

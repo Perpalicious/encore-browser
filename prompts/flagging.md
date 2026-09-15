@@ -38,7 +38,7 @@ as a judged non-match. For each lot that DOES match, return one object:
 {
   "lot_number": "S-1a",
   "is_bats_list": true,
-  "bats_buckets": ["Keyboards & PC peripherals", "Electronics"],
+  "bats_buckets": ["Keyboards, keycaps & switches"],
   "bats_subtype": "mechanical keyboards",
   "personal_match": true,
   "personal_tags": ["pc_gaming"],
@@ -59,10 +59,16 @@ Rules:
   a bucket name.
 - `is_bats_list` is `true` if and only if `bats_buckets` is non-empty.
 - **Assign every bucket that genuinely fits, not just the best one.** A
-  gaming keyboard is both "Keyboards & PC peripherals" *and* "Electronics".
-  Expect roughly one in ten flagged lots to carry two or more buckets.
-  Assigning exactly one bucket to almost everything is a known failure mode
-  of this task.
+  Logitech G wireless headset is both "Audio & headphones" *and* "PC
+  peripherals"; a pool basketball hoop is both "Outdoor play, swim &
+  blasters" *and* "Nets, goals & hoops". Assigning exactly one bucket to
+  almost everything is a known failure mode of this task — but with the
+  narrowed buckets most lots genuinely fit only one, so do not force a
+  second.
+- **The buckets are deliberately narrow, and most name brands.** Where a
+  description names brands or says "NOT", that is a gate, not a hint: a
+  no-name item of the same type is not a match, and a listed exclusion is
+  not a match however good it looks. The list is meant to be short.
 - **Reject freely.** A bucket whose description sets a quality bar ("do NOT
   flag generic no-brand pieces") applies that bar in full. Being complete
   about the lots you return and being selective about which ones qualify are

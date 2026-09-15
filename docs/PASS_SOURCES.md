@@ -188,7 +188,7 @@ module, or the rendered `_prompt.md` files that `chunk_flagging.py` and
 
 | File | Size | Read by | In a prompt? |
 |---|---|---|---|
-| `buckets.yaml` | 67 KB, 62 buckets | `prefilter.py`, `chunk_flagging.py`, `verify_passes.py`, `build/groups.py` | **Yes**, via `context.yaml`, every chunk |
+| `buckets.yaml` | ~100 KB, 72 buckets | `prefilter.py`, `chunk_flagging.py`, `verify_passes.py`, `build/groups.py` | **Yes**, via `context.yaml`, every chunk |
 | `profile.yaml` | 16 KB — `sizes`, `projects`, `not_wanted`, `interests`, `proven_resale` | `prefilter.py`, `chunk_flagging.py`, `verify_passes.py` | **Yes**, via `context.yaml`, every chunk |
 | `context.yaml` | 83 KB, generated | — | **This is the file that gets uploaded.** Regenerated every run |
 | `bats_list.yaml` | 6.5 KB | nothing | No |

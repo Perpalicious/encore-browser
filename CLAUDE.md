@@ -146,7 +146,7 @@ chunk files, concatenates `buckets.yaml` + `profile.yaml` into a single
 chunk (`auction_<ID>_chunk_NN_prompt.md`, via `tools/render_prompts.py` from
 `prompts/flagging.md`). Check its printout:
 - **the exact upload list** — normally 7 chunks plus `context.yaml`, 8 files
-- the bucket count (62 as of 2026-08-30). Each rendered prompt states this
+- the bucket count (72 as of 2026-09-15). Each rendered prompt states this
   number and tells the model to stop if its read-test disagrees, so a
   `context.yaml` that failed to attach ends the chat before any lots are judged
 - dedup normally collapses 20-25% of lots (25,195 → 19,250 on 2026-08-30)
@@ -169,8 +169,10 @@ nothing verified them. See the docstring in `tools/chunk_flagging.py`.
 
 `tools/prefilter.py` still exists and is still worth running for its
 diagnostics, but its shortlist **does not decide what the model sees any
-more**. It reaches only 77.4% of lots actually bid on, and of 234 real bids 94
-(40%) match no seed at all (`data/Watch/FINDINGS.md`). Since 2026-08-30 it is
+more**. Before the 2026-08-30 taxonomy it reached only 77.4% of lots actually
+bid on, with 40% of 234 real bids matching no seed at all; measured the same
+way on the 2026-09-13 week it reaches 92% of bids, and the ungated pass 96%
+(`data/Watch/FINDINGS.md`). Since 2026-08-30 it is
 also matching on `title` + `category` alone, because the fields it used to read
 are gone.
 
@@ -210,7 +212,7 @@ the paste / attach / save checklist. One fresh ChatGPT chat per prompt:
   which name; ChatGPT will name the file itself if it returns one
 
 ...for each chunk. The prompt already contains that chunk's row count, last
-`lot_number`, the bucket count (62) and its output name, so nothing in it
+`lot_number`, the bucket count (72) and its output name, so nothing in it
 needs editing. Let me know when they're saved and I'll continue."*
 
 If in doubt, `python3 tools/render_prompts.py <ID>` re-prints the checklist
@@ -525,6 +527,14 @@ git config --global user.email "<their email>"
   matched this bucket" from "the seed was misspelled". Three things catch it —
   the zero-candidate WARNING in step 3, `--backtest` recall, and the `outside`
   column in step 5's audit. Do not skip the backtest after editing seeds.
+- **Bat's List is deliberately narrow — never widen it without the user's
+  explicit say-so.** On 2026-09-15 the user cut it from 40% of the auction to
+  a targeted list (see SCOPE POLICY at the top of `buckets.yaml` and SCOPE
+  LOCK in `profile.yaml`): catch-alls retired, most buckets brand-gated, the
+  best ones split. A bucket flagging little is working as intended. If a
+  wanted item is missed, add that product or brand to the right bucket; do
+  not add "Branded or generic", "flag every X", or a retired bucket back.
+  Descriptions that name brands are gates, and the prompt tells the model so.
 - **The prefilter must never encode a quality gate.** Buckets whose
   descriptions say "QUALITY or BRANDED ... do NOT flag generic" rely on the
   model applying that bar. Seed them with plain type words so the shortlist

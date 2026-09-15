@@ -32,22 +32,38 @@ sizes:
   apparel:
     womens: "M"
     mens: "L"
-  # TODO(user): still unset. `Brand boots & shoes` sees ~404 lots a week and
-  # converts at 0.6x its own supply share, which is probably this rather than
-  # disinterest. One observed datapoint: a watched women's 8 M flat.
+  # Deliberately unset (2026-09-15): shoe sizes are mislabelled in these
+  # listings often enough that gating on them rejects the right pairs. The
+  # Footwear interest is brand-gated instead and flags every size.
   shoe: null
 
 projects:
   - "Home gym build-out — rack, bar, plates, flooring, accessories."
+  - "Kids' playroom and active-play build-out — climbing holds, ninja
+     course gear, swings, mats, trampolines (see \"Playroom & active play\")."
   - "Garage/workshop organisation and tooling."
   - "3D printing: filament, spare parts, consumables."
   - "Yard and lawn upkeep on an ongoing basis."
   - "Pool and hot tub maintenance across the season."
   - "Small-business product testing — items bought to evaluate and resell."
 
-# HOW THINGS ACTUALLY GET REJECTED. Many buckets get browsed thoroughly and
-# still convert poorly — that is condition risk, not disinterest, so never
-# read a low flag rate as a reason to narrow a bucket.
+# SCOPE LOCK (2026-09-15, user decision). Bat's List is a TARGETED list —
+# short enough to actually read — not a scan of the auction; the main viewer
+# does the wide search. On 2026-09-13 the list held 40% of the auction while
+# the household engaged with ~1 in 80 flagged lots, so every broad bucket was
+# narrowed to what the bid/watch history shows is actually wanted, and the
+# zero-engagement catch-alls were retired (see the header of buckets.yaml for
+# the list). DO NOT widen any bucket, soften any brand gate, or re-add a
+# retired bucket without the user's EXPLICIT permission in the conversation
+# where the edit is made. The exception is the short list of SCAN buckets
+# named in buckets.yaml — those stay broad on purpose. If a wanted item is
+# being missed, add the specific product or brand to the matching bucket;
+# never the whole type.
+#
+# HOW THINGS ACTUALLY GET REJECTED. Even inside the narrowed buckets, plenty
+# gets browsed and still not bought — that is condition and price, not
+# disinterest. Fix a miss by adding a product; do not fix a low bid rate by
+# widening a bucket.
 #   - On CONSUMABLES (personal care, food, cleaning) anything below
 #     "Brand New - Sealed" usually means opened. Measured across 54,463
 #     lots, personal-care categories run ~57% "Excellent" and only ~14%
@@ -73,45 +89,80 @@ not_wanted:
 
 interests:
   - name: "Home gym"
-    buckets: ["Home gym & weightlifting"]
+    buckets: ["Weights, bars & racks", "Gym accessories"]
     tags: ["home_gym"]
     description: >
       Strength training equipment for a home gym — barbells, plates, racks,
-      benches, dumbbells, kettlebells, and gym flooring. The single largest
-      standing interest.
+      benches, dumbbells, kettlebells, cable machines, and gym flooring.
+      The single largest standing interest. Split on 2026-09-15 so the
+      hardware is not buried under yoga mats: "Weights, bars & racks" is
+      the equipment, "Gym accessories" the bands, mats, attachments and
+      small gear. CAP bumper plates and adjustable dumbbells get watched
+      repeatedly.
     # Fitness gear the bucket's own seeds don't reach.
     seeds: ["fitness", "workout", "exercise", "training bag", "bag stand",
             "gym ", "weight lifting", "weightlifting", "strength training"]
 
   - name: "Sports & outdoor recreation"
-    buckets: ["Sports & recreation gear", "Outdoor furniture & hammocks"]
+    buckets: ["Backyard games", "Nets, goals & hoops", "Bikes, scooters & skates",
+              "Outdoor furniture & hammocks"]
     tags: ["family_outdoors", "family_activity"]
     description: >
-      Gear for family outdoor activity and yard seating — bikes, camping,
-      games, hammocks, and patio furniture.
+      Family outdoor activity and yard seating — backyard games (cornhole,
+      ladder toss, Spikeball), soccer nets, goals and hoops for practice,
+      bikes, scooters and skates with their pads and helmets, hammocks and
+      patio furniture. The old "Sports & recreation gear" bucket (808 lots
+      a week) was retired on 2026-09-15: balls, sticks, racquets, tents
+      and camping gear are NOT wanted — none drew a bid in four months.
 
   - name: "Kids' toys & games"
     buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Board games",
-              "Dolls & plush", "Kids' outdoor water play", "Kids' craft & activity"]
-    tags: ["kids_interest", "family_activity"]
+              "Dolls, plush & playsets", "Outdoor play, swim & blasters",
+              "Kids' craft & activity", "Playroom & active play"]
+    tags: ["kids_interest", "family_activity", "playroom"]
     description: >
-      Toys and games for kids roughly ages 8-11, plus board games the whole
-      household plays. Collectible and blind-box toys included.
+      Toys and games for a girl roughly ages 8-11, plus board games the
+      whole household plays (a SCAN bucket — rarely bought, kept on
+      purpose). Collectible and blind-box toys included. Nerf and water
+      blasters are a repeat buy. Action figures and figurines are not
+      wanted. The playroom build-out (climbing holds, ninja course kits,
+      swings, mats) is a live project — see "Playroom & active play".
     # "Dolls & plush" now covers dolls/plush/figures. These seeds catch the
     # remaining edges — craft and activity toys with no bucket of their own.
     seeds: ["toy ", "toys", "craft kit", "art set", "kids ", "children",
             "toddler", "frozen ", "ride on", "colouring", "coloring book",
             "sticker", "science kit", "building set"]
 
+  - name: "Playroom & active play"
+    buckets: ["Playroom & active play"]
+    tags: ["playroom", "kids_interest"]
+    description: >
+      A playroom / active-play build-out for a kid — rock climbing holds
+      and wall kits, ninja-warrior obstacle and slackline kits, monkey
+      bars, swings and swing hangers, trampolines, gymnastics and crash
+      mats, balance beams, Pikler triangles, play couches. A live project,
+      so a complete, well-made set is a personal match even from a lesser
+      brand; a single flimsy accessory is not.
+    seeds: ["climbing hold", "ninja line", "ninja warrior", "obstacle course",
+            "monkey bar", "swing set", "gymnastics mat", "crash mat",
+            "balance beam", "pikler", "play couch"]
+
   - name: "PC & desk setup"
-    buckets: ["Keyboards & PC peripherals", "Electronics", "Video games & VR",
+    buckets: ["Keyboards, keycaps & switches", "PC peripherals",
+              "Monitors & displays", "Networking", "VR headsets & accessories",
               "Audio & headphones"]
-    tags: ["pc_accessory", "pc_gaming", "secondary_monitor", "networking"]
+    tags: ["pc_accessory", "pc_gaming", "secondary_monitor", "networking",
+           "mechanical_keyboard", "vr"]
     description: >
       Desktop PC and gaming setup — keyboards, mice, monitors, headsets,
-      capture and streaming gear, networking equipment, consoles and VR.
-      Mechanical keyboards are a specific enthusiasm; ordinary membrane
-      boards are still worth surfacing but rank below them.
+      capture and streaming gear, networking equipment, and VR. Mechanical
+      keyboards, keycaps and switches are THE specific enthusiasm here (11
+      keyboard bids and a keycap-set bid in four months; Logitech G915 /
+      G515 / Alto Keys, Keychron, GMMK, Razer, SteelSeries Apex, Ajazz,
+      Yunzii all engaged) — an enthusiast board in decent condition is a
+      personal match, not just a bucket entry. Consoles and console games
+      are NOT wanted; VR gear is. Drones, tablets, cameras and wearables
+      are NOT wanted (the "Electronics" catch-all was retired 2026-09-15).
 
   - name: "Smart home"
     buckets: ["Smart home", "Smart locks"]
@@ -123,14 +174,17 @@ interests:
   - name: "Garage & workshop"
     buckets:
       ["Power tools", "Hand tools", "Garage & tool organization",
-       "Adhesives & tape", "Batteries & chargers",
-       "Extension cords & power strips", "Tie-downs"]
+       "Adhesives & tape", "Extension cords & power strips", "Tie-downs"]
     tags: ["garage_workshop", "tooling", "garage_organization",
            "charging_and_power", "yard_and_garage"]
     description: >
-      An actively used workshop — power and hand tools, tool storage and
-      organisation, fasteners and adhesives, tool batteries and chargers,
-      cords, and tie-downs for hauling.
+      An actively used workshop — power and hand tools (heat guns, sanders,
+      nailers, clamps and a soldering station have all been bid on or
+      watched), tool storage and organisation, fasteners and adhesives,
+      cords, and tie-downs for hauling. Household batteries, power banks
+      and chargers are NOT wanted ("Batteries & chargers" retired
+      2026-09-15, zero engagement in four months); a power-tool battery for
+      a platform already owned still counts under "Power tools".
     # "Hand tools" now covers the tools and fasteners themselves. These are
     # the workshop consumables and PPE that still have no bucket.
     seeds: ["work glove", "safety glass", "safety goggle", "ear protection",
@@ -147,7 +201,7 @@ interests:
   - name: "Yard & lawn"
     buckets:
       ["Lawn equipment", "Garden hose", "Gardening tools",
-       "Garden & lawncare misc", "Tarps", "Lawn treatment & pest control"]
+       "Garden & lawncare misc", "Lawn treatment & pest control"]
     tags: ["outdoor_maintenance", "yard_watering"]
     description: >
       Ongoing yard upkeep — mowers and trimmers, hoses and watering, hand
@@ -164,24 +218,43 @@ interests:
 
   - name: "Kitchen"
     buckets:
-      ["Kitchen appliances", "Brand cookware", "Brand chef knives",
-       "Kitchen utensils & gadgets", "Glassware & drinkware", "Dinnerware",
-       "Kitchen storage & organization"]
-    tags: ["premium_kitchen"]
+      ["Mixers, blenders & food prep", "Espresso & specialty appliances",
+       "Brand cookware", "Brand chef knives", "Kitchen utensils & gadgets",
+       "Glassware & drinkware", "Dinnerware", "Kitchen storage & organization",
+       "Insulated drinkware"]
+    tags: ["premium_kitchen", "insulated_drinkware"]
     description: >
       A well-equipped kitchen that rewards quality — recognisable-brand
-      appliances, cookware, cutlery and tools. Quality is the whole point
-      here: generic no-brand single pieces are explicitly not wanted, and
-      several buckets encode that gate in their own descriptions.
-      Food and drink itself now lives in its own interest below.
+      mixers, blenders and food prep (KitchenAid, Vitamix, Braun, Breville
+      — every kitchen-appliance bid in four months was one of these),
+      espresso/Nespresso machines and the odd specialty machine (Creami,
+      sous vide), and GOOD cookware (All-Clad, Made In, Tramontina tri-ply,
+      Le Creuset, Lodge — never a random single-ply stainless pan). Toasters,
+      kettles, air fryers and drip coffee makers are NOT wanted; the broad
+      "Kitchen appliances" bucket was split and narrowed on 2026-09-15.
+      Utensils & gadgets is a small SCAN bucket kept on purpose. Quality
+      is the whole point here: generic no-brand pieces are explicitly not
+      wanted, and the buckets encode that gate in their own descriptions.
+      Insulated drinkware is an active, repeat interest on its own — a
+      S'well travel mug, an Ember heated mug and a Hydro Flask mug have all
+      drawn bids, and Stanley Quenchers and Thermos kids' bottles get
+      watched. Treat Stanley / Owala / Hydro Flask / S'well / Yeti
+      tumblers, bottles and travel mugs as a personal match, not just a
+      bucket entry. Food and drink itself now lives in its own interest below.
 
   - name: "Cleaning"
-    buckets: ["Cleaning supplies & tools", "Vacuums & floor care"]
-    tags: ["cleaning_consumable", "cleaning_equipment", "second_shop_vac"]
+    buckets: ["Cleaning supplies & tools", "Handheld & cordless vacs",
+              "Robot vacuums & mops", "Vacuums & floor care"]
+    tags: ["cleaning_consumable", "cleaning_equipment", "second_shop_vac",
+           "proven_resale"]
     description: >
-      Household cleaning — vacuums (a second shop vac is actively wanted),
-      mops and brushes, and detergents and cleaning consumables bought in
-      bulk when cheap.
+      Household cleaning — handheld and cordless vacs are the most-bid
+      thing in the whole history (Shark WandVac is proven resale; Bissell
+      PowerClean, Dustbuster and Shark Cyclone all bid), robot vacuums are
+      watched as a separate purchase, a second shop vac is actively wanted,
+      and the supplies side is sponges and dish wands (always looked for),
+      spin scrubbers, brand mops and brand cleaning solutions. Paper goods
+      and generic cleaning kits are NOT wanted.
 
   - name: "Storage & organization"
     buckets: ["Storage bins & totes", "Laundry baskets"]
@@ -198,14 +271,21 @@ interests:
     description: >
       Bedroom and bathroom textiles and furniture, plus living-space seating
       and occasional tables. Bed size is king — check size before flagging
-      fitted sheets or frames.
+      fitted sheets or frames. "Bedding & pillows" was shrunk to BRAND
+      throws, premium pillows/toppers and weighted blankets on 2026-09-15
+      (693 lots a week, zero bids); mattresses and generic pillows are NOT
+      wanted.
 
   - name: "Footwear"
-    buckets: ["Brand boots & shoes"]
-    tags: ["footwear"]
+    buckets: ["Brand shoes (adult)", "Brand shoes (kids)"]
+    tags: ["footwear", "kids_footwear"]
     description: >
-      Recognisable-brand boots and shoes, work boots included. Size-gated:
-      see `sizes.shoe` above. The right boot in the wrong size is not a match.
+      BIG-brand footwear only — Hunter, UGG, Nike, Adidas, Crocs, Sorel,
+      Blundstone, Dr. Martens, Birkenstock, New Balance and the like — for
+      the adults and for a kid. Off-brand shoes are not wanted at all. NOT
+      size-gated: listings mislabel shoe sizes often enough that a size
+      gate was rejecting the right pairs, so flag any branded pair and note
+      the listed size in the reasoning. Split adult/kids 2026-09-15.
 
   - name: "Personal care & grooming"
     buckets: ["Hair care products", "Hair styling tools", "Skincare & body",
@@ -218,8 +298,12 @@ interests:
       and had NO bucket before 2026-08-30 despite eight bids in three months.
       Almost all of it is consumable, so the condition bar in `not_wanted`
       does the real filtering: the interest is broad, the acceptance is
-      narrow. Powered tools in these buckets (hair dryers, electric shavers,
-      water flossers) are appliances and are judged on value, not on seal.
+      narrow. Powered tools in these buckets (hair stylers, electric
+      shavers, toothbrushes, water flossers) are appliances judged on value,
+      not on seal — and since 2026-09-15 they are BRAND-gated: Shark
+      FlexStyle and Dyson Airwrap (both bid), Philips OneBlade (bid twice),
+      Sonicare / Oral-B / Waterpik. A no-name styler or "sonic toothbrush"
+      is not wanted.
       Nail is a distinct and consistent sub-interest — gel systems, press-on
       tips and manicure kits, not just polish.
     seeds: ["grooming", "personal care", "toiletries", "cosmetic",
@@ -263,15 +347,13 @@ interests:
 
 
   - name: "Pool & hot tub"
-    buckets: []
+    buckets: ["Pool & hot tub care"]
     tags: ["pool_maintenance", "pool_recreation", "hot_tub_maintenance"]
     description: >
-      Seasonal pool and hot tub upkeep and recreation. No bucket covers this,
-      so it reaches the model purely through the seeds below.
-    seeds:
-      ["pool", "chlorine", "pool filter", "pool pump", "pool vacuum",
-       "skimmer", "pool float", "hot tub", "spa chemical", "test strip",
-       "shock treatment", "pool cover", "pool noodle"]
+      Seasonal pool and hot tub upkeep — chemicals, test strips, filters,
+      pumps, skimmers, robotic cleaners, covers and hot tub supplies. Got
+      its own refined bucket on 2026-09-15; it is deliberately kept free
+      of floats, noodles and pool toys (those are kids' outdoor play).
 
   - name: "Practical lighting"
     buckets: []

@@ -53,7 +53,7 @@ exactly the shape the first pass used:
 {
   "lot_number": "S-1a",
   "is_bats_list": true,
-  "bats_buckets": ["Keyboards & PC peripherals", "Electronics"],
+  "bats_buckets": ["Keyboards, keycaps & switches"],
   "bats_subtype": "mechanical keyboards",
   "personal_match": true,
   "personal_tags": ["pc_gaming"],

@@ -34,7 +34,8 @@ mkdir -p data/archive/<LAST_RUN_DATE>
 find data/categorized -maxdepth 1 -name 'auction_*.json' \
   ! -name 'auction_703264_categorized.json' \
   -exec mv -t data/archive/<LAST_RUN_DATE>/ {} +
-rm -f data/categorized/context.yaml data/raw/auction_*.json
+rm -f data/categorized/context.yaml data/categorized/auction_*_prompt.md \
+      data/raw/auction_*.json
 ```
 
 `<LAST_RUN_DATE>` is the previous run's date (`ls data/archive/` shows what is
@@ -483,7 +484,7 @@ At the start of a run, sweep the previous week out of the way:
 ```bash
 mkdir -p data/archive/<LAST_RUN_DATE>
 mv data/categorized/auction_combined_*.json data/archive/<LAST_RUN_DATE>/ 2>/dev/null
-rm -f data/raw/auction_*.json
+rm -f data/categorized/auction_*_prompt.md data/raw/auction_*.json
 ```
 
 **Safe to delete outright:**

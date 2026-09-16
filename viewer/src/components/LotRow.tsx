@@ -1,7 +1,9 @@
 import { useRef, type CSSProperties } from 'react';
+import type { HammerWeek } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor, closeLabel } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
+import { hammerLine } from '../lib/hammer';
 import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
 
@@ -33,6 +35,8 @@ interface Props {
   onToggleWatch: () => void;
   /** Clock for the ENDED state; undefined when the bundle carries no times. */
   now?: number;
+  /** Past sale history for this product, newest week first; null when none. */
+  hammer?: HammerWeek[] | null;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -55,6 +59,7 @@ export function LotRow({
   onOpen,
   onToggleWatch,
   now,
+  hammer,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -63,6 +68,11 @@ export function LotRow({
   const ended = now !== undefined && view.closeMs !== null && view.closeMs <= now;
   const thumb = mobile ? 58 : 52;
   const starSize = coarse ? 44 : 34;
+  // The wide desktop row can carry the whole line beside the bucket; the 78px
+  // mobile row gets the short form under the resale figure, where there is a
+  // spare line and no competition for width.
+  const week = hammer && hammer.length > 0 ? hammer[0] : null;
+  const hammerText = week ? hammerLine(week, mobile ? 'minimal' : 'full') : null;
 
   const paint = (dx: number) => {
     const row = rowRef.current;
@@ -232,6 +242,15 @@ export function LotRow({
                   {formatMoney(view.mid)}
                 </span>
               )}
+              {hammerText && (
+                <span
+                  data-testid="hammer-line"
+                  title="What this product sold for last time"
+                  style={{ ...microFigure, fontSize: '9px', color: 'var(--dim3)' }}
+                >
+                  {hammerText}
+                </span>
+              )}
             </div>
           </>
         ) : (
@@ -252,14 +271,37 @@ export function LotRow({
               </div>
               <div
                 style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  minWidth: 0,
                   fontSize: '10px',
                   color: 'var(--dim3)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
                 }}
               >
-                {view.bucket ?? view.sub}
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {view.bucket ?? view.sub}
+                </span>
+                {hammerText && (
+                  <span
+                    data-testid="hammer-line"
+                    title="What this product sold for last time"
+                    style={{
+                      ...microFigure,
+                      flex: 'none',
+                      fontSize: '9.5px',
+                      color: 'var(--dim3)',
+                    }}
+                  >
+                    {hammerText}
+                  </span>
+                )}
               </div>
             </div>
             <div style={{ width: 110, flex: 'none' }}>

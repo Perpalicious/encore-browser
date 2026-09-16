@@ -12,6 +12,19 @@ Three problems drove the work:
 
 Plus a hierarchy fix: **thumb → title → condition → resale**, with colour reserved almost entirely for condition.
 
+> **Amended 2026-09-16 — hammer prices are in.** The line above about money
+> said resale was *"the only money figure on a lot"*, and estimated retail was
+> removed on 2026-09-10 precisely because a second, weaker figure beside it
+> invited comparison. The hammer line added on 2026-09-16 is the deliberate
+> exception, approved by Bat: unlike retail it is a **stronger** figure than
+> the resale estimate — real transactions in this venue, not a model's guess at
+> what a thing is worth elsewhere — and it answers the one question resale
+> cannot, which is what people here actually paid. The two are kept visually
+> distinct rather than merged: resale stays exactly where it is, at its size
+> and weight, and the hammer line is smaller, mono and `--dim3`, so it reads as
+> history rather than as a competing valuation. See `docs/HAMMER_PRICES_PLAN.md`
+> and `viewer/src/lib/hammer.ts`.
+
 > **Amended 2026-09-10 — estimated retail is gone.** This document was written when every lot carried an `est_retail_price`. HiBid stopped publishing it during the week of 2026-08-30 and it was removed from the pipeline entirely (see `scraper/condition.py`). Three things in the design below went with it: the grey retail figure beside resale on cards and rows, the `▲ VALUE` / `▲ TOP-DECILE SPREAD` badge (its ratio has no denominator), and the "Retail high → low" sort. Resale is now the only money figure. Everything else in this document still describes the shipped viewer; the affected lines are marked *(removed 2026-09-10)*.
 
 ## About the design files
@@ -147,7 +160,8 @@ This is the core of the redesign. Enforce it — the old build's flat feel came 
 | **Condition** | Owns the whole colour scale: a 2px full-width coloured lid under the card image, plus a mono word (grid) or dot + word (rows) | The only place the five-step palette appears |
 | **Personal match** | 6–7px `#8b6bff` dot, top-left of the thumb, white ring | Was a full chip row; now costs zero layout |
 | **Active filter** | Blush pill with `×` | Only ever means "you narrowed something" |
-| **Money** | Greyscale: resale 12.5–13.5px `--text`. The only money figure on a lot | Never coloured. Retail's old red is gone |
+| **Money** | Greyscale: resale 12.5–13.5px `--text`. The only *valuation* on a lot | Never coloured. Retail's old red is gone |
+| **Sale history** | Mono 8.5–9.5px `--dim3`, one line under the resale figure: `Sold 6× · med $14 · $9–$22 · 3 unsold` | What this exact product hammered at in past Encore auctions. Smaller and dimmer than resale, and never coloured |
 | ~~**Exceptional value**~~ | ~~`▲ VALUE` badge (lavender fill) on the thumb in grid; `▲` pill in rows~~ | *(removed 2026-09-10 — the resale-to-retail ratio lost its denominator)* |
 | **Day** | One letter (`S`/`M`) top-left on the thumb + the sticky group bar | Hide entirely when a single day is filtered |
 | **Watched** | Star, amber when set | |

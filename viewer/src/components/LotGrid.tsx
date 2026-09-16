@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { Lot, Density, Tab, MobileCols, MobileView, ViewMode } from '../lib/types';
 import type { LotView } from '../lib/lotView';
+import { hammerWeeks, type HammerIndex } from '../lib/hammer';
 import { LotCard } from './LotCard';
 import { LotRow } from './LotRow';
 import { EmptyState } from './EmptyState';
@@ -59,6 +60,11 @@ interface Props {
   onClearFilters: () => void;
   /** True when a single day is filtered — the day label is then redundant. */
   singleDay: boolean;
+  /**
+   * The bundle's product-key → sale-history map. Undefined on a bundle built
+   * without `--hammer`, in which case no card or row shows a history line.
+   */
+  hammer?: HammerIndex;
   /** Scroll offset to restore once the skeletons clear. */
   initialScrollTop?: number;
   onScrollTopChange?: (value: number) => void;
@@ -114,6 +120,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
     onToggleWatch,
     onClearFilters,
     singleDay,
+    hammer,
     initialScrollTop = 0,
     onScrollTopChange,
   },
@@ -259,6 +266,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   onToggleExpand={open}
                   watched={watched.has(lot.lot_number)}
                   onToggleWatch={() => onToggleWatch(lot.lot_number)}
+                  hammer={hammerWeeks(lot, hammer)}
                 />
               ) : (
                 <LotRow
@@ -273,6 +281,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   cursor={isCursor || lot.lot_number === expandedId}
                   onOpen={open}
                   onToggleWatch={() => onToggleWatch(lot.lot_number)}
+                  hammer={hammerWeeks(lot, hammer)}
                 />
               );
             })}

@@ -20,6 +20,7 @@ import { buildCategoryTree } from './lib/categoryTree';
 import { buildSearchIndex, searchLotNumbers, lotCandidates } from './lib/search';
 import { buildBatNav } from './lib/batNav';
 import { buildLotViews, indexViews } from './lib/lotView';
+import { hammerFor } from './lib/hammer';
 import {
   loadViewState,
   saveViewState,
@@ -661,6 +662,7 @@ export function App() {
             onToggleExpand={toggleExpand}
             onToggleWatch={onToggleWatch}
             onClearFilters={clearFilters}
+            hammer={bundle?.hammer}
             singleDay={dayFilter !== 'Both'}
             initialScrollTop={initialScrollTop}
             onScrollTopChange={(v) => {
@@ -743,6 +745,7 @@ export function App() {
           onClose={closeDetail}
           onStep={stepSelection}
           onToggleWatch={() => onToggleWatch(selectedView.lot)}
+          hammer={hammerFor(selectedView.src, bundle)}
         />
       )}
 

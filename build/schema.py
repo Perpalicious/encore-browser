@@ -61,6 +61,13 @@ class Lot(BaseModel):
     resale_outlook: Optional[Literal["good", "fair", "poor"]] = None
     resale_reasoning: Optional[str] = None
 
+    # --- Hammer history (optional, from the hammer pull) --------------------
+    # Joined in by `python -m build --hammer data/hammer/`. The product key
+    # ("TITLE|CONDITION") into the bundle's top-level `hammer` map, holding what
+    # this same product sold for in earlier weeks. None when the flag is absent,
+    # and None on the (majority of) lots whose product has no recorded history.
+    hammer_key: Optional[str] = None
+
     # --- Personal match (optional, from the personal-match pass) ------------
     # Present only when the categorized input carries personal-match fields.
     # Older categorized files lack them entirely; every field stays None then.

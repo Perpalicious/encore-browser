@@ -75,6 +75,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--hammer",
+        metavar="DIR",
+        default=None,
+        help=(
+            "Optional directory of past-auction hammer files written by "
+            "tools/hammer.py (normally data/hammer/). Each lot whose product "
+            "(title + condition) appears in that history gets a `hammer_key` "
+            "into the bundle's top-level `hammer` map. Coverage is partial by "
+            "nature — about a third of lots are repeat products. Omit the flag "
+            "entirely to build with no sale history (the prior behaviour)."
+        ),
+    )
+    parser.add_argument(
         "--output",
         required=True,
         metavar="PATH",
@@ -155,6 +168,25 @@ def main() -> None:
             f"Lots without a valuation show no resale info."
         )
 
+    # --- Optional hammer-price history join ---------------------------------
+    # Mirrors the resale join above: absent flag → every lot keeps a null
+    # `hammer_key` and the bundle carries no `hammer` map at all.
+    hammer_map: dict[str, Any] = {}
+    if args.hammer:
+        from build.hammer import (
+            load_hammer_files,
+            build_hammer_index,
+            attach_hammer,
+            used_index,
+            describe as describe_hammer,
+        )
+
+        hammer_files = load_hammer_files(Path(args.hammer))
+        hammer_index = build_hammer_index(hammer_files)
+        hammer_attached = attach_hammer(merged, hammer_index)
+        hammer_map = used_index(merged, hammer_index)
+        print(describe_hammer(hammer_files, hammer_index, hammer_attached, len(merged)))
+
     from build.transform import transform_all
     lots = transform_all(merged)
 
@@ -186,6 +218,13 @@ def main() -> None:
             f"Warning: image_url coverage {img_pct:.1f}% is below the 95% gate. "
             "Bundle still written, but viewer cards will mostly show 'NO IMAGE'.",
             file=sys.stderr,
+        )
+
+    if args.hammer:
+        with_hammer = sum(1 for lot in lots if lot.hammer_key)
+        print(
+            f"Hammer coverage: {100.0 * with_hammer / n:.1f}% ({with_hammer}/{n}) "
+            f"of lots carry a sale history."
         )
 
     # --- Condition vocabulary ----------------------------------------------
@@ -258,6 +297,10 @@ def main() -> None:
         # one entry per scrape run (see build/scrapes.py); [] when unknown
         "scrapes": scrapes,
     }
+    if hammer_map:
+        # product key -> {"weeks": [...]}, newest week first. Only keys some lot
+        # references are shipped, and only when --hammer was passed.
+        envelope["hammer"] = hammer_map
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(envelope, fh, ensure_ascii=False, indent=2)
 

@@ -1,7 +1,9 @@
 import { useEffect, type CSSProperties } from 'react';
+import type { HammerWeek } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor, closeLabelLong } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
+import { hammerDateLabel, hammerRange } from '../lib/hammer';
 import { TileImage } from './pills/TileImage';
 
 /**
@@ -27,6 +29,12 @@ interface Props {
   onClose: () => void;
   onStep: (delta: number) => void;
   onToggleWatch: () => void;
+  /**
+   * Every recorded week for this product, newest first — the full history the
+   * card's one line summarises. Null when the product has never run before, or
+   * the bundle was built without `--hammer`.
+   */
+  hammer?: HammerWeek[] | null;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -105,6 +113,7 @@ export function LotDetail({
   onClose,
   onStep,
   onToggleWatch,
+  hammer,
 }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -289,6 +298,52 @@ export function LotDetail({
                     </span>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {hammer && hammer.length > 0 && (
+            <div style={{ padding: '12px 16px 0' }}>
+              <div
+                data-testid="hammer-detail"
+                style={{ padding: '11px 13px', borderRadius: 10, background: 'var(--s2)' }}
+              >
+                <div style={{ ...microLabel, marginBottom: 8 }}>SOLD FOR, PAST WEEKS</div>
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontFamily: MONO,
+                    fontSize: '10.5px',
+                    fontVariantNumeric: 'tabular-nums',
+                    color: 'var(--dim)',
+                  }}
+                >
+                  <thead>
+                    <tr style={{ ...microLabel, textAlign: 'right' }}>
+                      <th style={{ textAlign: 'left', fontWeight: 500, paddingBottom: 5 }}>WEEK</th>
+                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>SOLD</th>
+                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>UNSOLD</th>
+                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>MEDIAN</th>
+                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>RANGE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hammer.map((week) => (
+                      <tr key={week.close_date} style={{ textAlign: 'right' }}>
+                        <td style={{ textAlign: 'left', padding: '3px 0' }}>
+                          {hammerDateLabel(week.close_date)}
+                        </td>
+                        <td style={{ padding: '3px 0', color: 'var(--text)' }}>{week.sold}</td>
+                        <td style={{ padding: '3px 0' }}>{week.unsold}</td>
+                        <td style={{ padding: '3px 0', color: 'var(--text)' }}>
+                          {week.median !== null ? formatMoney(week.median) : '—'}
+                        </td>
+                        <td style={{ padding: '3px 0' }}>{hammerRange(week) ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 from typing import Any, Callable, Optional
 
@@ -331,15 +332,42 @@ def _try_bearer(
 _PAGE_LENGTHS = [500, 200, 100]
 
 
-def _build_payload(auction_id: int, page_number: int, page_length: int) -> dict:
+# The operation name in the POST body must match the one inside the query
+# document, so it is read off the query rather than passed alongside it — a
+# caller supplying its own query (see tools/hammer.py) cannot get the two out
+# of step.
+_OPERATION_NAME_RE = re.compile(r"\bquery\s+(?P<name>\w+)")
+
+
+def _operation_name(query: str) -> str:
+    """The operation name declared by ``query`` (defaults to the lot search)."""
+    m = _OPERATION_NAME_RE.search(query)
+    return m.group("name") if m else "LotSearchLotOnly"
+
+
+def _build_payload(
+    auction_id: int,
+    page_number: int,
+    page_length: int,
+    query: str = LOT_SEARCH_QUERY,
+) -> dict:
+    """
+    Build a lotSearch POST body.
+
+    ``query`` defaults to LOT_SEARCH_QUERY — the weekly scrape's shape, which
+    scraper/__main__.py's raw file depends on and which must not change. A
+    caller that wants different fields (tools/hammer.py asks for `bidList`
+    instead of pictures and categories) passes its own document here; the
+    variables and the pagination contract are identical either way.
+    """
     return {
-        "operationName": "LotSearchLotOnly",
+        "operationName": _operation_name(query),
         "variables": {
             "auctionId": auction_id,
             "pageNumber": page_number,
             "pageLength": page_length,
         },
-        "query": LOT_SEARCH_QUERY,
+        "query": query,
     }
 
 
@@ -355,11 +383,11 @@ def _paged_results(resp) -> Optional[dict]:
 
 
 def _negotiate_page_length(
-    session, auction_id: int, auth_fn: Callable
+    session, auction_id: int, auth_fn: Callable, query: str = LOT_SEARCH_QUERY
 ) -> tuple[int, dict]:
     """Try 500 → 200 → 100 until one returns a valid page-1 response."""
     for page_length in _PAGE_LENGTHS:
-        payload = _build_payload(auction_id, 1, page_length)
+        payload = _build_payload(auction_id, 1, page_length, query)
         resp = auth_fn(session, payload)
         if not _is_valid_graphql(resp):
             continue
@@ -406,9 +434,18 @@ def _make_session():
     return cffi_requests.Session(impersonate=IMPERSONATE)
 
 
-def fetch_all_lots(auction_id: int) -> tuple[str, list[dict[str, Any]]]:
+def fetch_all_lots(
+    auction_id: int, query: str = LOT_SEARCH_QUERY
+) -> tuple[str, list[dict[str, Any]]]:
     """
     Fetch all lots for ``auction_id`` using the 3-tier auth strategy.
+
+    Args:
+        auction_id: HiBid auction id.
+        query: the lotSearch document to send. Defaults to LOT_SEARCH_QUERY,
+            which is what the weekly scrape writes to data/raw/ — do not change
+            that document or its default here. tools/hammer.py passes a slimmer
+            one asking for `bidList`; everything else about the call is the same.
 
     Returns:
         (auction_name, items_list)
@@ -441,7 +478,7 @@ def fetch_all_lots(auction_id: int) -> tuple[str, list[dict[str, Any]]]:
             (bearer_fn, "JWT bearer"),
         ]:
             logger.info("Trying auth strategy: %s", name)
-            probe_payload = _build_payload(auction_id, 1, _PAGE_LENGTHS[0])
+            probe_payload = _build_payload(auction_id, 1, _PAGE_LENGTHS[0], query)
             resp = fn(session, probe_payload)
             if _is_valid_graphql(resp) and _paged_results(resp) is not None:
                 chosen_fn = fn
@@ -459,7 +496,9 @@ def fetch_all_lots(auction_id: int) -> tuple[str, list[dict[str, Any]]]:
             )
 
         # Determine page length + fetch page 1
-        page_length, first_page = _negotiate_page_length(session, auction_id, chosen_fn)
+        page_length, first_page = _negotiate_page_length(
+            session, auction_id, chosen_fn, query
+        )
         total_count: int = first_page.get("totalCount") or 0
         results: list[dict] = list(first_page.get("results") or [])
 
@@ -480,7 +519,7 @@ def fetch_all_lots(auction_id: int) -> tuple[str, list[dict[str, Any]]]:
         total_pages = -(-total_count // page_length) if page_length else 1
         while (page_number - 1) * page_length < total_count:
             time.sleep(RATE_LIMIT_SLEEP)
-            payload = _build_payload(auction_id, page_number, page_length)
+            payload = _build_payload(auction_id, page_number, page_length, query)
             page_label = f"page {page_number}/{total_pages}"
             resp = chosen_fn(session, payload, label=page_label)
             if not _is_valid_graphql(resp):

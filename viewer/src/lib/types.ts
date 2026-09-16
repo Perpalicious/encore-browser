@@ -100,6 +100,14 @@ export interface Lot {
   resale_confidence: Confidence | null;
   resale_outlook: ResaleOutlook | null;
   resale_reasoning: string | null;
+  /**
+   * Key into `Bundle.hammer` — what this same product (title + condition) sold
+   * for in earlier auctions. Null on the ~two thirds of lots whose product has
+   * no recorded history, and absent entirely on a bundle built without
+   * `--hammer`. The history is NOT copied onto the lot: 58 lots routinely share
+   * one product, so they share one entry in the map.
+   */
+  hammer_key?: string | null;
   // Personal match — optional: absent (or null) on lots from bundles built
   // before the personal-match pass, and on lots the pass didn't flag.
   personal_match?: boolean | null;
@@ -137,4 +145,25 @@ export interface Bundle {
   groups: string[];
   /** Absent or empty on older bundles; the viewer shows the scrape filter only with 2+. */
   scrapes?: ScrapeInfo[];
+  /**
+   * Product key → what that product actually sold for, week by week, newest
+   * first. Absent unless the bundle was built with `--hammer`; see
+   * build/hammer.py.
+   */
+  hammer?: Record<string, { weeks: HammerWeek[] }>;
+}
+
+/**
+ * One past auction's result for one product. `median`/`low`/`high` are over
+ * SOLD lots only and are null when nothing sold — `unsold` is counted and
+ * shown, never rendered as "$0".
+ */
+export interface HammerWeek {
+  /** YYYY-MM-DD, the date that auction closed. */
+  close_date: string;
+  sold: number;
+  unsold: number;
+  median: number | null;
+  low: number | null;
+  high: number | null;
 }

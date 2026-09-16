@@ -1,8 +1,9 @@
 import { useRef, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
-import type { MobileCols } from '../lib/types';
+import type { HammerWeek, MobileCols } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor, closeLabel } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
+import { hammerDetailFor, hammerLine } from '../lib/hammer';
 import { TITLE_H, FIGURE_ROW_H, META_ROW_H } from '../hooks/useGridGeometry';
 import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
@@ -45,6 +46,12 @@ interface Props {
   now?: number;
   /** True when one day is filtered, which makes the S/M chip redundant. */
   singleDay?: boolean;
+  /**
+   * What this product sold for in past auctions, newest week first. Null on
+   * the ~two thirds of lots that are not repeat products, and on every lot of
+   * a bundle built without `--hammer`.
+   */
+  hammer?: HammerWeek[] | null;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -78,6 +85,7 @@ export function LotCard({
   touch = false,
   now,
   singleDay = false,
+  hammer,
 }: Props) {
   const cc = conditionColor(view.cond);
   // A lot is ENDED once its closing time passes. Compared at render against a
@@ -94,6 +102,14 @@ export function LotCard({
   const figFs = mobileCols === 3 ? '11.5px' : '12.5px';
   const textPad =
     mobileCols === 4 ? '5px 6px 6px' : mobileCols === 3 ? '6px 7px 7px' : '8px 9px 9px';
+
+  // History, not a valuation: one line, greyscale, typeset below the resale
+  // figure's weight so the two never read as competing prices. It rides the
+  // meta row rather than adding one, because the card's height is fixed and the
+  // virtualiser derives its row pitch from it.
+  const hammerText = hammer && hammer.length > 0
+    ? hammerLine(hammer[0], hammerDetailFor(colW))
+    : null;
 
   const shellRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -352,6 +368,24 @@ export function LotCard({
               {view.bucket ?? view.sub}
             </span>
           </span>
+          {hammerText && (
+            <span
+              data-testid="hammer-line"
+              title="What this product sold for last time"
+              style={{
+                flex: 'none',
+                fontFamily: MONO,
+                fontWeight: 500,
+                fontSize: '8.5px',
+                lineHeight: 1,
+                color: 'var(--dim3)',
+                fontVariantNumeric: 'tabular-nums',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {hammerText}
+            </span>
+          )}
         </div>
         )}
       </div>

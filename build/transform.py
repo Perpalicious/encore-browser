@@ -99,6 +99,18 @@ def _resale_passthrough(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _hammer_passthrough(item: dict[str, Any]) -> dict[str, Any]:
+    """
+    Carry the (optional) hammer product key onto the Lot shape.
+
+    Absent unless `python -m build --hammer ...` matched this lot's product to
+    a past auction; it then indexes the bundle's top-level `hammer` map. Same
+    tolerant pattern as the resale fields above.
+    """
+    key = item.get("hammer_key")
+    return {"hammer_key": str(key) if key else None}
+
+
 def _personal_passthrough(item: dict[str, Any]) -> dict[str, Any]:
     """
     Carry the optional personal-match fields onto the Lot shape. Categorized
@@ -196,6 +208,7 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         "first_seen": item.get("first_seen") or None,
         "confidence": _bucket_confidence(item.get("predicted_confidence")),
         **_resale_passthrough(item),
+        **_hammer_passthrough(item),
         **_personal_passthrough(item),
     }
 
@@ -241,6 +254,7 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "first_seen": item.get("first_seen") or None,
         "confidence": confidence,
         **_resale_passthrough(item),
+        **_hammer_passthrough(item),
         **_personal_passthrough(item),
     }
 

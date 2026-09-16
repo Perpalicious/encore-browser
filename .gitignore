@@ -25,6 +25,9 @@ data/categorized/*
 !data/categorized/auction_703264_categorized.json
 # Prior weeks, moved out of the working folder (see "Data retention" in CLAUDE.md)
 data/archive/
+# Past auctions' hammer prices (tools/hammer.py). Gitignored like the rest of
+# data/, but NEVER swept — see "Data retention" in CLAUDE.md.
+data/hammer/
 # Bid/watch history exports. The RAW history is a per-lot log of what this
 # household bid on and watched — the repo is public and profile.yaml is written
 # impersonally on purpose, so it stays local. The aggregate findings are

@@ -18,11 +18,22 @@ sequence exactly. **Stop and wait for the user at the marked points —
 the two ChatGPT passes cannot be run by you; they require the user to
 paste the input file into a ChatGPT chat and paste the response back.**
 
-### 0. Sync, then sweep last week aside
+### 0. Sync, pull last week's hammer prices, then sweep last week aside
 
 ```bash
 git pull
+python3 tools/hammer.py <LAST_WEEK_ID>     # last week is closed by now
 ```
+
+The hammer pull is **optional and out-of-band** — it feeds no pass and no
+build step by itself, and skipping it costs nothing this week. But it has to
+happen *before* the sweep and *before* this week's scrape, because it can only
+run on a CLOSED auction: it derives each lot's final price from the bid ladder
+HiBid leaves behind, and refuses (non-zero, writing nothing) if any lot is
+still open. Two-auction weeks: run it once per auction id. Output lands in
+`data/hammer/<close_date>_<ID>.json`, one row per product; step 6 can then
+join it onto this week's repeat products. See `tools/hammer.py`'s docstring
+and `docs/HAMMER_PRICES_PLAN.md`.
 
 Then move the previous week out of the way. This is not optional — last week's
 `_categorized.json` and `_resale.json` sit at exactly the paths this week's
@@ -347,14 +358,23 @@ proceed with a malformed, stale, or markdown-wrapped file.
 python -m build --raw data/raw/auction_<ID>.json \
   --categorized data/categorized/auction_<ID>_categorized.json \
   --resale data/categorized/auction_<ID>_resale.json \
+  --hammer data/hammer/ \
   --output viewer/src/data/auction_bundle.json --drop-orphans
 ```
 Drop the `--resale` line on a flagging-only week; the build treats resale as
-optional and every lot simply keeps a null valuation.
+optional and every lot simply keeps a null valuation. `--hammer` is optional
+the same way — drop it and every lot keeps a null `hammer_key` with no sale
+history shown. Unlike resale it is a *directory*, and it is cumulative: every
+file `tools/hammer.py` has ever written is read, newest week first.
 
 Check the build's own output for:
 - `category_path` coverage ~100%
 - resale coverage ~matches total lot count (or 0 on a flagging-only week)
+- hammer coverage in the 20-40% band when `--hammer` was passed. That is
+  normal, not a failure — about a third of lots are repeat products (32.8%
+  measured). **0% with hammer files on disk** means the join broke, not that
+  nothing repeated; it matches on title + condition, so a `condition` that
+  parsed as None everywhere (see the `slim.py` gotcha below) zeroes it
 - **the "no group" warning is EMPTY** — if it lists bucket names, those
   don't match `buckets.yaml` exactly and will fall into "Other"; report
   this to the user rather than silently continuing.
@@ -372,6 +392,8 @@ print(sum(1 for l in lots if l.get('personal_match') is not None), 'carry person
 print(sum(1 for l in lots if l.get('personal_match') is True), 'are personal_match=true')
 print(sum(1 for l in lots if l.get('bat_subtype')), 'carry a bat_subtype')
 print(sum(1 for l in lots if len(l.get('bat_buckets') or []) >= 2), 'have 2+ buckets')
+print(sum(1 for l in lots if l.get('hammer_key')), 'carry a hammer_key')
+print('hammer products:', len((b.get('hammer') or {}) if isinstance(b, dict) else {}))
 print('scrapes:', b.get('scrapes') if isinstance(b, dict) else None)
 "
 ```
@@ -521,6 +543,19 @@ Nothing reuses them automatically yet, and the 2026-07-18 archive contains no
 resale data at all (that week ran before the resale pass existed). From the
 2026-08-01 run forward, keep each `auction_<ID>_resale_deduped.json` in its
 dated archive folder when clearing the rest.
+
+**And `data/hammer/` — keep it indefinitely.** It is the one thing in `data/`
+that becomes *more* useful with age: every file is what real products really
+sold for in one closed auction, and that stays true forever. At roughly 1 MB a
+week it costs nothing, and each retained week raises the share of this week's
+lots that can show a sale history. **Do NOT add it to the step-0 sweep**, and
+do not delete from it when clearing a week — the sweep's `find`/`rm` lines
+above deliberately touch only `data/categorized/` and `data/raw/`.
+
+Whether to *track* `data/hammer/` in git — which would let a scheduled cloud
+job do the Monday pull — is deliberately left open; the default is gitignored,
+and `tools/hammer.py --out` is a flag so flipping that later touches nothing
+else.
 
 Do not keep old files "just in case" beyond those two. `diff_categorized` is a
 within-run resume tool keyed on this week's lot_numbers; it has no use for

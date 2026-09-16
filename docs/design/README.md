@@ -162,6 +162,7 @@ This is the core of the redesign. Enforce it — the old build's flat feel came 
 | **Active filter** | Blush pill with `×` | Only ever means "you narrowed something" |
 | **Money** | Greyscale: resale 12.5–13.5px `--text`. The only *valuation* on a lot | Never coloured. Retail's old red is gone |
 | **Sale history** | Mono 8.5–9.5px `--dim3`, one line under the resale figure: `Sold 6× · med $14 · $9–$22 · 3 unsold` | What this exact product hammered at in past Encore auctions. Smaller and dimmer than resale, and never coloured |
+| **Borrowed sale history** | Same line, *italic*, prefixed with the grade it came from: `Excellent: Sold 6× · med $14` | The same title in another condition, when this grade has never sold. The prefix is mandatory — a `For Parts Only` lot must never wear the `Excellent` median as its own. The detail leads with the lot's own grade (even "no sales yet") and collapses the other grades to one line each |
 | ~~**Exceptional value**~~ | ~~`▲ VALUE` badge (lavender fill) on the thumb in grid; `▲` pill in rows~~ | *(removed 2026-09-10 — the resale-to-retail ratio lost its denominator)* |
 | **Day** | One letter (`S`/`M`) top-left on the thumb + the sticky group bar | Hide entirely when a single day is filtered |
 | **Watched** | Star, amber when set | |

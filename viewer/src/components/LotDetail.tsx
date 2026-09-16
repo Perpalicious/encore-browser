@@ -3,7 +3,7 @@ import type { HammerWeek } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor, closeLabelLong } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
-import { hammerDateLabel, hammerRange } from '../lib/hammer';
+import { gradeLabel, hammerDateLabel, hammerLine, hammerRange, type HammerHistory } from '../lib/hammer';
 import { TileImage } from './pills/TileImage';
 
 /**
@@ -31,10 +31,10 @@ interface Props {
   onToggleWatch: () => void;
   /**
    * Every recorded week for this product, newest first — the full history the
-   * card's one line summarises. Null when the product has never run before, or
-   * the bundle was built without `--hammer`.
+   * card's one line summarises — plus the same title's other grades. Null when
+   * the title has never run before, or the bundle was built without `--hammer`.
    */
-  hammer?: HammerWeek[] | null;
+  hammer?: HammerHistory | null;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -102,6 +102,106 @@ function rangeLabel(view: LotView): string {
   if (lo !== null) return `≥ ${formatMoney(lo)}`;
   if (hi !== null) return `≤ ${formatMoney(hi)}`;
   return '—';
+}
+
+/**
+ * One grade's week-by-week table inside the sale-history block. The lot's own
+ * grade (`own`) is always open and renders even with no rows — "no sales yet"
+ * is the honest answer. Every other grade is context, so it starts collapsed
+ * to its latest week and opens on tap: a title like the Revlon One-Step has
+ * six grades of history, and six open tables buried the lot's own.
+ */
+function HammerGradeTable({
+  label,
+  weeks,
+  own = false,
+}: {
+  label: string;
+  weeks: HammerWeek[] | null;
+  own?: boolean;
+}) {
+  const cell: CSSProperties = { padding: '3px 0' };
+  const heading: CSSProperties = {
+    ...microLabel,
+    letterSpacing: '.06em',
+    fontSize: '9.5px',
+    color: own ? 'var(--text)' : 'var(--dim)',
+    textTransform: 'uppercase',
+  };
+  const table = weeks && (
+    <table
+      style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        fontFamily: MONO,
+        fontSize: '10.5px',
+        fontVariantNumeric: 'tabular-nums',
+        color: 'var(--dim)',
+        marginTop: 4,
+      }}
+    >
+      <thead>
+        <tr style={{ ...microLabel, textAlign: 'right' }}>
+          <th style={{ textAlign: 'left', fontWeight: 500, paddingBottom: 5 }}>WEEK</th>
+          <th style={{ fontWeight: 500, paddingBottom: 5 }}>SOLD</th>
+          <th style={{ fontWeight: 500, paddingBottom: 5 }}>UNSOLD</th>
+          <th style={{ fontWeight: 500, paddingBottom: 5 }}>MEDIAN</th>
+          <th style={{ fontWeight: 500, paddingBottom: 5 }}>RANGE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {weeks.map((week) => (
+          <tr key={week.close_date} style={{ textAlign: 'right' }}>
+            <td style={{ ...cell, textAlign: 'left' }}>{hammerDateLabel(week.close_date)}</td>
+            <td style={{ ...cell, color: 'var(--text)' }}>{week.sold}</td>
+            <td style={cell}>{week.unsold}</td>
+            <td style={{ ...cell, color: 'var(--text)' }}>
+              {week.median !== null ? formatMoney(week.median) : '—'}
+            </td>
+            <td style={cell}>{hammerRange(week) ?? '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  if (own) {
+    return (
+      <div data-testid="hammer-grade-own">
+        <div style={heading}>{label}</div>
+        {table ?? (
+          <div style={{ fontFamily: MONO, fontSize: '10.5px', color: 'var(--dim3)', marginTop: 4 }}>
+            No sales of this grade yet
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const latest = weeks?.[0];
+  return (
+    <details data-testid="hammer-grade-other" style={{ marginTop: 9 }}>
+      <summary
+        style={{
+          cursor: 'pointer',
+          listStyle: 'none',
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={heading}>{label}</span>
+        {latest && (
+          <span style={{ fontFamily: MONO, fontSize: '10px', color: 'var(--dim3)' }}>
+            {hammerDateLabel(latest.close_date)} · {hammerLine(latest, 'full')}
+          </span>
+        )}
+        <span aria-hidden style={{ ...microLabel, marginLeft: 'auto' }}>▾</span>
+      </summary>
+      {table}
+    </details>
+  );
 }
 
 export function LotDetail({
@@ -302,48 +402,30 @@ export function LotDetail({
             </div>
           )}
 
-          {hammer && hammer.length > 0 && (
+          {hammer && (
             <div style={{ padding: '12px 16px 0' }}>
               <div
                 data-testid="hammer-detail"
                 style={{ padding: '11px 13px', borderRadius: 10, background: 'var(--s2)' }}
               >
                 <div style={{ ...microLabel, marginBottom: 8 }}>SOLD FOR, PAST WEEKS</div>
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    fontFamily: MONO,
-                    fontSize: '10.5px',
-                    fontVariantNumeric: 'tabular-nums',
-                    color: 'var(--dim)',
-                  }}
-                >
-                  <thead>
-                    <tr style={{ ...microLabel, textAlign: 'right' }}>
-                      <th style={{ textAlign: 'left', fontWeight: 500, paddingBottom: 5 }}>WEEK</th>
-                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>SOLD</th>
-                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>UNSOLD</th>
-                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>MEDIAN</th>
-                      <th style={{ fontWeight: 500, paddingBottom: 5 }}>RANGE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hammer.map((week) => (
-                      <tr key={week.close_date} style={{ textAlign: 'right' }}>
-                        <td style={{ textAlign: 'left', padding: '3px 0' }}>
-                          {hammerDateLabel(week.close_date)}
-                        </td>
-                        <td style={{ padding: '3px 0', color: 'var(--text)' }}>{week.sold}</td>
-                        <td style={{ padding: '3px 0' }}>{week.unsold}</td>
-                        <td style={{ padding: '3px 0', color: 'var(--text)' }}>
-                          {week.median !== null ? formatMoney(week.median) : '—'}
-                        </td>
-                        <td style={{ padding: '3px 0' }}>{hammerRange(week) ?? '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {/*
+                  The lot's own grade leads, even when it has nothing — "no
+                  sales yet" is the honest answer, and the other grades below
+                  are context for it, not a substitute.
+                */}
+                <HammerGradeTable
+                  label={`${gradeLabel(view.cond ?? '')} · this lot`}
+                  weeks={hammer.own}
+                  own
+                />
+                {hammer.others.map((grade) => (
+                  <HammerGradeTable
+                    key={grade.condition}
+                    label={gradeLabel(grade.condition)}
+                    weeks={grade.weeks}
+                  />
+                ))}
               </div>
             </div>
           )}

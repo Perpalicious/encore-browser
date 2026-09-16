@@ -177,6 +177,7 @@ def main() -> None:
             load_hammer_files,
             build_hammer_index,
             attach_hammer,
+            count_alt_only,
             used_index,
             describe as describe_hammer,
         )
@@ -185,7 +186,15 @@ def main() -> None:
         hammer_index = build_hammer_index(hammer_files)
         hammer_attached = attach_hammer(merged, hammer_index)
         hammer_map = used_index(merged, hammer_index)
-        print(describe_hammer(hammer_files, hammer_index, hammer_attached, len(merged)))
+        print(
+            describe_hammer(
+                hammer_files,
+                hammer_index,
+                hammer_attached,
+                len(merged),
+                count_alt_only(merged),
+            )
+        )
 
     from build.transform import transform_all
     lots = transform_all(merged)
@@ -222,9 +231,12 @@ def main() -> None:
 
     if args.hammer:
         with_hammer = sum(1 for lot in lots if lot.hammer_key)
+        alt_only = sum(1 for lot in lots if not lot.hammer_key and lot.hammer_alt_keys)
         print(
             f"Hammer coverage: {100.0 * with_hammer / n:.1f}% ({with_hammer}/{n}) "
-            f"of lots carry a sale history."
+            f"of lots carry their own sale history; "
+            f"{100.0 * alt_only / n:.1f}% ({alt_only}/{n}) more show another "
+            f"condition's."
         )
 
     # --- Condition vocabulary ----------------------------------------------

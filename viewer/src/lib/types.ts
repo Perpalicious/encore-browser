@@ -108,6 +108,13 @@ export interface Lot {
    * one product, so they share one entry in the map.
    */
   hammer_key?: string | null;
+  /**
+   * Keys into `Bundle.hammer` for the SAME title in OTHER conditions that have
+   * history, nearest grade first. A `Good` lot whose title only ever ran as
+   * `Excellent` has no `hammer_key` but one entry here. Shown under that grade's
+   * own label, never as this lot's history. Null/absent when there are none.
+   */
+  hammer_alt_keys?: string[] | null;
   // Personal match — optional: absent (or null) on lots from bundles built
   // before the personal-match pass, and on lots the pass didn't flag.
   personal_match?: boolean | null;

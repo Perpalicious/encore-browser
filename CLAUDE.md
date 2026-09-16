@@ -370,11 +370,14 @@ file `tools/hammer.py` has ever written is read, newest week first.
 Check the build's own output for:
 - `category_path` coverage ~100%
 - resale coverage ~matches total lot count (or 0 on a flagging-only week)
-- hammer coverage in the 20-40% band when `--hammer` was passed. That is
-  normal, not a failure — about a third of lots are repeat products (32.8%
-  measured). **0% with hammer files on disk** means the join broke, not that
-  nothing repeated; it matches on title + condition, so a `condition` that
-  parsed as None everywhere (see the `slim.py` gotcha below) zeroes it
+- hammer coverage in the 20-40% band when `--hammer` was passed, plus
+  another 10-15% "via another condition" (41.2% + 14.0% measured 2026-09-16
+  against twelve weeks). That is normal, not a failure — about a third of
+  lots are repeat products (32.8% measured). **0% with hammer files on
+  disk** means the join broke, not that nothing repeated; it matches on
+  title + condition, so a `condition` that parsed as None everywhere (see
+  the `slim.py` gotcha below) zeroes the exact match — and the borrowed
+  share would then balloon, because every lot keys on a blank grade
 - **the "no group" warning is EMPTY** — if it lists bucket names, those
   don't match `buckets.yaml` exactly and will fall into "Other"; report
   this to the user rather than silently continuing.
@@ -393,6 +396,7 @@ print(sum(1 for l in lots if l.get('personal_match') is True), 'are personal_mat
 print(sum(1 for l in lots if l.get('bat_subtype')), 'carry a bat_subtype')
 print(sum(1 for l in lots if len(l.get('bat_buckets') or []) >= 2), 'have 2+ buckets')
 print(sum(1 for l in lots if l.get('hammer_key')), 'carry a hammer_key')
+print(sum(1 for l in lots if not l.get('hammer_key') and l.get('hammer_alt_keys')), 'borrow another grade only')
 print('hammer products:', len((b.get('hammer') or {}) if isinstance(b, dict) else {}))
 print('scrapes:', b.get('scrapes') if isinstance(b, dict) else None)
 "

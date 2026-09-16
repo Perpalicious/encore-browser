@@ -2,9 +2,12 @@ import { describe, it, expect } from 'vitest';
 import type { Bundle, HammerWeek, Lot } from './types';
 import { lot } from '../test/lotFixture';
 import {
+  gradeLabel,
+  hammerCardLine,
   hammerDateLabel,
   hammerDetailFor,
   hammerFor,
+  hammerHistory,
   hammerLine,
   hammerRange,
   hammerWeeks,
@@ -55,7 +58,83 @@ describe('hammerWeeks lookup', () => {
 
   it('reads the map off a whole bundle', () => {
     const l = lot({ lot_number: '1', hammer_key: 'SHARK|EXCELLENT' });
-    expect(hammerFor(l, bundle([l], index))?.[0].sold).toBe(6);
+    expect(hammerFor(l, bundle([l], index))?.own?.[0].sold).toBe(6);
+  });
+});
+
+describe('hammerHistory — other grades of the same title', () => {
+  const index = {
+    'SHARK|EXCELLENT': { weeks: [week({ median: 3 })] },
+    'SHARK|BRAND NEW - OPEN BOX': { weeks: [week({ median: 4 })] },
+    'SHARK|FAIR': { weeks: [] },
+  };
+
+  it('keeps the exact match as own and the others under their conditions, in build order', () => {
+    const h = hammerHistory(
+      lot({
+        lot_number: '1',
+        hammer_key: 'SHARK|EXCELLENT',
+        hammer_alt_keys: ['SHARK|BRAND NEW - OPEN BOX'],
+      }),
+      index
+    );
+    expect(h?.own?.[0].median).toBe(3);
+    expect(h?.others).toEqual([{ condition: 'BRAND NEW - OPEN BOX', weeks: [week({ median: 4 })] }]);
+  });
+
+  it('is a borrowed-only history when the lot has alternates but no own key', () => {
+    const h = hammerHistory(
+      lot({ lot_number: '1', hammer_alt_keys: ['SHARK|EXCELLENT', 'SHARK|BRAND NEW - OPEN BOX'] }),
+      index
+    );
+    expect(h?.own).toBeNull();
+    expect(h?.others.map((g) => g.condition)).toEqual(['EXCELLENT', 'BRAND NEW - OPEN BOX']);
+    // hammerWeeks is own-only, so the grid's old callers see nothing here
+    expect(hammerWeeks(lot({ lot_number: '1', hammer_alt_keys: ['SHARK|EXCELLENT'] }), index)).toBeNull();
+  });
+
+  it('drops alternates that resolve to nothing, and is null when nothing is left', () => {
+    expect(
+      hammerHistory(lot({ lot_number: '1', hammer_alt_keys: ['SHARK|FAIR', 'NOPE|GOOD'] }), index)
+    ).toBeNull();
+  });
+});
+
+describe('hammerCardLine', () => {
+  it('is the plain line for the lot\'s own latest week', () => {
+    expect(hammerCardLine({ own: [week()], others: [] })).toBe(
+      'Sold 6× · med $14 · $9–$22 · 3 unsold'
+    );
+  });
+
+  it('prefixes a borrowed week with its grade and gives up one level of detail for it', () => {
+    const h = { own: null, others: [{ condition: 'EXCELLENT', weeks: [week()] }] };
+    expect(hammerCardLine(h, 'full')).toBe('Excellent: Sold 6× · med $14 · 3 unsold');
+    expect(hammerCardLine(h, 'no-range')).toBe('Excellent: Sold 6× · med $14');
+    expect(hammerCardLine(h, 'minimal')).toBe('Excellent: Sold 6× · med $14');
+  });
+
+  it('borrows from the FIRST alternate — the build put the nearest grade there', () => {
+    const h = {
+      own: null,
+      others: [
+        { condition: 'GOOD', weeks: [week({ median: 1 })] },
+        { condition: 'BRAND NEW - SEALED', weeks: [week({ median: 40 })] },
+      ],
+    };
+    expect(hammerCardLine(h)).toContain('Good: ');
+    expect(hammerCardLine(h)).not.toContain('$40');
+  });
+});
+
+describe('gradeLabel', () => {
+  it('shortens the long HiBid spellings and title-cases the rest', () => {
+    expect(gradeLabel('BRAND NEW - OPEN BOX')).toBe('Open box');
+    expect(gradeLabel('BRAND NEW - SEALED')).toBe('Sealed');
+    expect(gradeLabel('FOR PARTS ONLY')).toBe('Parts only');
+    expect(gradeLabel('Excellent')).toBe('Excellent');
+    expect(gradeLabel('SOMETHING NEW')).toBe('Something new');
+    expect(gradeLabel('')).toBe('No grade');
   });
 });
 

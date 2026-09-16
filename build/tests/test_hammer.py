@@ -18,9 +18,12 @@ from pathlib import Path
 import pytest
 
 from build.hammer import (
+    CONDITION_LADDER,
     MAX_WEEKS,
+    alt_key_order,
     attach_hammer,
     build_hammer_index,
+    count_alt_only,
     describe,
     hammer_key,
     load_hammer_files,
@@ -207,6 +210,11 @@ class TestAttach:
         assert lots[0]["hammer_key"] == hammer_key("SHARK HD430C FLEXSTYLE", "Excellent")
         assert "hammer_key" not in lots[1]
         assert "hammer_key" not in lots[2]
+        # The other grade of the same title still learns about the Excellent
+        # history — under its own key, never as its own match.
+        assert "hammer_alt_keys" not in lots[1]
+        assert lots[2]["hammer_alt_keys"] == [hammer_key("SHARK HD430C FLEXSTYLE", "Excellent")]
+        assert "hammer_alt_keys" not in lots[0]
 
     def test_every_lot_of_a_repeat_product_shares_one_key(self):
         index = build_hammer_index([_file("2026-09-13", [_product()])])
@@ -224,12 +232,69 @@ class TestAttach:
         assert list(used) == [hammer_key("SHARK HD430C FLEXSTYLE", "Excellent")]
         assert used[list(used)[0]]["weeks"][0]["median"] == 14.0
 
+    def test_alt_keys_are_ordered_nearest_grade_first_and_never_include_own(self):
+        index = build_hammer_index(
+            [
+                _file(
+                    "2026-09-13",
+                    [
+                        _product(condition="Brand New - Sealed"),
+                        _product(condition="Excellent"),
+                        _product(condition="Fair"),
+                        _product(condition="Good"),
+                    ],
+                )
+            ]
+        )
+        lot = _merged("1", condition="Good")
+        attach_hammer([lot], index)
+        assert lot["hammer_key"] == hammer_key("SHARK HD430C FLEXSTYLE", "Good")
+        assert [k.rpartition("|")[2] for k in lot["hammer_alt_keys"]] == [
+            "EXCELLENT",  # one step up
+            "FAIR",  # two steps down (New With Defects sits between)
+            "BRAND NEW - SEALED",
+        ]
+
+    def test_equidistant_grades_prefer_the_worse_one(self):
+        # A borrowed figure should err low: Good borrows from New With Defects
+        # (one step down) before Excellent (one step up).
+        assert alt_key_order("GOOD", "NEW WITH DEFECTS") < alt_key_order("GOOD", "EXCELLENT")
+
+    def test_a_blank_condition_history_is_never_offered_as_an_alternate(self):
+        index = build_hammer_index(
+            [_file("2026-09-13", [_product(condition=None), _product(condition="Good")])]
+        )
+        lot = _merged("1", condition="Excellent")
+        attach_hammer([lot], index)
+        assert lot["hammer_alt_keys"] == [hammer_key("SHARK HD430C FLEXSTYLE", "Good")]
+        # ...but a lot that is itself ungraded still matches it exactly.
+        blank = _merged("2", condition=None)
+        attach_hammer([blank], index)
+        assert blank["hammer_key"] == hammer_key("SHARK HD430C FLEXSTYLE", None)
+
+    def test_alt_key_order_puts_unknown_grades_last_and_handles_no_condition(self):
+        assert alt_key_order("GOOD", "USED") > alt_key_order("GOOD", "FOR PARTS ONLY")
+        # A lot with no grade at all sees the ladder best-first.
+        assert sorted(CONDITION_LADDER, key=lambda c: alt_key_order("", c)) == list(
+            CONDITION_LADDER
+        )
+
+    def test_alt_keys_are_shipped_and_counted(self):
+        index = build_hammer_index([_file("2026-09-13", [_product()])])
+        lots = [_merged("1", condition="Good")]  # no Good history, Excellent exists
+        assert attach_hammer(lots, index) == 0
+        assert count_alt_only(lots) == 1
+        assert list(used_index(lots, index)) == [
+            hammer_key("SHARK HD430C FLEXSTYLE", "Excellent")
+        ]
+
     def test_describe_reports_products_weeks_and_coverage(self):
         files = [_file("2026-09-13", [_product()])]
         index = build_hammer_index(files)
-        assert describe(files, index, 1, 4) == (
-            "Hammer: 1 products across 1 week(s); 1/4 lots matched (25.0%). "
-            "Lots without a match show no sale history."
+        assert describe(files, index, 1, 4, 1) == (
+            "Hammer: 1 products across 1 week(s); 1/4 lots matched (25.0%), "
+            "1 more (25.0%) only via another condition. "
+            "Lots with neither show no sale history."
         )
 
 
@@ -247,6 +312,13 @@ class TestTransform:
     def test_a_lot_with_no_hammer_key_validates_with_none(self):
         lot = Lot(**transform_item(_merged("1")))
         assert lot.hammer_key is None
+        assert lot.hammer_alt_keys is None
+
+    def test_alt_keys_survive_the_transform_and_empty_becomes_none(self):
+        lot = Lot(**transform_item(_merged("1", hammer_alt_keys=["SHARK|GOOD"])))
+        assert lot.hammer_alt_keys == ["SHARK|GOOD"]
+        lot = Lot(**transform_item(_merged("1", hammer_alt_keys=[])))
+        assert lot.hammer_alt_keys is None
 
 
 # ---------------------------------------------------------------------------
@@ -335,9 +407,11 @@ class TestBundleShape:
         assert "hammer" in bundle
         keys = [lot["hammer_key"] for lot in bundle["lots"]]
         assert keys == [hammer_key("SHARK HD430C FLEXSTYLE", "Excellent"), None]
-        for key in [k for k in keys if k]:
-            assert key in bundle["hammer"]
-            assert bundle["hammer"][key]["weeks"][0]["median"] == 14.0
+        for lot in bundle["lots"]:
+            for key in [lot["hammer_key"], *(lot["hammer_alt_keys"] or [])]:
+                if key:
+                    assert key in bundle["hammer"]
+                    assert bundle["hammer"][key]["weeks"][0]["median"] == 14.0
 
     def test_an_empty_hammer_directory_builds_exactly_as_if_the_flag_were_absent(
         self, tmp_path, monkeypatch

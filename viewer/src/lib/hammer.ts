@@ -19,22 +19,91 @@ import { formatMoney } from './resale';
 /** The product-key → history map, as it ships in the bundle. */
 export type HammerIndex = Record<string, { weeks: HammerWeek[] }>;
 
+/** One condition's history for a title: the grade as HiBid spells it, and its weeks. */
+export interface HammerGrade {
+  condition: string;
+  weeks: HammerWeek[];
+}
+
 /**
- * This lot's history, newest week first, or null when it has none.
+ * Everything the bundle knows about this lot's title.
  *
- * Split from `hammerFor` so the grid can resolve thousands of lots against one
- * already-unwrapped map without touching the bundle each time.
+ * `own` is the lot's exact (title + condition) history, and is what the card
+ * line shows when present. `others` are the same title's OTHER conditions,
+ * nearest grade first as the build ordered them (build/hammer.py
+ * CONDITION_LADDER); the card falls back to the first of them, always under
+ * that grade's label, when `own` is null. The two are never blended: a `Good`
+ * unit that never sold is not priced by the `Excellent` one next to it.
  */
-export function hammerWeeks(lot: Lot, index: HammerIndex | undefined): HammerWeek[] | null {
-  if (!index || !lot.hammer_key) return null;
-  const entry = index[lot.hammer_key];
+export interface HammerHistory {
+  own: HammerWeek[] | null;
+  others: HammerGrade[];
+}
+
+function weeksAt(index: HammerIndex, key: string): HammerWeek[] | null {
+  const entry = index[key];
   if (!entry || !entry.weeks || entry.weeks.length === 0) return null;
   return entry.weeks;
 }
 
+/** The condition half of a `"TITLE|CONDITION"` key. */
+export function keyCondition(key: string): string {
+  const bar = key.lastIndexOf('|');
+  return bar < 0 ? '' : key.slice(bar + 1);
+}
+
+/**
+ * This lot's history, or null when there is nothing at all to show.
+ *
+ * Split from `hammerFor` so the grid can resolve thousands of lots against one
+ * already-unwrapped map without touching the bundle each time.
+ */
+export function hammerHistory(lot: Lot, index: HammerIndex | undefined): HammerHistory | null {
+  if (!index) return null;
+  const own = lot.hammer_key ? weeksAt(index, lot.hammer_key) : null;
+  const others: HammerGrade[] = [];
+  for (const key of lot.hammer_alt_keys ?? []) {
+    const weeks = weeksAt(index, key);
+    if (weeks) others.push({ condition: keyCondition(key), weeks });
+  }
+  if (!own && others.length === 0) return null;
+  return { own, others };
+}
+
+/** This lot's own history only, newest week first, or null when it has none. */
+export function hammerWeeks(lot: Lot, index: HammerIndex | undefined): HammerWeek[] | null {
+  return hammerHistory(lot, index)?.own ?? null;
+}
+
 /** The same lookup against a whole bundle, for a single lot. */
-export function hammerFor(lot: Lot, bundle: Bundle | null | undefined): HammerWeek[] | null {
-  return hammerWeeks(lot, bundle?.hammer);
+export function hammerFor(lot: Lot, bundle: Bundle | null | undefined): HammerHistory | null {
+  return hammerHistory(lot, bundle?.hammer);
+}
+
+/**
+ * Short grade labels for the borrowed-history line, where the full HiBid
+ * spelling ("BRAND NEW - OPEN BOX") would eat the whole card. Anything HiBid
+ * adds later falls back to title case of its own name.
+ */
+const GRADE_SHORT: Record<string, string> = {
+  'BRAND NEW - SEALED': 'Sealed',
+  'BRAND NEW - OPEN BOX': 'Open box',
+  'NEW (ADJUSTED QUANTITY)': 'New (adj.)',
+  'NEW WITH DEFECTS': 'New w/ defects',
+  'BEST BEFORE (GROCERY)': 'Best before',
+  EXCELLENT: 'Excellent',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  'HEAVILY USED': 'Heavily used',
+  'FOR PARTS ONLY': 'Parts only',
+};
+
+/** "Open box", "Excellent", … for a key's condition half. */
+export function gradeLabel(condition: string): string {
+  const upper = condition.toUpperCase();
+  if (GRADE_SHORT[upper]) return GRADE_SHORT[upper];
+  if (!upper) return 'No grade';
+  return upper.charAt(0) + upper.slice(1).toLowerCase();
 }
 
 /**
@@ -85,6 +154,23 @@ export function hammerLine(week: HammerWeek, detail: HammerDetail = 'full'): str
   if (detail !== 'minimal' && week.unsold > 0) parts.push(`${week.unsold} unsold`);
 
   return parts.join(' · ');
+}
+
+/**
+ * The card line for a whole history: the lot's own latest week when it has one,
+ * else the nearest other grade's latest week PREFIXED with that grade —
+ *
+ *     Excellent: Sold 6× · med $14
+ *
+ * The prefix is not decoration. Without it a `For Parts Only` lot would show
+ * the `Excellent` median as if it were its own. A borrowed line also drops one
+ * level of detail to pay for the label.
+ */
+export function hammerCardLine(history: HammerHistory, detail: HammerDetail = 'full'): string {
+  if (history.own) return hammerLine(history.own[0], detail);
+  const grade = history.others[0];
+  const less: HammerDetail = detail === 'full' ? 'no-range' : 'minimal';
+  return `${gradeLabel(grade.condition)}: ${hammerLine(grade.weeks[0], less)}`;
 }
 
 /** "13 Sep" — the detail table's week label. Falls back to the raw date. */

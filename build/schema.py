@@ -67,6 +67,10 @@ class Lot(BaseModel):
     # this same product sold for in earlier weeks. None when the flag is absent,
     # and None on the (majority of) lots whose product has no recorded history.
     hammer_key: Optional[str] = None
+    # The same title's OTHER conditions that have history, nearest grade first
+    # (build/hammer.py:CONDITION_LADDER). Shown under their own grade, never
+    # blended with `hammer_key`. None when there are none.
+    hammer_alt_keys: Optional[list[str]] = None
 
     # --- Personal match (optional, from the personal-match pass) ------------
     # Present only when the categorized input carries personal-match fields.

@@ -1,9 +1,8 @@
 import { useRef, type CSSProperties } from 'react';
-import type { HammerWeek } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor, closeLabel } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
-import { hammerLine } from '../lib/hammer';
+import { hammerCardLine, type HammerHistory } from '../lib/hammer';
 import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
 
@@ -35,8 +34,8 @@ interface Props {
   onToggleWatch: () => void;
   /** Clock for the ENDED state; undefined when the bundle carries no times. */
   now?: number;
-  /** Past sale history for this product, newest week first; null when none. */
-  hammer?: HammerWeek[] | null;
+  /** Past sale history for this product (or its title's other grades); null when none. */
+  hammer?: HammerHistory | null;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -71,8 +70,11 @@ export function LotRow({
   // The wide desktop row can carry the whole line beside the bucket; the 78px
   // mobile row gets the short form under the resale figure, where there is a
   // spare line and no competition for width.
-  const week = hammer && hammer.length > 0 ? hammer[0] : null;
-  const hammerText = week ? hammerLine(week, mobile ? 'minimal' : 'full') : null;
+  const hammerText = hammer ? hammerCardLine(hammer, mobile ? 'minimal' : 'full') : null;
+  const hammerBorrowed = !!hammer && !hammer.own;
+  const hammerTitle = hammerBorrowed
+    ? 'No sales of this exact grade yet — this is what the named grade sold for'
+    : 'What this product sold for last time';
 
   const paint = (dx: number) => {
     const row = rowRef.current;
@@ -245,8 +247,14 @@ export function LotRow({
               {hammerText && (
                 <span
                   data-testid="hammer-line"
-                  title="What this product sold for last time"
-                  style={{ ...microFigure, fontSize: '9px', color: 'var(--dim3)' }}
+                  data-borrowed={hammerBorrowed || undefined}
+                  title={hammerTitle}
+                  style={{
+                    ...microFigure,
+                    fontSize: '9px',
+                    color: 'var(--dim3)',
+                    fontStyle: hammerBorrowed ? 'italic' : undefined,
+                  }}
                 >
                   {hammerText}
                 </span>
@@ -291,12 +299,14 @@ export function LotRow({
                 {hammerText && (
                   <span
                     data-testid="hammer-line"
-                    title="What this product sold for last time"
+                    data-borrowed={hammerBorrowed || undefined}
+                    title={hammerTitle}
                     style={{
                       ...microFigure,
                       flex: 'none',
                       fontSize: '9.5px',
                       color: 'var(--dim3)',
+                      fontStyle: hammerBorrowed ? 'italic' : undefined,
                     }}
                   >
                     {hammerText}

@@ -104,6 +104,19 @@ Known collision: two different products sharing a 50-char title, and
 truncated titles (1.1% are cut at exactly 50 chars). Accept it — this is a
 display line, and condition-in-key absorbs most of it.
 
+> **Amended 2026-09-16 — other grades of the same title.** Bat asked for a
+> fallback: a `Good` lot whose title only ever ran as `Excellent` should still
+> see that history, labelled. Measured on 776904 against twelve weeks it lifts
+> lots-with-something-to-show from 41.2% to 55.3% (2,520 lots). The key is
+> unchanged; each lot additionally carries `hammer_alt_keys` — the same
+> title's other conditions that have history, nearest grade first on
+> `build/hammer.py:CONDITION_LADDER` (ties to the worse grade, so a borrowed
+> figure errs low; blank-condition history never offered). The viewer shows a
+> borrowed week *prefixed with its grade* (`Excellent: Sold 6× · med $14`), in
+> italics, and the detail leads with the lot's own grade — even when empty —
+> with the others collapsed to their latest week beneath. The two are never
+> blended, and the card never shows a borrowed figure without its label.
+
 ---
 
 ## 4. Architecture
@@ -393,3 +406,4 @@ merged or deployed.
 | where the join lives | build, mirroring `--resale`; never the scraper | design |
 | ships in bundle | product-keyed `hammer` map + `hammer_key` on lots | size |
 | scope | display only; never touches flagging or resale passes | Bat, standing |
+| no exact grade match | **borrow the nearest grade, always labelled**; own grade leads the detail even when empty | Bat 2026-09-16 |

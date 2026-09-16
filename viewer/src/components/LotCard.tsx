@@ -1,9 +1,9 @@
 import { useRef, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
-import type { HammerWeek, MobileCols } from '../lib/types';
+import type { MobileCols } from '../lib/types';
 import type { LotView } from '../lib/lotView';
 import { conditionColor, closeLabel } from '../lib/lotView';
 import { formatMoney } from '../lib/resale';
-import { hammerDetailFor, hammerLine } from '../lib/hammer';
+import { hammerCardLine, hammerDetailFor, type HammerHistory } from '../lib/hammer';
 import { TITLE_H, FIGURE_ROW_H, META_ROW_H } from '../hooks/useGridGeometry';
 import { useSwipeToWatch } from '../hooks/useSwipeToWatch';
 import { TileImage } from './pills/TileImage';
@@ -47,11 +47,11 @@ interface Props {
   /** True when one day is filtered, which makes the S/M chip redundant. */
   singleDay?: boolean;
   /**
-   * What this product sold for in past auctions, newest week first. Null on
-   * the ~two thirds of lots that are not repeat products, and on every lot of
-   * a bundle built without `--hammer`.
+   * What this product — or, failing that, the same title in another condition —
+   * sold for in past auctions. Null on lots with neither, and on every lot of a
+   * bundle built without `--hammer`.
    */
-  hammer?: HammerWeek[] | null;
+  hammer?: HammerHistory | null;
 }
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -107,9 +107,8 @@ export function LotCard({
   // figure's weight so the two never read as competing prices. It rides the
   // meta row rather than adding one, because the card's height is fixed and the
   // virtualiser derives its row pitch from it.
-  const hammerText = hammer && hammer.length > 0
-    ? hammerLine(hammer[0], hammerDetailFor(colW))
-    : null;
+  const hammerText = hammer ? hammerCardLine(hammer, hammerDetailFor(colW)) : null;
+  const hammerBorrowed = !!hammer && !hammer.own;
 
   const shellRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -371,7 +370,12 @@ export function LotCard({
           {hammerText && (
             <span
               data-testid="hammer-line"
-              title="What this product sold for last time"
+              data-borrowed={hammerBorrowed || undefined}
+              title={
+                hammerBorrowed
+                  ? 'No sales of this exact grade yet — this is what the named grade sold for'
+                  : 'What this product sold for last time'
+              }
               style={{
                 flex: 'none',
                 fontFamily: MONO,
@@ -379,6 +383,7 @@ export function LotCard({
                 fontSize: '8.5px',
                 lineHeight: 1,
                 color: 'var(--dim3)',
+                fontStyle: hammerBorrowed ? 'italic' : undefined,
                 fontVariantNumeric: 'tabular-nums',
                 whiteSpace: 'nowrap',
               }}

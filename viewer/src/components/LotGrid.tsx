@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { Lot, Density, Tab, MobileCols, MobileView, ViewMode } from '../lib/types';
 import type { LotView } from '../lib/lotView';
-import { hammerWeeks, type HammerIndex } from '../lib/hammer';
+import { hammerHistory, type HammerIndex } from '../lib/hammer';
 import { LotCard } from './LotCard';
 import { LotRow } from './LotRow';
 import { EmptyState } from './EmptyState';
@@ -266,7 +266,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   onToggleExpand={open}
                   watched={watched.has(lot.lot_number)}
                   onToggleWatch={() => onToggleWatch(lot.lot_number)}
-                  hammer={hammerWeeks(lot, hammer)}
+                  hammer={hammerHistory(lot, hammer)}
                 />
               ) : (
                 <LotRow
@@ -281,7 +281,7 @@ export const LotGrid = forwardRef<LotGridHandle, Props>(function LotGrid(
                   cursor={isCursor || lot.lot_number === expandedId}
                   onOpen={open}
                   onToggleWatch={() => onToggleWatch(lot.lot_number)}
-                  hammer={hammerWeeks(lot, hammer)}
+                  hammer={hammerHistory(lot, hammer)}
                 />
               );
             })}

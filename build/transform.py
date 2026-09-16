@@ -108,7 +108,11 @@ def _hammer_passthrough(item: dict[str, Any]) -> dict[str, Any]:
     tolerant pattern as the resale fields above.
     """
     key = item.get("hammer_key")
-    return {"hammer_key": str(key) if key else None}
+    alts = [str(k) for k in item.get("hammer_alt_keys") or () if k]
+    return {
+        "hammer_key": str(key) if key else None,
+        "hammer_alt_keys": alts or None,
+    }
 
 
 def _personal_passthrough(item: dict[str, Any]) -> dict[str, Any]:

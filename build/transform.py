@@ -191,6 +191,9 @@ def _transform_shape_b(item: dict[str, Any]) -> dict[str, Any]:
         # Kept, not just used to derive `day`: the viewer shows the closing
         # time per lot and marks a lot ENDED once it passes.
         "close_at": item.get("close_at") or None,
+        # The scrape run that first saw the lot; build/scrapes.py turns these
+        # into the numbered scrapes the viewer can filter on.
+        "first_seen": item.get("first_seen") or None,
         "confidence": _bucket_confidence(item.get("predicted_confidence")),
         **_resale_passthrough(item),
         **_personal_passthrough(item),
@@ -235,6 +238,7 @@ def _transform_shape_a(item: dict[str, Any]) -> dict[str, Any]:
         "bat_buckets": bat_buckets,
         "bat_subtype": _normalise_subtype(item.get("bats_subtype")),
         "close_at": item.get("close_at") or None,
+        "first_seen": item.get("first_seen") or None,
         "confidence": confidence,
         **_resale_passthrough(item),
         **_personal_passthrough(item),

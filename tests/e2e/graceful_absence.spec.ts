@@ -51,3 +51,14 @@ test('the bucket drill-down stays two panes without subtypes', async ({ page }) 
   await expect(page.locator('[data-testid="bucket-level-1"]')).toBeVisible();
   await expect(page.locator('[data-testid="subtype-level"]')).toHaveCount(0);
 });
+
+test('no scrape filter appears on a bundle with fewer than two scrape runs', async ({ page }) => {
+  // Scrape runs are numbered by the build from the scraper's first_seen
+  // stamps; a single run (or a raw file without the field) is nothing to
+  // toggle, so the section is omitted rather than shown with one dead chip.
+  await ready(page);
+  await openFilters(page);
+  await expect(page.locator('[data-testid^="scrape-chip-"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid^="chip-scrape-"]')).toHaveCount(0);
+  await closeFilters(page);
+});

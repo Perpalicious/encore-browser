@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Tab, SortKey, ViewMode } from '../lib/types';
+import { LegendButton } from './RecallLegend';
 
 /**
  * The sticky header — docs/design/README.md § "Sticky header".
@@ -47,6 +48,8 @@ interface Props {
   onCycleSort: () => void;
   onOpenFilters: () => void;
   activeFilterCount: number;
+  /** The recall legend toggle; omitted when there is no legend to show. */
+  legend?: { open: boolean; onToggle: () => void };
   chips: ActiveChip[];
   onClearAll: () => void;
   searchRef?: React.RefObject<HTMLInputElement>;
@@ -112,6 +115,7 @@ export function Header({
   onCycleSort,
   onOpenFilters,
   activeFilterCount,
+  legend,
   chips,
   onClearAll,
   searchRef,
@@ -488,6 +492,7 @@ export function Header({
         </button>
 
         <FiltersButton count={activeFilterCount} onClick={onOpenFilters} label="Filters" />
+        {legend && <LegendButton open={legend.open} onToggle={legend.onToggle} />}
 
         {chips.length > 0 && (
           <span style={{ width: 1, height: 18, background: 'var(--line)', flex: 'none' }} />

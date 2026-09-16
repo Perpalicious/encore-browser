@@ -148,3 +148,43 @@ describe('filterLots personal-picks filter', () => {
     expect(filterLots(older, { ...base, personalOnly: true })).toHaveLength(0);
   });
 });
+
+describe('filterLots — scrapes', () => {
+  const SCRAPED: Lot[] = [
+    lot('a', { scrape: 1 }),
+    lot('b', { scrape: 1, is_bat: true, bat_buckets: ['Lego'] }),
+    lot('c', { scrape: 2, is_bat: true, bat_buckets: ['Lego'] }),
+    lot('d', { scrape: 3 }),
+    lot('e'), // no scrape index (older bundle / unknown)
+  ];
+
+  it('no excluded scrapes = the unified auction', () => {
+    expect(filterLots(SCRAPED, { ...base }).map((l) => l.lot_number)).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(filterLots(SCRAPED, { ...base, excludedScrapes: new Set() }).length).toBe(5);
+  });
+
+  it('hiding a scrape drops exactly the lots first seen in it', () => {
+    const out = filterLots(SCRAPED, { ...base, excludedScrapes: new Set([2]) });
+    expect(out.map((l) => l.lot_number)).toEqual(['a', 'b', 'd', 'e']);
+  });
+
+  it('1 + 3 works: hiding two scrapes keeps the rest', () => {
+    const out = filterLots(SCRAPED, { ...base, excludedScrapes: new Set([1, 3]) });
+    expect(out.map((l) => l.lot_number)).toEqual(['c', 'e']);
+  });
+
+  it('a lot without a scrape index is never hidden', () => {
+    const out = filterLots(SCRAPED, { ...base, excludedScrapes: new Set([1, 2, 3]) });
+    expect(out.map((l) => l.lot_number)).toEqual(['e']);
+  });
+
+  it('composes with the Bat’s List tab', () => {
+    const out = filterLots(SCRAPED, {
+      ...base,
+      tab: 'bat',
+      batBucket: 'Lego',
+      excludedScrapes: new Set([1]),
+    });
+    expect(out.map((l) => l.lot_number)).toEqual(['c']);
+  });
+});

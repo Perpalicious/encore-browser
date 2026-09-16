@@ -107,6 +107,22 @@ export interface Lot {
   match_strength?: string | null;
   match_types?: string[] | null;
   personal_reasoning?: string | null;
+  // Scrape identity — optional: the ISO timestamp of the scrape run that first
+  // saw the lot, and the 1-based index of that run in `Bundle.scrapes`. Both
+  // absent on bundles built from raw files that predate the field.
+  first_seen?: string | null;
+  scrape?: number | null;
+}
+
+/** One scrape run of the week, as numbered by build/scrapes.py. */
+export interface ScrapeInfo {
+  /** 1-based index; `Lot.scrape` points here. */
+  scrape: number;
+  /** ISO timestamp of the run's start — the stable identity a filter stores. */
+  at: string;
+  /** "Tue Sep 15" (with a time appended only when two runs share a day). */
+  label: string;
+  count: number;
 }
 
 /**
@@ -119,4 +135,6 @@ export interface Bundle {
   lots: Lot[];
   bucket_groups: Record<string, string>;
   groups: string[];
+  /** Absent or empty on older bundles; the viewer shows the scrape filter only with 2+. */
+  scrapes?: ScrapeInfo[];
 }

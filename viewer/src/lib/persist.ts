@@ -55,6 +55,12 @@ export interface ViewState {
   subtype: string | null;
   /** Hide lots whose closing time has passed. */
   ended: boolean;
+  /**
+   * Scrapes to hide, by their `ScrapeInfo.at` timestamp — never by index. A
+   * value saved last week matches nothing in this week's bundle, so it is
+   * inert (no chip, no effect) instead of silently hiding a different run.
+   */
+  xscrapes: string[];
 }
 
 export const DEFAULT_VIEW_STATE: ViewState = {
@@ -76,6 +82,7 @@ export const DEFAULT_VIEW_STATE: ViewState = {
   bucket: null,
   subtype: null,
   ended: false,
+  xscrapes: [],
 };
 
 const TABS: Tab[] = ['all', 'bat', 'watched'];
@@ -129,6 +136,9 @@ export function parseViewState(raw: unknown): ViewState {
     bucket: typeof r.bucket === 'string' ? r.bucket : null,
     subtype: typeof r.subtype === 'string' ? r.subtype : null,
     ended: r.ended === true,
+    xscrapes: Array.isArray(r.xscrapes)
+      ? r.xscrapes.filter((s): s is string => typeof s === 'string')
+      : [],
   };
 }
 

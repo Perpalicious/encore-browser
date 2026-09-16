@@ -11,6 +11,7 @@ import type {
   ViewMode,
   MobileView,
   MobileCols,
+  ScrapeInfo,
 } from './lib/types';
 import { CONDITION_ORDER } from './lib/types';
 import { filterLots } from './lib/filter';
@@ -28,6 +29,9 @@ import {
   type ViewState,
 } from './lib/persist';
 import { useTheme } from './hooks/useTheme';
+import { usePersistedBool } from './hooks/usePersistedBool';
+import { LEGEND_GROUPS } from './lib/legend';
+import { LegendStrip } from './components/RecallLegend';
 import { usePersistedSet } from './hooks/usePersistedSet';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { useMobileLayout, useCoarsePointer, useTouchCapable } from './hooks/useMediaQuery';
@@ -100,6 +104,8 @@ export function App() {
   const [hideEnded, setHideEnded] = useState(initial.ended);
   const [sortKey, setSortKey] = useState<SortKey>(initial.sort);
   const [conditions, setConditions] = useState<Set<Condition>>(new Set(initial.conds));
+  // Scrapes hidden from view, by their `at` timestamp (see ViewState.xscrapes).
+  const [xscrapes, setXscrapes] = useState<string[]>(initial.xscrapes);
   // At most one lot is selected at a time; it opens the detail overlay.
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // Keyboard cursor: an index into the filtered array, -1 when unset.
@@ -108,6 +114,9 @@ export function App() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [bucketOpen, setBucketOpen] = useState(false);
+  // The recall legend strip under the rail. Yours alone — localStorage only.
+  const [legendOpen, setLegendOpen] = usePersistedBool('encore.legend.v1', false);
+  const hasLegend = LEGEND_GROUPS.length > 0;
   // A lot number we owe a scroll to. Held as state rather than acted on
   // immediately because reaching it may mean clearing filters first, and the
   // result set that decides its index is a render behind that.
@@ -128,6 +137,22 @@ export function App() {
    */
   const hasCloseTimes = useMemo(() => allLots.some((l) => Boolean(l.close_at)), [allLots]);
   const now = useNow(hasCloseTimes);
+
+  /**
+   * Scrape runs are numbered by the build; a single-run week (or an older
+   * bundle) has nothing to toggle, so the control is gated the same way as
+   * closing times. Exclusions are stored by timestamp and resolved to indices
+   * here, so a value persisted from a previous week resolves to nothing.
+   */
+  const scrapes = useMemo<ScrapeInfo[]>(() => bundle?.scrapes ?? [], [bundle]);
+  const hasScrapes = scrapes.length >= 2;
+  const excludedScrapes = useMemo(
+    () => new Set(scrapes.filter((s) => xscrapes.includes(s.at)).map((s) => s.scrape)),
+    [scrapes, xscrapes]
+  );
+  const toggleScrape = useCallback((at: string) => {
+    setXscrapes((prev) => (prev.includes(at) ? prev.filter((x) => x !== at) : [...prev, at]));
+  }, []);
 
   // The presentation mapping runs once over the whole bundle and is cached;
   // filtering and sorting still work on the raw lots, and the grid looks each
@@ -180,6 +205,7 @@ export function App() {
     (personalOnly ? 1 : 0) +
     (conditions.size > 0 ? 1 : 0) +
     (hasCloseTimes && hideEnded ? 1 : 0) +
+    (hasScrapes && excludedScrapes.size > 0 ? 1 : 0) +
     (density !== 'standard' ? 1 : 0);
 
   const filtered = useMemo(() => {
@@ -195,6 +221,7 @@ export function App() {
       potentialOnly,
       personalOnly,
       conditions,
+      excludedScrapes: hasScrapes ? excludedScrapes : undefined,
       hideEnded: hasCloseTimes && hideEnded,
       now,
     });
@@ -205,7 +232,7 @@ export function App() {
       return sortLots(rows.filter((l) => matches.has(l.lot_number)), sortKey);
     }
     return sortLots(rows, sortKey);
-  }, [allLots, tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, batSubtype, watched, confidenceFilter, outlookFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex, hasCloseTimes, hideEnded, now]);
+  }, [allLots, tab, debouncedQuery, fuzzy, dayFilter, categoryPath, batBucket, batSubtype, watched, confidenceFilter, outlookFilter, potentialOnly, personalOnly, conditions, sortKey, searchIndex, hasCloseTimes, hideEnded, now, hasScrapes, excludedScrapes]);
 
   /** Persist the shareable state, debounced, to both the hash and localStorage. */
   useEffect(() => {
@@ -228,10 +255,11 @@ export function App() {
       bucket: batBucket,
       subtype: batSubtype,
       ended: hideEnded,
+      xscrapes,
     };
     const t = setTimeout(() => saveViewState(state), PERSIST_DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [tab, query, fuzzy, categoryPath, sortKey, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, dayFilter, view, mobileView, mobileCols, density, batBucket, batSubtype, hideEnded]);
+  }, [tab, query, fuzzy, categoryPath, sortKey, conditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, dayFilter, view, mobileView, mobileCols, density, batBucket, batSubtype, hideEnded, xscrapes]);
 
   /** Scroll position is yours alone — localStorage only, never the hash. */
   useEffect(() => {
@@ -287,6 +315,7 @@ export function App() {
     setPersonalOnly(false);
     setConditions(new Set());
     setHideEnded(false);
+    setXscrapes([]);
     // Tab, density, and sort order are intentionally preserved.
   }, []);
 
@@ -427,6 +456,13 @@ export function App() {
     if (hasCloseTimes && hideEnded) {
       out.push({ id: 'ended', label: 'Hiding ended', onRemove: () => setHideEnded(false) });
     }
+    if (hasScrapes) {
+      for (const s of scrapes) {
+        if (excludedScrapes.has(s.scrape)) {
+          out.push({ id: `scrape-${s.scrape}`, label: `Hiding ${s.label}`, onRemove: () => toggleScrape(s.at) });
+        }
+      }
+    }
     if (tab === 'bat' && batBucket !== null) {
       // Once a bucket is picked the picker is replaced by its lots, so this
       // chip is the way back to it — the old dropdown could be re-opened in
@@ -441,7 +477,7 @@ export function App() {
       });
     }
     return out;
-  }, [categoryPath, dayFilter, conditions, availableConditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, batSubtype, hasCloseTimes, hideEnded, toggleCondition]);
+  }, [categoryPath, dayFilter, conditions, availableConditions, confidenceFilter, outlookFilter, personalOnly, potentialOnly, query, tab, batBucket, batSubtype, hasCloseTimes, hideEnded, toggleCondition, hasScrapes, scrapes, excludedScrapes, toggleScrape]);
 
   const closeDetail = useCallback(() => setExpandedId(null), []);
 
@@ -472,6 +508,7 @@ export function App() {
         else if (catOpen) setCatOpen(false);
         else if (bucketOpen) setBucketOpen(false);
         else if (expandedId !== null) closeDetail();
+        else if (legendOpen) setLegendOpen(false);
         return;
       }
       if (typing) return;
@@ -537,7 +574,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [mobileLayout, filtered, cursor, expandedId, filtersOpen, catOpen, bucketOpen, anyOverlayOpen, closeDetail, toggleExpand, onToggleWatch]);
+  }, [mobileLayout, filtered, cursor, expandedId, filtersOpen, catOpen, bucketOpen, anyOverlayOpen, closeDetail, toggleExpand, onToggleWatch, legendOpen, setLegendOpen]);
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
@@ -578,6 +615,7 @@ export function App() {
         onCycleSort={cycleSort}
         onOpenFilters={() => setFiltersOpen(true)}
         activeFilterCount={activeFilterCount}
+        legend={hasLegend ? { open: legendOpen, onToggle: () => setLegendOpen((v) => !v) } : undefined}
         chips={chips}
         onClearAll={clearFilters}
         view={view}
@@ -585,6 +623,10 @@ export function App() {
         onJump={jumpToLot}
         coarse={coarsePointer}
       />
+
+      {hasLegend && legendOpen && (
+        <LegendStrip groups={LEGEND_GROUPS} onPick={setQuery} onClose={() => setLegendOpen(false)} />
+      )}
 
       <main className="flex-1 min-h-0 flex flex-col">
         {showBatPrompt ? (
@@ -675,6 +717,9 @@ export function App() {
           density={density}
           onDensityChange={setDensity}
           hasCloseTimes={hasCloseTimes}
+          scrapes={hasScrapes ? scrapes : []}
+          excludedScrapes={excludedScrapes}
+          onToggleScrape={toggleScrape}
           hideEnded={hideEnded}
           onHideEndedToggle={() => setHideEnded((v) => !v)}
           personalOnly={personalOnly}

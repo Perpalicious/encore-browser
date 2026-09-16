@@ -5,6 +5,7 @@ import type {
   DayFilter,
   Density,
   OutlookFilter,
+  ScrapeInfo,
   SortKey,
 } from '../lib/types';
 import { OUTLOOK_ORDER } from '../lib/types';
@@ -39,6 +40,10 @@ interface Props {
   hasCloseTimes: boolean;
   hideEnded: boolean;
   onHideEndedToggle: () => void;
+  /** Empty unless the bundle carries 2+ scrape runs: the section is omitted. */
+  scrapes: ScrapeInfo[];
+  excludedScrapes: Set<number>;
+  onToggleScrape: (at: string) => void;
   onDensityChange: (d: Density) => void;
   personalOnly: boolean;
   onPersonalToggle: () => void;
@@ -94,6 +99,9 @@ export function FiltersOverlay({
   hasCloseTimes,
   hideEnded,
   onHideEndedToggle,
+  scrapes,
+  excludedScrapes,
+  onToggleScrape,
   onDensityChange,
   personalOnly,
   onPersonalToggle,
@@ -202,6 +210,24 @@ export function FiltersOverlay({
               ))}
             </div>
           </Section>
+
+          {scrapes.length > 0 && (
+            <Section label="SCRAPE">
+              {/* The auction is one set by default: every run is pressed. Un-
+                  pressing one hides the lots that first appeared in that run. */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                {scrapes.map((s) => (
+                  <Chip
+                    key={s.scrape}
+                    testId={`scrape-chip-${s.scrape}`}
+                    label={`${s.label} · ${s.count.toLocaleString('en-US')}`}
+                    selected={!excludedScrapes.has(s.scrape)}
+                    onClick={() => onToggleScrape(s.at)}
+                  />
+                ))}
+              </div>
+            </Section>
+          )}
 
           <Section label="RESALE CONFIDENCE">
             <Segmented

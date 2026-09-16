@@ -242,6 +242,12 @@ def main() -> None:
         f"buckets.yaml group across {len(groups_present)} group(s)."
     )
 
+    # Number the scrape runs so the viewer can show/hide each one. Stamps
+    # lot.scrape in place; an older raw file with no first_seen yields [].
+    from build.scrapes import assign_scrapes, describe as describe_scrapes
+    scrapes = assign_scrapes(lots)
+    print(describe_scrapes(scrapes))
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     envelope = {
         "lots": [lot.model_dump() for lot in lots],
@@ -249,6 +255,8 @@ def main() -> None:
         "bucket_groups": present_bucket_groups,
         # groups that actually contain items, in buckets.yaml order ("Other" last)
         "groups": groups_present,
+        # one entry per scrape run (see build/scrapes.py); [] when unknown
+        "scrapes": scrapes,
     }
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(envelope, fh, ensure_ascii=False, indent=2)

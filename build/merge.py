@@ -115,6 +115,7 @@ def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
     merged["lot_url"] = raw.get("lot_url", "") or ""
     merged["condition"] = raw.get("condition")  # may be None
     merged["close_at"] = raw.get("close_at")
+    merged["first_seen"] = raw.get("first_seen")
     # Keep the raw id so an optional resale join can match on it as a fallback.
     merged["id"] = raw.get("id")
     # `current_bid` and `status` aren't on the Lot shape, but pass through
@@ -130,7 +131,7 @@ def _merge_one(raw: dict[str, Any], cat: dict[str, Any]) -> dict[str, Any]:
     # EXCEPT category fields, which come from the raw scrape only.
     _SCRAPER_AUTHORITATIVE = {
         "title", "description", "thumb_url", "image_url",
-        "lot_url", "url", "condition", "close_at",
+        "lot_url", "url", "condition", "close_at", "first_seen",
     }
     # Agent category fields are intentionally dropped — HiBid's native tree
     # (raw category_path) is the single source of truth for categorization.

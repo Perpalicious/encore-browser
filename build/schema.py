@@ -36,6 +36,15 @@ class Lot(BaseModel):
     # timeLeftTitle could not be parsed.
     close_at: Optional[str] = None
 
+    # --- Scrape identity (from the scraper, may be missing) -----------------
+    # `first_seen` is the ISO-8601 UTC timestamp of the scrape run that first
+    # saw this lot (scraper/__main__.py carries it across re-scrapes).
+    # `scrape` is the 1-based index of the cluster of runs it belongs to,
+    # assigned after validation by build/scrapes.py; both None on raw files
+    # written before the field existed.
+    first_seen: Optional[str] = None
+    scrape: Optional[int] = None
+
     # --- Bat's List subtype (optional, from the flagging pass) --------------
     # Free-form 1-3 words under the fixed bucket, e.g. "scrub brushes" inside
     # "Cleaning supplies & tools". Normalised in transform. None when the lot

@@ -371,6 +371,7 @@ print(sum(1 for l in lots if l.get('personal_match') is not None), 'carry person
 print(sum(1 for l in lots if l.get('personal_match') is True), 'are personal_match=true')
 print(sum(1 for l in lots if l.get('bat_subtype')), 'carry a bat_subtype')
 print(sum(1 for l in lots if len(l.get('bat_buckets') or []) >= 2), 'have 2+ buckets')
+print('scrapes:', b.get('scrapes') if isinstance(b, dict) else None)
 "
 ```
 Report these numbers to the user. If resale or personal_match coverage
@@ -411,6 +412,59 @@ If push is rejected ("fetch first"), run `git pull --no-rebase` then
 `auction_bundle.json`, do NOT attempt to hand-resolve the JSON diff —
 stop and ask the user; the correct resolution is almost always to keep
 the locally just-built version.
+
+## Mid-week delta (new lots after the weekly run)
+
+The auction keeps growing after Sunday (Tue ~12k lots, Thu +6k, Fri +…). The
+build is strict — a raw lot with no categorized row is dropped — so new lots
+reach the viewer only after they have been judged. `tools/delta.py` runs the
+normal pass on **just the new lots** and folds the answers into the week's
+files without disturbing anything already judged. Preconditions: the week is
+fully deployed (steps 1-9 done, `auction_<ID>_categorized.json` exists).
+
+1. **Re-scrape** with the same command as step 1 — both auctions on a
+   two-auction week, then re-run step 2's prefix + combine exactly as written.
+   The scraper stamps every lot with `first_seen` (the run that first saw it,
+   matched on HiBid's item `id`, so the prefixing does not break it); the
+   build turns those into the numbered scrapes the viewer's SCRAPE filter
+   shows. Two auctions scraped minutes apart count as one scrape.
+2. `python3 tools/delta.py <ID> start` — writes
+   `data/raw/auction_<ID>_dN.json` holding only the unjudged lots (not in the
+   categorized file, not in an earlier unmerged delta) and prints the exact
+   commands for the delta ID `<ID>_dN`. It refuses if nothing is new or if
+   the raw carries no `first_seen` (an old scraper wrote it).
+3. Run the printed commands: `slim.py`, `slim_resale.py`, `chunk_flagging.py`
+   under `<ID>_dN`, the ChatGPT chats (STOP and hand off exactly as in step
+   4), then `expand_flags.py`, `recall_check.py plan`/`apply`,
+   `expand_resale.py`, all under `<ID>_dN`. Chunking under the delta ID is
+   safe — its files are `auction_<ID>_dN_*` and never touch the parent's. The
+   never-re-run rule still applies to `chunk_flagging.py <ID>`. Note the
+   delta's chunking regenerates the shared `context.yaml`, and `slim.py`'s
+   ≥50 % `condition` gate can trip on a tiny delta — that is a real signal
+   about the new lots, not a tool bug.
+4. `python3 tools/delta.py <ID> merge` — re-runs `slim.py <ID>` and
+   `prefilter.py <ID>` on the full raw (fresh `_for_agent`, `_base`,
+   `_prefilter` with the new `lot_set_sha`), then folds the week's
+   `_categorized.json` and every `_dN_flags.json` onto that base, and the
+   delta valuations into `_resale.json`. Lots pulled from the auction since
+   the last scrape are reported as dropped; after that every fold must add
+   0 rows — anything else is fatal. Re-running `merge` is safe.
+5. Continue with steps 5 (verify), 6, 7 (expect one more entry under
+   `scrapes:`), 8 and 9. Commit as `Update bundle: auction <ID> (delta dN)`.
+
+Step 0's sweep already removes `_dN` files with the rest of the week.
+
+## The recall legend (`recall_legend.yaml`)
+
+The viewer's `LEGEND` rail button opens a strip of the search terms the
+user tends to forget ("clamps", "tie downs", …); clicking one fills the
+search box and nothing else. `recall_legend.yaml` at the repo root is the
+hand-curated source; `python3 tools/recall_legend.py build` writes
+`viewer/src/data/recall_legend.json`, which the viewer imports statically —
+commit both together. `python3 tools/recall_legend.py suggest` mines
+`data/Watch/history.tsv` for product phrases no term covers yet; run it after
+appending a history batch and curate what it proposes into generic terms. It
+never changes a filter and needs no pipeline step.
 
 ## Data retention (`data/` is gitignored; nothing here is on GitHub)
 
@@ -518,6 +572,12 @@ git config --global user.email "<their email>"
   `prompts/flagging.md` / `prompts/resale.md` to change what a chat is told;
   `PROMPTS.md` is the rationale. Never hand-edit a rendered
   `_prompt.md` — re-run `tools/render_prompts.py <ID>` instead.
+- **A mid-week re-scrape overwrites the raw file but keeps `first_seen`.**
+  The scraper reads the existing output first and carries each lot's
+  `first_seen` forward by item `id`; deleting the raw file before a re-scrape
+  makes every lot look new to the SCRAPE filter. Only step 0 should delete
+  it. Never build a raw lot into the bundle without a categorized row —
+  use the mid-week delta section, not a build flag.
 - **Never re-run `tools/chunk_flagging.py` mid-pass.** It rewrites every chunk
   file and the group map, so responses already collected would be reconciled
   against chunks they were never judged from. `tools/expand_flags.py` catches

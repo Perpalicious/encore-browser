@@ -1,0 +1,220 @@
+{
+  "groups": [
+    {
+      "name": "Names we keep bidding on",
+      "terms": [
+        "wandvac",
+        "flexstyle",
+        "oneblade",
+        "alto keys",
+        "apex pro",
+        "blackwidow",
+        "quencher",
+        "nespresso",
+        "kitchenaid",
+        "philips hue"
+      ]
+    },
+    {
+      "name": "Tools & garage",
+      "terms": [
+        "clamps",
+        "tie downs",
+        "ratchet straps",
+        "heat gun",
+        "brad nailer",
+        "staple gun",
+        "paint sprayer",
+        "wet dry vac",
+        "shop vac",
+        "tool bag",
+        "tool organizer",
+        "pegboard",
+        "tarp",
+        "bolt cutter",
+        "orbit sander",
+        "soldering",
+        "headlamp",
+        "filament",
+        "3d printer"
+      ]
+    },
+    {
+      "name": "Outdoor & garden",
+      "terms": [
+        "hedge trimmer",
+        "pole saw",
+        "pressure washer",
+        "garden hose",
+        "hose reel",
+        "hose timer",
+        "sprinkler",
+        "sprayer",
+        "weed puller",
+        "grass seed",
+        "lawn fertilizer",
+        "landscape edging",
+        "weed barrier",
+        "raised garden bed",
+        "rain barrel",
+        "patio cover",
+        "hammock",
+        "hanging chair",
+        "deck box",
+        "outdoor storage",
+        "fire pit",
+        "pellets",
+        "grill cover",
+        "griddle"
+      ]
+    },
+    {
+      "name": "Cleaning & storage",
+      "terms": [
+        "hand vacuum",
+        "handheld vacuum",
+        "robot vacuum",
+        "steam mop",
+        "spin scrubber",
+        "power scrubber",
+        "squeegee",
+        "microfiber",
+        "laundry hamper",
+        "drying rack",
+        "storage bin",
+        "airtight containers",
+        "trash can",
+        "shelving"
+      ]
+    },
+    {
+      "name": "Kitchen & dining",
+      "terms": [
+        "knife",
+        "cleaver",
+        "fry pan",
+        "tri-ply",
+        "induction cooktop",
+        "immersion blender",
+        "hand mixer",
+        "blender",
+        "pizza stone",
+        "cast iron",
+        "travel mug",
+        "tumbler",
+        "insulated bottle"
+      ]
+    },
+    {
+      "name": "Home & bedroom",
+      "terms": [
+        "bed frame",
+        "sheet set",
+        "comforter",
+        "throw blanket",
+        "bath towels",
+        "washcloths",
+        "nightstand",
+        "night stand",
+        "coffee table",
+        "bar stool",
+        "bean bag",
+        "dehumidifier",
+        "box fan",
+        "towel warmer",
+        "smart lock",
+        "smart bulb",
+        "light strip"
+      ]
+    },
+    {
+      "name": "Electronics & gaming",
+      "terms": [
+        "mechanical keyboard",
+        "keycaps",
+        "wireless mouse",
+        "gaming headset",
+        "headphones",
+        "bluetooth speaker",
+        "security cam",
+        "floodlight cam",
+        "graphics tablet",
+        "joy con",
+        "flash drive"
+      ]
+    },
+    {
+      "name": "Toys & games",
+      "terms": [
+        "water table",
+        "soccer goal",
+        "nerf",
+        "water gun",
+        "pool float",
+        "pool toys",
+        "dolls",
+        "playset",
+        "plush",
+        "surprise",
+        "magnetic blocks",
+        "marble run",
+        "slime kit",
+        "markers",
+        "kids tool set",
+        "scooter",
+        "swing set",
+        "cornhole"
+      ]
+    },
+    {
+      "name": "Sports & fitness",
+      "terms": [
+        "bumper plates",
+        "barbell",
+        "weight bench",
+        "gym mats",
+        "walking pad",
+        "swim goggles",
+        "swimsuit",
+        "basketball",
+        "bike lock"
+      ]
+    },
+    {
+      "name": "Personal care",
+      "terms": [
+        "hair dryer",
+        "styler",
+        "trimmer",
+        "groomer",
+        "water flosser",
+        "electric toothbrush",
+        "sunscreen",
+        "gel polish",
+        "press on nails",
+        "hand soap"
+      ]
+    },
+    {
+      "name": "Clothing & footwear",
+      "terms": [
+        "hoodie",
+        "t-shirts",
+        "workout shorts",
+        "rain boots",
+        "clogs",
+        "ballet flats"
+      ]
+    },
+    {
+      "name": "Food & drink",
+      "terms": [
+        "protein",
+        "tortilla chips",
+        "energy drink",
+        "chocolate chips",
+        "coconut milk"
+      ]
+    }
+  ]
+}

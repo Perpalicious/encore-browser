@@ -48,6 +48,7 @@ export function filterLots(
     potentialOnly = false,
     personalOnly = false,
     conditions,
+    excludedScrapes,
     hideEnded = false,
     now,
   }: {
@@ -62,6 +63,9 @@ export function filterLots(
     potentialOnly?: boolean;
     personalOnly?: boolean;
     conditions?: Set<Condition>;
+    /** Scrape indices (`Lot.scrape`) to hide. A lot with no scrape index is
+     *  never hidden — the filter can only act on what the bundle labelled. */
+    excludedScrapes?: Set<number>;
     /** Drop lots whose closing time has already passed. */
     hideEnded?: boolean;
     /** The clock `hideEnded` is measured against — passed in, never read from
@@ -106,6 +110,12 @@ export function filterLots(
   // among them. Lots with no condition are excluded while the filter is active.
   if (conditions && conditions.size > 0) {
     rows = rows.filter((l) => l.condition !== null && conditions.has(l.condition));
+  }
+
+  // Scrapes: the auction is one unified set by default; hiding a scrape drops
+  // only the lots that first appeared in that run.
+  if (excludedScrapes && excludedScrapes.size > 0) {
+    rows = rows.filter((l) => l.scrape == null || !excludedScrapes.has(l.scrape));
   }
 
   // Ended lots leave last, so every other filter still counts them — the

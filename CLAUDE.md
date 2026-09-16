@@ -546,8 +546,8 @@ dated archive folder when clearing the rest.
 
 **And `data/hammer/` — keep it indefinitely.** It is the one thing in `data/`
 that becomes *more* useful with age: every file is what real products really
-sold for in one closed auction, and that stays true forever. At roughly 1 MB a
-week it costs nothing, and each retained week raises the share of this week's
+sold for in one closed auction, and that stays true forever. At 2-3.5 MB a
+week (measured 2026-09-16) it costs nothing, and each retained week raises the share of this week's
 lots that can show a sale history. **Do NOT add it to the step-0 sweep**, and
 do not delete from it when clearing a week — the sweep's `find`/`rm` lines
 above deliberately touch only `data/categorized/` and `data/raw/`.

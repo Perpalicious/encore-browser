@@ -18,6 +18,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import hammer  # noqa: E402
 from hammer import (  # noqa: E402
     HAMMER_LOT_QUERY,
     NoLots,
@@ -234,6 +235,7 @@ class TestClosedGate:
         monkeypatch.setattr(
             client, "fetch_all_lots", lambda a, query=None: ("ENCORE TEST", results)
         )
+        monkeypatch.setattr(hammer, "fetch_close_date", lambda a: None)
         path, payload = pull(774972, tmp_path)
 
         assert path.name == "2026-09-13_774972.json"
@@ -244,6 +246,27 @@ class TestClosedGate:
         assert {p["title"] for p in payload["products"]} == {"WIDGET", "DUD"}
         # No temp file left behind by the atomic write.
         assert [p.name for p in tmp_path.iterdir()] == ["2026-09-13_774972.json"]
+
+    def test_pull_prefers_the_auction_objects_close_date(self, tmp_path, monkeypatch):
+        # HiBid blanks per-lot timeLeftTitle a few days after close (measured
+        # 2026-09-16); the auction object's bidCloseDateTime must win, and must
+        # win even when the lot strings disagree or are empty.
+        results = [_lot("WIDGET", bid_list=[11, 12], close="")]
+        monkeypatch.setattr(
+            client, "fetch_all_lots", lambda a, query=None: ("X", results))
+        monkeypatch.setattr(hammer, "fetch_close_date", lambda a: "2026-08-30")
+        path, payload = pull(764524, tmp_path)
+        assert payload["close_date"] == "2026-08-30"
+        assert path.name == "2026-08-30_764524.json"
+
+    def test_derive_close_date_order_of_preference(self):
+        from datetime import date
+
+        lots = [_lot("A", bid_list=[2, 3], close="9/14/2026 1:00:02 PM EST")]
+        assert derive_close_date(lots, "2026-09-13") == "2026-09-13"   # auction wins
+        assert derive_close_date(lots, None) == "2026-09-14"           # then lots
+        assert derive_close_date([_lot("A", bid_list=[2, 3], close="")], None) \
+            == date.today().isoformat()                                # then today
 
     def test_pull_asks_for_the_slim_query(self, tmp_path, monkeypatch):
         seen = {}

@@ -203,15 +203,59 @@ def check_closed(results: Iterable[dict[str, Any]]) -> None:
         )
 
 
-def derive_close_date(results: Iterable[dict[str, Any]]) -> str:
+# HiBid blanks every lot's `timeLeftTitle` a few days after close — on
+# 2026-09-14 auction 774972's lots still read "Internet Bidding closed at:
+# 9/13/2026 1:00:02 PM EST"; by 2026-09-16 every one was "". The auction object
+# keeps its dates, so that is the source and the per-lot strings are only a
+# fallback. Measured 2026-09-16: bidCloseDateTime is populated for every known
+# auction back to 741675 (May) and for the still-open week.
+AUCTION_CLOSE_QUERY = """
+query AuctionClose($id: Int!) {
+  auction(id: $id) { id bidCloseDateTime eventDateEnd }
+}
+""".strip()
+
+
+def fetch_close_date(auction_id: int) -> str | None:
+    """
+    The auction's close date from HiBid's auction object, as YYYY-MM-DD, or
+    None if the lookup fails for any reason (the caller falls back).
+    """
+    try:
+        with client._make_session() as session:
+            resp = client._post_with_retry(
+                session, client.GRAPHQL_URL, label=f"auction-close {auction_id}",
+                json={"operationName": "AuctionClose",
+                      "variables": {"id": auction_id},
+                      "query": AUCTION_CLOSE_QUERY},
+                timeout=client.REQUEST_TIMEOUT,
+            )
+        if not client._is_valid_graphql(resp):
+            return None
+        auction = (resp.json().get("data") or {}).get("auction") or {}
+        for field in ("bidCloseDateTime", "eventDateEnd"):
+            value = auction.get(field)
+            if isinstance(value, str) and len(value) >= 10:
+                return value[:10]
+    except Exception:
+        return None
+    return None
+
+
+def derive_close_date(results: Iterable[dict[str, Any]],
+                      auction_close: str | None = None) -> str:
     """
     The auction's close date, as YYYY-MM-DD.
 
-    The LATEST close time across lots: an Encore auction closes in waves over
-    an afternoon, and the last wave is the day the auction ended. Falls back to
-    today when nothing parses — the file still names its auction id, so a wrong
-    date costs ordering, not identity.
+    Prefers ``auction_close`` (from fetch_close_date). Otherwise the LATEST
+    close time across lots — an Encore auction closes in waves over an
+    afternoon, and the last wave is the day it ended — which only works for a
+    few days after close before HiBid blanks the strings. Falls back to today
+    when nothing parses; the file still names its auction id, so a wrong date
+    costs ordering, not identity.
     """
+    if auction_close:
+        return auction_close
     latest: str | None = None
     for lot in results:
         close_at = _parse_close_at((lot.get("lotState") or {}).get("timeLeftTitle"))
@@ -268,13 +312,14 @@ def aggregate(results: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def build_payload(
-    auction_id: int, auction_name: str, results: list[dict[str, Any]]
+    auction_id: int, auction_name: str, results: list[dict[str, Any]],
+    auction_close: str | None = None,
 ) -> dict[str, Any]:
     """The whole output file, as a dict."""
     return {
         "auction_id": auction_id,
         "auction_name": auction_name,
-        "close_date": derive_close_date(results),
+        "close_date": derive_close_date(results, auction_close),
         "pulled_at": datetime.now(timezone.utc).isoformat(),
         "lots_seen": len(results),
         "products": aggregate(results),
@@ -346,7 +391,8 @@ def pull(auction_id: int, out_dir: Path) -> tuple[Path, dict[str, Any]]:
     if not results:
         raise NoLots(f"auction {auction_id} returned no lots")
     check_closed(results)
-    payload = build_payload(auction_id, auction_name, results)
+    payload = build_payload(auction_id, auction_name, results,
+                            fetch_close_date(auction_id))
     path = out_dir / f"{payload['close_date']}_{auction_id}.json"
     write_atomic(path, payload)
     return path, payload

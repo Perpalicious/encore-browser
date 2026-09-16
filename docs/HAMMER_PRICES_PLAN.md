@@ -131,6 +131,12 @@ python3 tools/hammer.py <ID> [--out data/hammer]
 python3 tools/hammer.py backfill <ID> [<ID> ...]
 ```
 
+- **Close date comes from the auction object, not the lots** (found in
+  verification 2026-09-16): HiBid blanks every lot's `timeLeftTitle` a few
+  days after close, so the per-lot derivation below only works for the first
+  few days. `auction(id:) { bidCloseDateTime eventDateEnd }` is stable and
+  populated back to 741675; use it first, per-lot `timeLeftTitle` as the
+  fallback, today as the last resort.
 - Reuse `scraper.client`. **Do not change `LOT_SEARCH_QUERY`** — the weekly
   raw file must stay byte-identical in shape, and `scraper/__main__.py`'s
   `first_seen` logic reads that file. Instead add an optional `query`

@@ -25,6 +25,15 @@ git pull
 python3 tools/hammer.py <LAST_WEEK_ID>     # last week is closed by now
 ```
 
+`<LAST_WEEK_ID>` is not something to ask the user for — "pull hammers for
+the most recent auction" means: **read it off disk before the sweep.**
+`ls data/raw/auction_*.json` names every auction the previous run scraped
+(two files on a two-auction week — pull both), and the last
+`git log --oneline --grep 'Update bundle'` commit names the week. Do the pull
+before the sweep below deletes those files. On a Sunday-close auction the
+pull works from Monday on; if the user starts the run before it has closed,
+say so, skip the pull, and carry on — it can be run on its own later.
+
 The hammer pull is **optional and out-of-band** — it feeds no pass and no
 build step by itself, and skipping it costs nothing this week. But it has to
 happen *before* the sweep and *before* this week's scrape, because it can only

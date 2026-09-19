@@ -449,6 +449,25 @@ If push is rejected ("fetch first"), run `git pull --no-rebase` then
 stop and ask the user; the correct resolution is almost always to keep
 the locally just-built version.
 
+### 10. Tidy `data/categorized/` (do this every run, including deltas)
+```bash
+python3 tools/tidy.py <ID>
+```
+A run leaves ~35 files in `data/categorized/` and each delta adds ~20 more;
+by d2 the folder is unreadable and the files the next delta needs are buried.
+`tidy.py` removes only what is provably folded in — every `_chunk_*`,
+`_recall*`, `_flags_before_recall`, `_for_resale`, `*_groups`,
+`_candidates`, `_sweep` file plus `context.yaml`, for the week **and** every
+`<ID>_dN` — and keeps what later steps still read: `_categorized`, `_resale`,
+`_for_agent`, `_base`, `_prefilter`, `_flags`, `_resale_deduped`, and each
+delta's `_flags` / `_for_agent` / `_resale`, which `delta.py merge` re-folds
+on every run. It leaves a chunk, recall or resale input alone while its pass
+is still open (no `_flags.json` yet, recall planned but not applied, no
+`_resale.json` yet), so it is safe mid-pass too. `--dry-run` lists without
+deleting. It never touches `data/raw/auction_<ID>_dN.json` — `delta.py`
+numbers the next delta from those. Afterwards the folder should hold ~7 files
+for the week plus 4 per delta plus the two tracked ones.
+
 ## Mid-week delta (new lots after the weekly run)
 
 The auction keeps growing after Sunday (Tue ~12k lots, Thu +6k, Fri +…). The
@@ -486,7 +505,8 @@ fully deployed (steps 1-9 done, `auction_<ID>_categorized.json` exists).
    the last scrape are reported as dropped; after that every fold must add
    0 rows — anything else is fatal. Re-running `merge` is safe.
 5. Continue with steps 5 (verify), 6, 7 (expect one more entry under
-   `scrapes:`), 8 and 9. Commit as `Update bundle: auction <ID> (delta dN)`.
+   `scrapes:`), 8, 9 and 10. Commit as `Update bundle: auction <ID> (delta dN)`.
+   Step 10 runs under the **parent** `<ID>`; it finds the deltas itself.
 
 Step 0's sweep already removes `_dN` files with the rest of the week.
 
@@ -508,6 +528,12 @@ Old auction data is almost entirely disposable — the lots are gone and
 `lot_number` is reused week to week, so last week's files are actively
 dangerous to have lying around at the paths this week's build reads (see
 step 5). `data/` runs ~230 MB after two weeks, most of it raw scrapes.
+
+`python3 tools/tidy.py <ID>` (step 10) is the within-week half of this: run
+after every deploy, it removes the chat inputs and raw replies once they are
+folded in and leaves the folder holding only what the build, verify, the seed
+backtest and the next delta read. The lists below describe the same
+distinction by hand, for anything tidy does not know about.
 
 Prior weeks live in `data/archive/<YYYY-MM-DD>/` (gitignored), so
 `data/categorized/` only ever holds the current week plus two tracked files —

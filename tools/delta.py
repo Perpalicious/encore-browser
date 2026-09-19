@@ -283,13 +283,14 @@ def merge(aid: str, *, run_tools: bool = True) -> None:
         print("note: the week has no _resale.json, so delta valuations were not merged")
 
     print(f"""
-Next — CLAUDE.md steps 5 to 9 for `{aid}`:
+Next — CLAUDE.md steps 5 to 10 for `{aid}`:
 
   python3 tools/verify_passes.py {aid}{'' if resale_path.exists() else ' --no-resale'}
   python -m build ...                 # step 6, unchanged flags
   (bundle verification snippet)       # step 7 — expect one more scrape listed
   cd viewer && npm run build && npx gh-pages -d dist -b gh-pages && cd ..
-  git add -A && git commit -m "Update bundle: auction {aid} (delta{'s' if len(deltas) > 1 else ''} {', '.join(f'd{n}' for n, _ in deltas)})" && git push""")
+  git add -A && git commit -m "Update bundle: auction {aid} (delta{'s' if len(deltas) > 1 else ''} {', '.join(f'd{n}' for n, _ in deltas)})" && git push
+  python3 tools/tidy.py {aid}         # step 10 — sweep the spent chat files""")
 
 
 def main(argv: list[str]) -> None:

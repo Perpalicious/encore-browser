@@ -50,3 +50,6 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Ad-hoc local reports (e.g. unsold-lot CSVs built from data/hammer/).
+data/reports/

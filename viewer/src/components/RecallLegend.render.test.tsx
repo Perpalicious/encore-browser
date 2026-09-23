@@ -20,6 +20,26 @@ describe('RecallLegend', () => {
     expect(html).toContain('data-testid="legend-close"');
   });
 
+  it('shows each term count and dims a term with none this week', () => {
+    const counts = new Map([['clamps', 12], ['tie downs', 0]]);
+    const html = renderToStaticMarkup(
+      <LegendStrip groups={GROUPS} counts={counts} onPick={() => {}} onClose={() => {}} />
+    );
+    expect(html.match(/data-testid="legend-count"/g)?.length).toBe(2);
+    expect(html).toMatch(/clamps<span[^>]*data-testid="legend-count"[^>]*>12</);
+    expect(html.match(/data-empty="true"/g)?.length).toBe(1);
+    expect(html).toContain('opacity:0.45');
+    expect(html).toContain('No lots this week');
+  });
+
+  it('renders no counts when none are given', () => {
+    const html = renderToStaticMarkup(
+      <LegendStrip groups={GROUPS} onPick={() => {}} onClose={() => {}} />
+    );
+    expect(html).not.toContain('legend-count');
+    expect(html).not.toContain('data-empty');
+  });
+
   it('renders nothing without groups', () => {
     expect(renderToStaticMarkup(<LegendStrip groups={[]} onPick={() => {}} onClose={() => {}} />)).toBe('');
   });

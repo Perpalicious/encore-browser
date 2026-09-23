@@ -1,15 +1,21 @@
-# Recall legend — the search terms we tend to forget to run.
+# Recall legend — the names Bat's List tends to miss.
 #
-# Hand-curated. Each term is a plain search phrase the viewer drops into the
-# search box when clicked, nothing more: no matching, no flagging, no effect
-# on any filter. Keep terms short and generic ("clamps", not a brand + model).
-# Groups follow buckets.yaml's group names loosely; they are only headings.
+# Hand-curated. Each term is a plain search the viewer drops into the search
+# box when clicked, nothing more: no matching, no flagging, no effect on any
+# filter. The chip shows how many of this week's lots it finds; a name with
+# none this week is dimmed but kept, because the point is to remember it.
 #
-# Seeded 2026-09-15 from data/Watch/history.tsv (bids + watch list,
-# 2026-05-31 → 2026-09-13) via `python3 tools/recall_legend.py suggest`.
-# After editing:  python3 tools/recall_legend.py build   (writes the viewer JSON;
-# commit both). Re-run `suggest` after appending new history to see what is
-# not covered yet.
+# NAMES ONLY — brands, product lines, distinctive item names. Never a generic
+# item type ("tumbler", "cookware", "tortilla chips"): Bat's List owns types
+# and already flags them, so a type chip reminds nobody of anything (user
+# decision, 2026-09-23). Favour names that recur here and that Bat's List
+# leaves unflagged. Groups are only headings.
+#
+# Search is substring on every token, so a short name can be noisy ("ego"
+# finds LEGO, "vans" finds CANVAS). After editing:
+#     python3 tools/recall_legend.py check   # weeks seen / now / missed, noise
+#     python3 tools/recall_legend.py build   # writes the viewer JSON; commit both
+# `suggest` lists brands from data/Watch/history.tsv not covered yet.
 
 groups:
   # Product names with repeated bids or watches in the history — the few
@@ -23,185 +29,161 @@ groups:
       - apex pro
       - blackwidow
       - quencher
+      - iceflow
       - nespresso
       - kitchenaid
       - philips hue
 
+  - name: "Kitchen & drinkware"
+    terms:
+      - stanley
+      - owala
+      - "s'well"
+      - hydro flask
+      - yeti
+      - simple modern
+      - zojirushi
+      - shun
+      - all-clad
+      - hexclad
+      - le creuset
+      - staub
+      - zwilling
+      - henckels
+      - victorinox
+      - tramontina
+      - lodge
+      - greenpan
+      - our place
+      - smeg
+      - breville
+      - vitamix
+      - "de'longhi"
+      - keurig
+      - cuisinart
+      - ninja
+      - salton
+
+  - name: "Grill & outdoor"
+    terms:
+      - napoleon
+      - traeger
+      - weber
+      - pit boss
+      - blackstone
+      - masterbuilt
+      - ooni
+      - kamado
+      - meater
+      - coleman
+      - thule
+      - osprey
+      - north face
+      - greenworks
+      - gardena
+      - chapin
+
+  - name: "Cleaning & home"
+    terms:
+      - shark
+      - dyson
+      - bissell
+      - dreame
+      - roborock
+      - miele
+      - sebo
+      - mova robot
+      - tineco
+      - "black+decker"
+      - rubbermaid
+      - casper
+      - loloi
+      - zinus
+      - bedsure
+
   - name: "Tools & garage"
     terms:
-      - clamps
-      - tie downs
-      - ratchet straps
-      - heat gun
-      - brad nailer
-      - staple gun
-      - paint sprayer
-      - wet dry vac
-      - shop vac
-      - tool bag
-      - tool organizer
-      - pegboard
-      - tarp
-      - bolt cutter
-      - orbit sander
-      - soldering
-      - headlamp
-      - filament
-      - 3d printer
-
-  - name: "Outdoor & garden"
-    terms:
-      - hedge trimmer
-      - pole saw
-      - pressure washer
-      - garden hose
-      - hose reel
-      - hose timer
-      - sprinkler
-      - sprayer
-      - weed puller
-      - grass seed
-      - lawn fertilizer
-      - landscape edging
-      - weed barrier
-      - raised garden bed
-      - rain barrel
-      - patio cover
-      - hammock
-      - hanging chair
-      - deck box
-      - outdoor storage
-      - fire pit
-      - pellets
-      - grill cover
-      - griddle
-
-  - name: "Cleaning & storage"
-    terms:
-      - hand vacuum
-      - handheld vacuum
-      - robot vacuum
-      - steam mop
-      - spin scrubber
-      - power scrubber
-      - squeegee
-      - microfiber
-      - laundry hamper
-      - drying rack
-      - storage bin
-      - airtight containers
-      - trash can
-      - shelving
-
-  - name: "Kitchen & dining"
-    terms:
-      - knife
-      - cleaver
-      - fry pan
-      - tri-ply
-      - induction cooktop
-      - immersion blender
-      - hand mixer
-      - blender
-      - pizza stone
-      - cast iron
-      - travel mug
-      - tumbler
-      - insulated bottle
-
-  - name: "Home & bedroom"
-    terms:
-      - bed frame
-      - sheet set
-      - comforter
-      - throw blanket
-      - bath towels
-      - washcloths
-      - nightstand
-      - night stand
-      - coffee table
-      - bar stool
-      - bean bag
-      - dehumidifier
-      - box fan
-      - towel warmer
-      - smart lock
-      - smart bulb
-      - light strip
+      - dewalt
+      - milwaukee
+      - makita
+      - bosch
+      - klein tools
+      - knipex
+      - wera
+      - metabo
+      - craftsman
+      - vevor
+      - "meguiar's"
+      - elegoo
 
   - name: "Electronics & gaming"
     terms:
-      - mechanical keyboard
-      - keycaps
-      - wireless mouse
-      - gaming headset
-      - headphones
-      - bluetooth speaker
-      - security cam
-      - floodlight cam
-      - graphics tablet
-      - joy con
-      - flash drive
+      - sonos
+      - bose
+      - jbl
+      - marshall
+      - sennheiser
+      - logitech
+      - keychron
+      - steelseries
+      - razer
+      - corsair
+      - arlo
+      - wyze
+      - dji
+      - gopro
+      - anker
 
   - name: "Toys & games"
     terms:
-      - water table
-      - soccer goal
-      - nerf
-      - water gun
-      - pool float
-      - pool toys
-      - dolls
-      - playset
-      - plush
-      - surprise
-      - magnetic blocks
-      - marble run
-      - slime kit
-      - markers
-      - kids tool set
-      - scooter
-      - swing set
-      - cornhole
-
-  - name: "Sports & fitness"
-    terms:
-      - bumper plates
-      - barbell
-      - weight bench
-      - gym mats
-      - walking pad
-      - swim goggles
-      - swimsuit
-      - basketball
-      - bike lock
+      - magna-tiles
+      - "melissa & doug"
+      - little tikes
+      - step2
+      - playmobil
+      - hot wheels
+      - pokemon
+      - squishmallow
+      - fisher-price
+      - vtech
+      - mattel
+      - funko
+      - "gabby's"
+      - furby
 
   - name: "Personal care"
     terms:
-      - hair dryer
-      - styler
-      - trimmer
-      - groomer
-      - water flosser
-      - electric toothbrush
-      - sunscreen
-      - gel polish
-      - press on nails
-      - hand soap
+      - oral-b
+      - sonicare
+      - waterpik
+      - ghd
+      - t3 singlepass
+      - revlon
+      - eucerin
+      - gel-x
 
   - name: "Clothing & footwear"
     terms:
-      - hoodie
-      - t-shirts
-      - workout shorts
-      - rain boots
-      - clogs
-      - ballet flats
+      - carhartt
+      - columbia
+      - new balance
+      - adidas
+      - nike
+      - crocs
+      - vans
+      - lululemon
+      - samsonite
+      - speedo
+      - gildan
 
   - name: "Food & drink"
     terms:
-      - protein
-      - tortilla chips
-      - energy drink
-      - chocolate chips
-      - coconut milk
+      - frito-lay
+      - lavazza
+      - starbucks
+      - kirkland
+      - clif bar
+      - quest protein
+      - celsius
+      - premier protein
+      - kind bar

@@ -512,15 +512,22 @@ Step 0's sweep already removes `_dN` files with the rest of the week.
 
 ## The recall legend (`recall_legend.yaml`)
 
-The viewer's `LEGEND` rail button opens a strip of the search terms the
-user tends to forget ("clamps", "tie downs", …); clicking one fills the
-search box and nothing else. `recall_legend.yaml` at the repo root is the
+The viewer's `LEGEND` rail button opens a strip of **names** Bat's List tends
+to miss — brands and product lines ("stanley", "all-clad", "keurig",
+"black+decker"), never generic item types, which Bat's List already owns
+(user decision, 2026-09-23). Clicking a chip fills the search box and nothing
+else; each chip shows how many of this week's lots it finds, and a name with
+none is dimmed, not hidden. `recall_legend.yaml` at the repo root is the
 hand-curated source; `python3 tools/recall_legend.py build` writes
 `viewer/src/data/recall_legend.json`, which the viewer imports statically —
-commit both together. `python3 tools/recall_legend.py suggest` mines
-`data/Watch/history.tsv` for product phrases no term covers yet; run it after
-appending a history batch and curate what it proposes into generic terms. It
-never changes a filter and needs no pipeline step.
+commit both together. After any edit run `python3 tools/recall_legend.py
+check`: per term it prints weeks seen across `data/hammer/`, lots this week,
+and how many of those Bat's List left unflagged, and flags `never seen`
+(misspelled) and `noisy` (substring hits dwarf whole-word hits — "ego" finds
+LEGO). It cannot see a *different brand* sharing the word ("klein" is mostly
+Calvin Klein), so eyeball the big ones. `python3 tools/recall_legend.py
+suggest` lists brands from `data/Watch/history.tsv` no term covers yet. None of
+it changes a filter or needs a pipeline step.
 
 ## Data retention (`data/` is gitignored; nothing here is on GitHub)
 

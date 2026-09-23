@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test';
 import { ready } from './helpers';
 
 /**
- * The recall legend — a reminder of the searches we usually run.
+ * The recall legend — a reminder of the names Bat's List tends to miss.
  *
  * Tucked behind one rail button, collapsed by default. Open, it lists term
- * chips; a click on one only fills the search box (which then shows as the
- * usual query chip). It must be easy to tuck back away, and it must not touch
+ * chips, each with this week's match count; a click on one only fills the
+ * search box (which then shows as the usual query chip). It must be easy to tuck back away, and it must not touch
  * any filter.
  */
 
@@ -25,8 +25,12 @@ test('the legend is closed by default, opens from the rail and fills the search'
   await expect(button).toHaveAttribute('aria-expanded', 'true');
   expect(await page.locator('[data-testid="legend-group"]').count()).toBeGreaterThan(1);
 
-  const term = page.locator('[data-testid="legend-term"]').first();
-  const text = ((await term.textContent()) ?? '').trim();
+  // Every chip carries this week's count, and it can be dimmed but never hidden.
+  const terms = page.locator('[data-testid="legend-term"]');
+  await expect(page.locator('[data-testid="legend-count"]')).toHaveCount(await terms.count());
+
+  const term = terms.first();
+  const text = (await term.getAttribute('data-term')) ?? '';
   await term.click();
   await expect(page.locator('[data-testid="search-input"]:visible')).toHaveValue(text);
   await expect(page.locator('[data-testid="chip-query"]')).toBeVisible();

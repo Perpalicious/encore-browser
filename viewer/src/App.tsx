@@ -31,7 +31,7 @@ import {
 } from './lib/persist';
 import { useTheme } from './hooks/useTheme';
 import { usePersistedBool } from './hooks/usePersistedBool';
-import { LEGEND_GROUPS } from './lib/legend';
+import { LEGEND_GROUPS, legendCounts } from './lib/legend';
 import { LegendStrip } from './components/RecallLegend';
 import { usePersistedSet } from './hooks/usePersistedSet';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
@@ -164,6 +164,11 @@ export function App() {
   // group→bucket tree, all built once the bundle lands.
   const categoryTree = useMemo(() => buildCategoryTree(allLots), [allLots]);
   const searchIndex = useMemo(() => buildSearchIndex(allLots), [allLots]);
+  // This week's match count per legend chip — only worked out while it's open.
+  const legendHits = useMemo(
+    () => (legendOpen ? legendCounts(LEGEND_GROUPS, searchIndex) : undefined),
+    [legendOpen, searchIndex]
+  );
   const batNav = useMemo(
     () => (bundle ? buildBatNav(allLots, bundle.bucket_groups, bundle.groups) : []),
     [allLots, bundle]
@@ -626,7 +631,12 @@ export function App() {
       />
 
       {hasLegend && legendOpen && (
-        <LegendStrip groups={LEGEND_GROUPS} onPick={setQuery} onClose={() => setLegendOpen(false)} />
+        <LegendStrip
+          groups={LEGEND_GROUPS}
+          counts={legendHits}
+          onPick={setQuery}
+          onClose={() => setLegendOpen(false)}
+        />
       )}
 
       <main className="flex-1 min-h-0 flex flex-col">

@@ -2,10 +2,12 @@ import type { CSSProperties } from 'react';
 import type { LegendGroup } from '../lib/legend';
 
 /**
- * The recall legend: a reminder of the searches we usually run, tucked behind
- * one small rail button. Open, it is a strip under the rail — group names and
- * term chips — and a click on a term fills the search box. It changes nothing
- * else: no filter reads it, and the grid below keeps its own scroll.
+ * The recall legend: a reminder of the names Bat's List tends to miss, tucked
+ * behind one small rail button. Open, it is a strip under the rail — group
+ * names and term chips, each with this week's match count — and a click on a
+ * term fills the search box. A name with nothing this week is dimmed, not
+ * hidden. It changes nothing else: no filter reads it, and the grid below
+ * keeps its own scroll.
  */
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -49,10 +51,13 @@ export function LegendButton({ open, onToggle }: { open: boolean; onToggle: () =
 
 export function LegendStrip({
   groups,
+  counts,
   onPick,
   onClose,
 }: {
   groups: LegendGroup[];
+  /** This week's lots per term; absent, chips render without counts. */
+  counts?: Map<string, number>;
   onPick: (term: string) => void;
   onClose: () => void;
 }) {
@@ -95,28 +100,46 @@ export function LegendStrip({
               {g.name}
             </span>
             <span style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-              {g.terms.map((term) => (
-                <button
-                  key={term}
-                  type="button"
-                  data-testid="legend-term"
-                  onClick={() => onPick(term)}
-                  title={`Search “${term}”`}
-                  style={{
-                    height: 24,
-                    padding: '0 8px',
-                    borderRadius: 7,
-                    background: 'var(--s2)',
-                    border: '1px solid var(--line)',
-                    fontSize: '11px',
-                    fontWeight: 500,
-                    color: 'var(--dim)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {term}
-                </button>
-              ))}
+              {g.terms.map((term) => {
+                const n = counts?.get(term);
+                const empty = n === 0;
+                return (
+                  <button
+                    key={term}
+                    type="button"
+                    data-testid="legend-term"
+                    data-term={term}
+                    data-empty={empty || undefined}
+                    onClick={() => onPick(term)}
+                    title={empty ? `No lots this week — search “${term}” anyway` : `Search “${term}”`}
+                    style={{
+                      height: 24,
+                      padding: '0 8px',
+                      borderRadius: 7,
+                      background: 'var(--s2)',
+                      border: '1px solid var(--line)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: 'var(--dim)',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      opacity: empty ? 0.45 : 1,
+                    }}
+                  >
+                    {term}
+                    {n !== undefined && (
+                      <span
+                        data-testid="legend-count"
+                        style={{ fontFamily: MONO, fontSize: '9.5px', color: 'var(--dim3)' }}
+                      >
+                        {n}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </span>
           </div>
         ))}

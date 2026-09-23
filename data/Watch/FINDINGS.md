@@ -1,18 +1,20 @@
 # What the bid/watch history actually says
 
-Source: 35 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-09-13**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 913 unique lots (304 bid, 609 watch-only).
-Outcomes: 222 Outbid, 82 May Have Won.
+Source: 39 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-09-20**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 1,011 unique lots (343 bid, 668 watch-only).
+Outcomes: 252 Outbid, 91 May Have Won.
 
-Last refreshed **2026-09-15**, which added 80 lots (25 bid, 55 watch) from
-auction 774972, closed 9/13/26. All 80 joined to
-`data/categorized/auction_774972_for_agent.json` on `lot_number` with a
-matching title prefix. The 2026-09-10 refresh (97 lots, 45 bid, auction
-764523) did the same, so the two most recent batches carry **full untruncated
-titles** and a real `condition` instead of the brand-only inference the
-earlier batches were stuck with. Doing the export in the same week is what
-buys that — see Step 1.
+Last refreshed **2026-09-23**, which added 98 lots (39 bid, 59 watch) from
+auction 776904, closed 9/20/26. All 98 joined to the archived
+`data/archive/2026-09-20/auction_776904_for_agent.json` on `lot_number` with
+a matching title prefix, and — new this time — to
+`data/hammer/2026-09-20_776904.json` for what each product actually sold for.
+The three most recent batches (2026-09-10, -15, -23) carry **full
+untruncated titles** and a real `condition` instead of the brand-only
+inference the earlier batches were stuck with. Doing the export while the
+week's slimmed file is still on disk — or in the dated archive, *which is the
+same week* — is what buys that; see Step 1.
 
 `history.tsv` is **append-only and local** (gitignored — it is a per-lot log
 of what this household bid on, and this repo is public). This file is the
@@ -723,6 +725,148 @@ next refresh should recompute them against the 72-bucket one. Measured at
 the time of the rescope: seed reach over all 913 tracked lots 81% → 83%,
 over the 304 bids 81% → 84%, while the shortlist fell 12,989 → 8,712.
 
+# What the 2026-09-20 refresh found
+
+**One auction (776904, closed 9/20/26). 98 lots, 39 bids** — 62 distinct
+products tracked, 26 bid on. Same rule as before: one week answers coverage
+questions and cannot move a rate, so no lift in §3 was recomputed.
+
+This is the **first export judged entirely on the 72-bucket rescope**: the
+rescope landed 2026-09-15 and this week's flags were written 2026-09-16, so
+the pass column, the shortlist column and the taxonomy all agree for once.
+The slimmed file joined against includes both mid-week deltas (27,953 lots).
+
+## Recall held on everything but the consumable gate
+
+| measured against the 39 real bids | recall |
+|---|---|
+| shortlist (`tools/prefilter.py`, gate on) | 35/39 = 89.7% |
+| shortlist, gate off | 38/39 = 97.4% |
+| **the flagging pass as shipped** (`_categorized.json`) | **35/39 = 89.7%** |
+
+Over all 98 tracked lots the pass gave a bucket to 93, plus one personal-only
+pick (a Garant garden cart, caught by the `Yard & lawn` pseudo-seed
+`garden cart`). The shortlist reached 90. Shortlist size was 8,124 of
+27,953 lots (29.1%), against 46.3% before the rescope — the rescope narrowed
+the net by a third and bid recall with the gate off went *up*.
+
+The drop from last week's 96.0% is **entirely the consumable condition
+gate**, and this time the pass agreed with it. Last week the gate hid one
+bid and the pass overrode it (the Neutrogena twin-pack). This week the gate
+hid three bids and the pass refused all three:
+
+| lot | product | grade | outcome |
+|---|---|---|---|
+| 21197 | Après Gel-X stiletto tips, 280ct | Excellent | **May Have Won** |
+| 8731 | Après Extend Gel (the Gel-X tip adhesive) | Excellent | Outbid |
+| 13785 | Frito-Lay variety pack, 42 × 28 g | Brand New - Open Box | Outbid |
+
+The fourth miss is an Amazon Basics clear umbrella (Excellent, outbid),
+which no bucket or seed describes. One SKU; not a bucket.
+
+## The gate is refusing things that are wanted
+
+**Après Gel-X is a repeat purchase, not a new interest.** The same stiletto
+tips SKU was bid on and won on 7/27 (lot 23105). Two bids this week, one won
+— on "Excellent", HiBid's most common grade (11,148 in the label count),
+which on a box of 280 plastic tips means the box was opened, not that
+anything was used. `Cosmetics & nail`'s `condition_in` and its "CONSUMABLE:
+prefer New. An opened polish … is a pass" line are written for a bottle of
+polish, and the pass applied them to tips.
+
+The seed side had a bug on top of that: the bucket's `apres ` seed has never
+matched a single lot. HiBid drops the è, so the brand renders "APR S" in every
+title across the six archived weeks. Fixed in this refresh (`apr s `, checked
+to match only the seven Après lots on disk). It changed no number above —
+`gel x` was already matching both lots before the gate removed them.
+
+**The Frito-Lay bid is the second opened-multipack engagement.** The 9/15
+section set this trigger: "if a second Open Box multipack gets engaged with".
+Here it is, in `Snacks & confectionery` rather than `Skincare & body`: 27 lots
+of the 42-pack, 26 sealed or best-before (all flagged, 10 watched) and one
+Open Box (not flagged) — and the one bid went on the Open Box lot. An opened
+outer carton of 42 individually sealed bags is the twin-pack case again.
+
+Both are the same rule mis-stated: the consumable gate should refuse an
+opened *unit*, and it is refusing an opened *box of sealed units*. Changing
+it widens Bat's List, which needs the user's say-so (SCOPE POLICY) — see
+"What is worth doing" below.
+
+## Sampling, not sweeping — and the first sale prices
+
+| product run | supply | tracked | bid | May Have Won | sold for (median, range) |
+|---|---|---|---|---|---|
+| GOUTIME hammock stands (both SKUs) | 49 | 11 | 10 | 2 | $10.50 ($6–17), 24/24 sold |
+| FRITO-LAY 42 × 28 g variety pack | 27 | 11 | 1 | 0 | $13 sealed, $16 open box |
+| BISSELL PowerClean Pet 2389D | 9 | 5 | 3 | 1 | $10 Excellent ($7–13) |
+| SHARK WandVac WV200C | 26 | 2 | 1 | 1 | $17 Excellent ($16–24) |
+| STANLEY (any) | 44 | 3 | 3 | 0 | $7–16, all graded Good |
+| DCYOURHOME pellet bin | 3 | 3 | 3 | 0 | $14–15 |
+| EUCERIN (any) | 32 | 2 | 2 | 1 | $4–6 |
+| ULTIMATE EARS (any) | 8 | 7 | 0 | 0 | Boom 4 $65, Wonderboom 4 $42.50 |
+| DYSON Car+Boat | 58 | 2 | 0 | 0 | $100 ($82.50–140), 43 sold |
+| Keyboards & keycaps (any) | 130 | 7 | 2 | 0 | Razer Huntsman V3 Pro $44–88 |
+| Razer (any) | 59 | 4 | 0 | 0 | |
+| Logitech (any) | 243 | 0 | 0 | 0 | |
+
+**The hammock stand is the week's one real same-product bid run.** Ten bids
+across identical lots, two May Have Won, against a product that sold 24 times
+at a $10.50 median. Hammocks have been engaged with in five auctions since 6/7
+(Suncreat, Amazon Basics, double-hammock-with-stand), and `Outdoor furniture &
+hammocks` caught every one of them. Nothing to change in the taxonomy. Whether
+it is wanting one at a price or wanting several is not something the capture
+can tell — it looks like the WandVac's 16 bids of 2026-07-19, which turned
+out to be resale.
+
+**Ultimate Ears is the new watch-only run:** 7 of 8 lots tracked, none bid.
+Pellet storage bins are the opposite — 3 of 3 supply, 3 bids, all outbid at
+$14–15.
+
+**Hammer prices are the new axis.** This is the first refresh with the week's
+`data/hammer/` file on disk, and it answers what the gate question in §4 lost
+when `est_retail_price` went: what an outbid lot actually took. Stanley
+graded Good cleared $7–16; the UGG throw $27; the Furby $30. Joined on
+`title` + `condition` the same way the build does — product-level, not per
+lot, because the hammer file carries no lot numbers.
+
+Logitech: 243 lots, zero tracked — still the widest exposure-to-interest gap
+on the board, and wider than last week's 233 / 2.
+
+## Numbers that moved, and why
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 913 | 1,011 | +98 from this export |
+| bids | 304 | 343 | +39 |
+| unmatched share (title-only, 72 buckets) | 17.2% | 15.8% | this batch landed at 3.1%; the 913-row figure was 19% on the 63-bucket taxonomy |
+| unmatched bids (title-only, 72 buckets) | 16.4% | 14.9% | this batch 1/39 (the umbrella) |
+| shortlist recall vs real bids, same-week | 92.0% (23/25) | 89.7% (35/39) | consumable gate, 3 lots; gate off 97.4% |
+| pass recall vs real bids, same-week | 96.0% (24/25) | 89.7% (35/39) | the pass refused the same 3 lots |
+| shortlist share of auction | 46.3% | 29.1% | the 2026-09-15 rescope |
+| supply on disk | 130,384 (5 wks) | 158,337 (6 wks) | this week's archive; lifts not recomputed |
+
+## What is worth doing about it
+
+1. **Done: the Après seed.** `apres ` → `apr s ` in `Cosmetics & nail`.
+2. **Done 2026-09-23, with the user's say-so: the OUTER-BOX RULE.**
+   `Cosmetics & nail` and `Snacks & confectionery` now admit "Brand New -
+   Open Box" and "Excellent" in `condition_in`; `Skincare & body` admits
+   Open Box only (see below). Their
+   descriptions (plus `profile.yaml` `not_wanted`) say to flag those grades
+   and leave the seal check to the photos. The user's reasoning: graders
+   use those two grades inconsistently and an opened outer box is almost
+   never a problem. "Good" and below stay out, and the other four gated
+   buckets are unchanged — widening either would flood the list. Shortlist
+   effect on 776904: Cosmetics 9 → 34, Snacks 62 → 85, Skincare 155 → 289.
+   Skincare was first given "Excellent" too (155 → 532) and the user cut it
+   back to Open Box the same day as too many lots. All three of this week's
+   gate misses still shortlist — none of them was Skincare. The Neutrogena
+   twin-pack of 9/13 (Open Box) is covered.
+3. **The §3 lift table is still owed a recompute on the 72-bucket taxonomy**
+   (flagged by the 9/15 rescope note). Supply is now 158,337 lots over six
+   weeks and the history is 343 bids — enough for the quarterly question.
+   Not attempted on a one-week refresh.
+
 ---
 
 # How to refresh this
@@ -781,6 +925,13 @@ single auction took 3 (969 x 3428 and similar, four tiles per row, ~9 rows per
 capture), and so did 2026-09-15 (980 x 3437, 1009 x 3351, 980 x 1130). They
 are disposable once `history.tsv` is updated (~47 MB), and `data/Watch/` is
 gitignored apart from this file.
+
+**Chat attachments can be fine — check for a path.** The 2026-09-20 captures
+were attached in the chat, but the harness stored each one on disk (the image
+block names its source path). Copying them into `Bids Temp/` and cropping the
+two tall ones (950 x 3663, 960 x 3671) into overlapping quarters worked
+exactly as a saved capture would; all 98 rows passed the prefix check first
+time. The rule is about being croppable, not about the channel.
 
 The 2026-09-15 captures were pasted into the chat instead of saved, so no
 cropping was possible. It worked — 79 of 80 rows joined on the first pass —

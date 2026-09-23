@@ -73,13 +73,25 @@ projects:
 #     reads "2 sealed, 1 opened amount of sheets unknown".
 #   - If the photos cannot show an intact seal on something meant to be
 #     sealed, that is a pass regardless of the stated grade.
+#   - EXCEPTION since 2026-09-23, the OUTER-BOX RULE: in Cosmetics & nail
+#     and Snacks & confectionery, "Brand New - Open Box" and "Excellent"
+#     usually mean an opened outer box around sealed units (a 42-bag
+#     carton, a box of nail tips), and graders apply them inconsistently.
+#     Skincare & body takes Open Box only (a twin-pack sleeve); "Excellent"
+#     there is too common to admit. Those are flagged and Bat judges the
+#     seal from the photos. "Good" and below is still a pass, and every other
+#     consumable keeps the sealed-only bar — widening it everywhere would
+#     flood the list.
 # Buckets whose descriptions say CONSUMABLE encode this bar.
 
 not_wanted:
   - "Consumables — personal care, food, drink, cleaning — in any condition
      below New, or where the photos cannot establish that the seal is
      intact. An opened lotion or a broken-seal food pack is an immediate
-     pass even when the listing says New."
+     pass even when the listing says New. Exception: buckets whose
+     description states the OUTER-BOX RULE also accept \"Brand New - Open
+     Box\", and some also \"Excellent\" — accept exactly the grades that
+     bucket's description names."
   - "Broken, incomplete, or non-functional items, unless the profile
      explicitly wants that type for parts or repair."
   - "Generic no-brand single utensils, cables, and accessories with no
@@ -325,7 +337,8 @@ interests:
       while no bucket existed to hold them. Supplements pair with the home
       gym interest.
       Everything here is consumable: prefer New, and treat an unprovable
-      seal as a pass.
+      seal as a pass — except Snacks & confectionery, which follows the
+      OUTER-BOX RULE in its bucket description.
     seeds: ["grocery", "food lot", "snack", "beverage", "drink ", "pantry"]
 
   - name: "Product testing & resale"

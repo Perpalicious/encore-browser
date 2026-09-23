@@ -61,6 +61,18 @@
 #               CONDITION_LABELS in scraper/condition.py exactly — a value that
 #               is not in that list matches nothing and silently empties the
 #               bucket.
+#               OUTER-BOX RULE (2026-09-23): Cosmetics & nail and Snacks &
+#               confectionery also admit "Brand New - Open Box" and
+#               "Excellent"; Skincare & body admits Open Box only, because
+#               "Excellent" is that category's commonest grade and took its
+#               shortlist from 155 to 532. Graders use those two grades
+#               inconsistently, and the bids showed they usually mean an opened
+#               outer box around sealed units (a twin-pack sleeve, a 42-bag
+#               carton, a box of nail tips). Bat checks the photos before
+#               bidding. "Good" and below stays out everywhere, and the other
+#               gated buckets keep the sealed-only list: widening all of them
+#               to Good would flood the list. See data/Watch/FINDINGS.md,
+#               2026-09-20 refresh.
 #
 # THE PREFILTER MUST NEVER ENCODE A QUALITY GATE. Several buckets below say
 # "QUALITY or BRANDED ... do NOT flag generic". That judgement belongs to the
@@ -1232,12 +1244,18 @@ buckets:
       Skin and body products — lotions and moisturisers, body wash, face
       wash and cleansers, serums and toners, sunscreen, body butter and
       scrubs, hand cream. Branded or generic; this is a SCAN bucket.
-      CONSUMABLE: prefer "Brand New - Sealed". Roughly 57% of this category
-      grades "Excellent" and 25% "Good", and on a pump bottle or tube that
-      means opened. A photo that cannot prove the seal is intact is a pass.
-    # sealed consumable — see header. All three are HiBid "new" gradings;
-    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
-    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+      CONSUMABLE, OUTER-BOX RULE (Open Box only): flag "Brand New - Sealed"
+      and "Brand New - Open Box" alike. Open Box here usually means an
+      opened outer box or sleeve around sealed bottles (a twin-pack, a gift
+      set), and Bat checks the photos for an intact seal before bidding, so
+      do not refuse a lot on that grade alone. Unlike the other OUTER-BOX
+      buckets, "Excellent" is NOT accepted here — it is this category's
+      commonest grade and would triple the list. "Excellent", "Good" and
+      below mean opened or part-used: a pass.
+    # OUTER-BOX RULE, narrowed — see header. Open Box only; "Excellent" was
+    # tried and dropped the same day (shortlist 155 -> 532 on 776904).
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)",
+                   "Brand New - Open Box"]
     examples: ["CeraVe", "Cetaphil", "Neutrogena", "Aveeno", "The Ordinary"]
     subtypes: ["body lotion", "face care", "sunscreen", "body wash",
                "serums & toners", "hand & foot care"]
@@ -1306,11 +1324,16 @@ buckets:
       tips, manicure kits and lamps, plus colour cosmetics (lipstick,
       mascara, foundation, eyeshadow) and makeup tools. Nail is the
       stronger half of this bucket in practice.
-      CONSUMABLE: prefer New. An opened polish or a broken-seal palette is
-      a pass.
-    # sealed consumable — see header. All three are HiBid "new" gradings;
-    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
-    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+      CONSUMABLE, OUTER-BOX RULE: flag "Brand New - Sealed", "Brand New -
+      Open Box" and "Excellent" alike — graders use the last two
+      inconsistently, and on nail tips, press-ons, gels and kits they
+      usually mean the box was opened, not that anything was used (Après
+      Gel-X tips and Extend Gel were both bid on at "Excellent"). Bat checks
+      the photos before bidding. "Good" and below is a pass.
+    # OUTER-BOX RULE — see header. The three "new" gradings plus the two
+    # that usually mean an opened outer box; "Good" and below stay out.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)",
+                   "Brand New - Open Box", "Excellent"]
     examples: ["OPI", "Modelones", "Glamnetic", "Essie", "Maybelline"]
     subtypes: ["nail polish", "gel systems", "press-on nails", "manicure kits",
                "nail lamps", "colour cosmetics", "makeup tools"]
@@ -1318,7 +1341,9 @@ buckets:
             "nail kit", "nail tip", "nail lamp", "manicure", "pedicure",
             "gel x", "nail art", "lipstick", "mascara", "eyeshadow",
             "concealer", "makeup brush", "makeup set", "opi ", "modelones",
-            "glamnetic", "essie ", "maybelline", "apres "]
+            "glamnetic", "essie ", "maybelline", "apr s "]
+    # HiBid drops the è: Après renders "APR S" in every title on disk, so the
+    # old "apres " seed never matched once. Bid 7/27 (won) and twice 9/20.
 
   - name: "Snacks & confectionery"
     group: "Food & drink"
@@ -1327,11 +1352,16 @@ buckets:
       cookies and biscuits, granola and protein bars, popcorn, nuts, jerky,
       and variety/snack packs. Branded or generic; a SCAN bucket, so
       breadth beats selectivity.
-      CONSUMABLE: prefer New. Best-before dates are fine to flag — Bat will
-      assess — but an opened or repacked box is a pass.
-    # sealed consumable — see header. All three are HiBid "new" gradings;
-    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
-    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+      CONSUMABLE, OUTER-BOX RULE: flag "Brand New - Sealed", "Brand New -
+      Open Box" and "Excellent" alike. On a variety pack those two grades
+      usually mean the outer carton was opened while every bag inside is
+      still sealed, and Bat checks the photos before bidding. Best-before
+      dates are fine to flag too. "Good" and below, or a visibly repacked
+      or loose box, is a pass.
+    # OUTER-BOX RULE — see header. The three "new" gradings plus the two
+    # that usually mean an opened outer box; "Good" and below stay out.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)",
+                   "Brand New - Open Box", "Excellent"]
     examples: ["Frito-Lay", "Hershey's", "Ghirardelli", "Quest", "Kind"]
     subtypes: ["chocolate & candy", "chips & savoury", "cookies & biscuits",
                "bars & granola", "nuts & jerky", "variety packs"]

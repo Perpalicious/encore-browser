@@ -1,11 +1,13 @@
 # What the bid/watch history actually says
 
-Source: 39 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-09-20**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 1,011 unique lots (343 bid, 668 watch-only).
-Outcomes: 252 Outbid, 91 May Have Won.
+Source: 41 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-09-27**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 1,078 unique lots (370 bid, 708 watch-only).
+Outcomes: 272 Outbid, 98 May Have Won.
 
-Last refreshed **2026-09-23**, which added 98 lots (39 bid, 59 watch) from
+Last refreshed **2026-10-02**, which added 67 lots (27 bid, 40 watch) from
+auction 779118, closed 9/27/26 — see "What the 2026-09-27 refresh found".
+The refresh before it, **2026-09-23**, added 98 lots (39 bid, 59 watch) from
 auction 776904, closed 9/20/26. All 98 joined to the archived
 `data/archive/2026-09-20/auction_776904_for_agent.json` on `lot_number` with
 a matching title prefix, and — new this time — to
@@ -866,6 +868,114 @@ on the board, and wider than last week's 233 / 2.
    (flagged by the 9/15 rescope note). Supply is now 158,337 lots over six
    weeks and the history is 343 bids — enough for the quarterly question.
    Not attempted on a one-week refresh.
+
+---
+
+# What the 2026-09-27 refresh found
+
+**One auction (779118, closed 9/27/26). 67 lots, 27 bids, 7 May Have Won** —
+57 distinct titles. Two captures (976 x 3430, 974 x 2995), attached in chat
+and copied to `Bids Temp/`, cropped into overlapping quarters. The captures
+are contiguous: the partial row at the top of the second matches the last
+row of the first (blue / red / blue / blue). All 67 rows passed the prefix
+check against `data/categorized/auction_779118_for_agent.json` (28,057 lots,
+delta d1 included) on the first pass. No hammer file for this week yet —
+`tools/hammer.py 779118` is next run's step 0.
+
+## Recall: everything but Funko
+
+| measured against the 27 real bids | before edits | after edits |
+|---|---|---|
+| shortlist (`tools/prefilter.py`), gate on or off | 25/27 | **27/27** |
+| **the flagging pass as shipped** (`_categorized.json`) | **25/27** | — |
+
+Over all 67 tracked lots the pass gave a bucket to 59. **The 8 it refused
+were every Funko Pop! in the export** (2 bids, 6 watches), and it refused
+them because `Dolls, plush & playsets` told it to: "NOT Funko — those were a
+third of the old bucket and drew nothing in four months." That sentence was
+wrong when it was written. `history.tsv` held two Funko bids at the time
+(5/31 WandaVision Agatha, won; 9/6 KPop Demon Hunters Rumi, outbid).
+
+| | Funko this week |
+|---|---|
+| supply | 194 lots (all "Toys - Action Figures") |
+| tracked | 8 (4.1%) — the auction overall is 67 / 28,057 = 0.24%, so ~17x |
+| bid | 2 (KPop Demon Hunters Rumi, Bluey Granny Gladys), both outbid |
+| franchises | KPop Demon Hunters x2, Bluey, Pokemon x2, Fallout Vault Boy chase x2, WoW |
+
+That clears §Step 4's bar for a real interest (5+ distinct products, 2+
+auctions). Funko spans adult franchises as well as kids' ones, so a
+franchise allowlist would keep missing the next one.
+
+The shortlist's two missed bids were seed gaps, not interest gaps — the
+pass flagged both: a Razer Basilisk mouse and a Griot's foam cannon. The
+Razer one is a bug (below).
+
+## A rescope bug: `PC peripherals` excluded its own category
+
+`HAYSTACK_FIELDS` includes `category`, and `PC peripherals` had a bare
+`keyboard` in `exclude` (meant to keep keyboards in their own bucket). Every
+mouse in "Computers - Peripherals - Keyboards / Mice" carries the word
+"keyboards" in its haystack, so the exclusion vetoed it: the bucket
+shortlisted **10 lots instead of 170**. It has been that way since the
+2026-09-15 rescope (`e8c8d24`). Flagging never suffered — the pass is
+ungated and flagged 128 lots there — but `tools/recall_check.py` finds
+suspects from seeds, so this bucket was invisible to recall repair. Fixed
+by right-anchoring it (`"keyboard "`); the bucket now shortlists 112, with
+no KEYBOARD title among them.
+
+## Recurring themes this week confirms
+
+All already flagged; written into `profile.yaml` so `personal_match` sees
+them too.
+
+- **KPop Demon Hunters**, across every form: Huntr/x dolls (8/23, 8/24 bid,
+  9/27 bid), Furby Furblets (9/6 watch, 9/27 won), Funko (9/6, 9/27 bids).
+  A sealed Huntr/x Rumi doll in "Toys - Dolls" went unflagged this week.
+- **Garden hoses**: four auctions since 5/31; two won this week (Flexzilla
+  15 ft, a 25 ft rubber hose). All were flagged, none as a personal match.
+- **Stanley**: 7 lots tracked, 3 bids — including the All Day lunch box,
+  which `Insulated drinkware`'s brand note did not reach.
+- **Attitude**: kids' 2-in-1 shampoo won; their mineral sunscreen was won
+  7/12. The other 51 Attitude lots this week were unflagged, nearly all on
+  the consumable gate — working as intended.
+- **Lawn levelling** (levelling rake x2, lawn roller; a dethatcher on 6/7)
+  and **food mills** (OXO, Cuisipro x2) — flagged by the pass, missed by
+  the shortlist.
+
+## What was changed (2026-10-02, with the user's say-so on Funko)
+
+1. **New bucket `Funko Pop!`** (Toys & games), seed `funko`, any franchise.
+   72 -> 73 buckets; `build/tests/test_groups.py`, `CLAUDE.md` and
+   `docs/PASS_SOURCES.md` bumped. `Dolls` keeps `funko` in `exclude` so the
+   lots route to the new bucket, and its description now points there.
+   `profile.yaml`: "Kids' toys & games" claims the bucket and names Funko
+   as the one figure line that is wanted.
+2. **KPop Demon Hunters** named in `Dolls`' description and examples, seeds
+   `demon hunter`, `huntr x`; and in the Kids' toys interest.
+3. **`PC peripherals` exclude**: `keyboard` -> `keyboard `.
+4. **Seeds** for the shortlist's misses: `food mill` (Kitchen utensils),
+   `foam cannon` / `foam gun` / `griot` (Car care), `garage shelv` (Garage
+   organisation — `garage shelf` never matched "SHELVES"), `lawn level` /
+   `leveling rake` / `levelling rake` / `lawn roller` / `dethatch`
+   (Gardening tools).
+5. **`profile.yaml` notes**: hoses and lawn levelling (Yard & lawn),
+   Stanley lunch boxes (Kitchen), Attitude (Personal care).
+
+Re-measured the same week after the edits: shortlist reaches **67/67**
+tracked lots, gate on or off (was 59/67). Backtest against
+`auction_779118_categorized.json` — no bucket regressed; PC peripherals
+4.7% -> 80.5%, Car care 60.9% -> 78.3%, Gardening tools 40.0% -> 66.7%; lot
+recall 81.3% -> 83.1%. Funko gets no backtest credit: the pass never
+labelled one, which is the §"trap" exactly. The first week flagged under
+the new bucket is the real test — expect ~190 Funko lots on the list.
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 1,011 | 1,078 | +67 from this export |
+| bids | 343 | 370 | +27 |
+| pass recall vs real bids, same-week | 89.7% (35/39) | 92.6% (25/27) | both misses Funko |
+| shortlist recall vs real bids, same-week | 89.7% (35/39) | 92.6% -> 100% | Razer + Griot's, fixed by the edits |
 
 ---
 

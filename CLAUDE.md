@@ -167,7 +167,7 @@ chunk files, concatenates `buckets.yaml` + `profile.yaml` into a single
 chunk (`auction_<ID>_chunk_NN_prompt.md`, via `tools/render_prompts.py` from
 `prompts/flagging.md`). Check its printout:
 - **the exact upload list** — normally 7 chunks plus `context.yaml`, 8 files
-- the bucket count (72 as of 2026-09-15). Each rendered prompt states this
+- the bucket count (73 as of 2026-10-02). Each rendered prompt states this
   number and tells the model to stop if its read-test disagrees, so a
   `context.yaml` that failed to attach ends the chat before any lots are judged
 - dedup normally collapses 20-25% of lots (25,195 → 19,250 on 2026-08-30)
@@ -233,7 +233,7 @@ the paste / attach / save checklist. One fresh ChatGPT chat per prompt:
   which name; ChatGPT will name the file itself if it returns one
 
 ...for each chunk. The prompt already contains that chunk's row count, last
-`lot_number`, the bucket count (72) and its output name, so nothing in it
+`lot_number`, the bucket count (73) and its output name, so nothing in it
 needs editing. Let me know when they're saved and I'll continue."*
 
 If in doubt, `python3 tools/render_prompts.py <ID>` re-prints the checklist

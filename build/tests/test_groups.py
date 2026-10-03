@@ -32,7 +32,7 @@ class TestLoadBucketGroups:
         assert len(order) >= 8  # the curated file defines at least the 8 documented groups
 
     def test_bucket_count_and_integrity(self):
-        """The curated file holds exactly 72 buckets, every one grouped, no
+        """The curated file holds exactly 73 buckets, every one grouped, no
         duplicate names. Guards accidental drops/dupes when buckets evolve.
 
         Bump this deliberately when a bucket is added or removed — a stale
@@ -59,10 +59,12 @@ class TestLoadBucketGroups:
         # peripherals, Home gym, Vacuums (x3), Boots (adult/kids), Kitchen
         # appliances; added Monitors, Networking, Backyard games, Nets/goals,
         # Bikes, Pool & hot tub care, Playroom & active play.
-        assert len(names) == 72
+        # 2026-10-02: 72 -> 73. Added "Funko Pop!" — Funko was excluded from
+        # Dolls on 9/15 but drew bids in three auctions (FINDINGS.md, 9/27).
+        assert len(names) == 73
         assert len(names) == len(set(names)), "duplicate bucket names"
         assert all(b.get("group") for b in raw["buckets"]), "a bucket is missing its group"
-        assert len(mapping) == 72
+        assert len(mapping) == 73
 
     def test_new_outdoor_furniture_bucket(self):
         """The 'Outdoor furniture & hammocks' bucket exists in Outdoor & garden."""

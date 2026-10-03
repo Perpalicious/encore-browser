@@ -235,7 +235,10 @@ buckets:
             "driving force", "racing wheel", "flight stick", "hotas"]
     categories: ["Computers & Electronics - Computers - Peripherals - Keyboards / Mice"]
     seed_exempt: ["Razer", "Pulsar", "Anker dock"]  # model names above carry them
-    exclude: ["mouse trap", "mouse pad heating", "keyboard", "rgb fan",
+    # "keyboard " is right-anchored: the haystack includes the category, and
+    # a bare `keyboard` matched "Keyboards / Mice" and vetoed 160 of the 170
+    # lots this bucket shortlists (found 2026-10-02, a Razer Basilisk bid).
+    exclude: ["mouse trap", "mouse pad heating", "keyboard ", "rgb fan",
               "pwm fan", "case fan", "fan controller", "phone case",
               "usb cable", "usb c to"]
 
@@ -336,7 +339,8 @@ buckets:
     seeds: ["tool chest", "tool cabinet", "tool box", "toolbox", "tool bag",
             "pegboard", "peg board", "tool rack", "tool organizer", "tool holder",
             "wall mount rack", "workbench", "work bench", "garage shelf",
-            "garage shelving", "utility shelving", "gladiator", "husky ", "wera"]
+            "garage shelving", "utility shelving", "gladiator", "husky ", "wera",
+            "garage shelv"]
     seed_exempt: ["Craftsman"]  # Craftsman spans tools, mowers and storage
 
   - name: "3D printing supplies"
@@ -447,7 +451,10 @@ buckets:
     seeds: ["pruner", "pruning", "secateur", "lopper", "garden shear",
             "hedge shear", "trowel", "garden spade", "shovel", "garden rake",
             "leaf rake", "garden hoe", "cultivator hand", "weeder", "garden fork",
-            "watering can", "garden kneeler", "fiskars", "felco"]
+            "watering can", "garden kneeler", "fiskars", "felco",
+            # Lawn levelling is a live project (watched 6/7 and 9/27).
+            "lawn level", "leveling rake", "levelling rake", "lawn roller",
+            "dethatch"]
     seed_exempt: ["Corona", "Wolf-Garten"]  # Corona is a beer brand here
 
   - name: "Garden & lawncare misc"
@@ -678,6 +685,26 @@ buckets:
     subtypes: ["eggs", "colleggtibles", "playsets"]
     seeds: ["hatchimal", "colleggtible"]
 
+  # Added 2026-10-02 with the user's say-so. The 2026-09-15 rescope excluded
+  # Funko from "Dolls, plush & playsets" as drawing nothing, but the history
+  # holds bids in three auctions (5/31 won, 9/6, 9/27 x2) and the 9/27 week
+  # tracked 8 of 194 Funko lots, ~17x the auction's base rate. Its own bucket
+  # rather than a widened Dolls bucket: the engagement spans adult franchises
+  # (Fallout, World of Warcraft, WandaVision) as well as kids' ones.
+  - name: "Funko Pop!"
+    group: "Toys & games"
+    description: >
+      Funko Pop! vinyl figures and Funko multipacks (Bitty Pop!, 4-packs) of
+      ANY franchise — KPop Demon Hunters, Bluey, Pokemon, Fallout, World of
+      Warcraft, Marvel and so on. This is the one collectible-figure line
+      that is wanted; other action figures, figurines and statues are still
+      NOT. Chase and exclusive variants are worth noting in the reasoning.
+      Box grade matters to collectors, but Open Box and Excellent were both
+      engaged with, so do not reject on those grades alone.
+    examples: ["Funko Pop!", "Funko Bitty Pop!"]
+    subtypes: ["pop! figures", "multipacks & bitty pops"]
+    seeds: ["funko"]
+
   - name: "Dolls, plush & playsets"
     group: "Toys & games"
     aliases: ["Dolls & plush"]
@@ -685,12 +712,16 @@ buckets:
       Dolls and doll-world toys for a girl aged 8-11 — fashion and baby
       dolls (Disney Princess, Baby Alive, Polly Pocket, Gabby's Dollhouse,
       Bluey), doll clothes and accessories, dollhouses and character
-      playsets, and plush/interactive plush (Furby, Squishmallows). Barbie
-      goes under "Barbies", LOL/Na Na Na under "Surprise toys". NOT action
-      figures, NOT collectible figurines or statues, NOT Funko — those were
-      a third of the old bucket and drew nothing in four months.
+      playsets, and plush/interactive plush (Furby, Squishmallows). KPop
+      Demon Hunters is a current favourite franchise: Mattel Huntr/x dolls
+      and Furby Furblets were bid on in three auctions, and a Huntr/x doll
+      or figure is a match. Barbie goes under "Barbies", LOL/Na Na Na under
+      "Surprise toys", Funko under "Funko Pop!". NOT other action figures,
+      NOT collectible figurines or statues — those were a third of the old
+      bucket and drew nothing in four months.
     examples: ["Gabby's Dollhouse", "Disney Princess", "Baby Alive",
-               "Polly Pocket", "Furby", "Squishmallows", "Bluey", "Melissa & Doug"]
+               "Polly Pocket", "Furby", "Squishmallows", "Bluey", "Melissa & Doug",
+               "KPop Demon Hunters"]
     subtypes: ["dolls", "doll clothes & accessories", "dollhouses & playsets",
                "plush & interactive plush"]
     seeds: ["doll", "plush", "stuffed animal", "squishmallow", "playset",
@@ -698,7 +729,10 @@ buckets:
             "polly pocket", "furby", "furblet", "paw patrol", "bluey",
             "melissa & doug", "melissa and doug", "styling head",
             "baby doll", "fashion doll", "disney princess", "frozen doll",
-            "our generation", "american girl"]
+            "our generation", "american girl",
+            # Huntr/x dolls and figures sit in "Toys - Action Figures" with no
+            # doll word in the title; a sealed Rumi doll went unflagged 9/27.
+            "demon hunter", "huntr x"]
     exclude: ["barbie", "lol surprise", "na na na surprise", "hatchimal",
               "action figure", "figurine", "funko", "statue"]
     seed_exempt: ["Disney"]  # spans every category in these auctions
@@ -1176,7 +1210,7 @@ buckets:
             "kitchen shear", "rolling pin", "baking mat", "cookie cutter",
             "pot holder", "oven mitt", "trivet", "corkscrew", "bottle opener",
             "mixing bowl", "salad spinner", "garlic press", "oxo ",
-            "joseph joseph", "zwilling", "kitchenaid"]
+            "joseph joseph", "zwilling", "kitchenaid", "food mill"]
 
   # ------------------------------------------------------------------
   # Added 2026-08-30 from three months of bid/watch history. See
@@ -1531,7 +1565,8 @@ buckets:
             "detailing spray", "wheel cleaner", "tire shine", "tyre shine",
             "interior cleaner", "wash mitt", "drying towel", "clay bar",
             "wiper blade", "meguiar", "chemical guys", "armor all",
-            "turtle wax", "mothers polish", "car cover", "windshield washer"]
+            "turtle wax", "mothers polish", "car cover", "windshield washer",
+            "foam cannon", "foam gun", "griot"]
     seed_exempt: ["Mothers"]  # ordinary word; "mothers polish" carries it
     exclude: ["car seat", "car charger", "car mount", "car vacuum"]
 

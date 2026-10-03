@@ -128,16 +128,22 @@ interests:
       and camping gear are NOT wanted — none drew a bid in four months.
 
   - name: "Kids' toys & games"
-    buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Board games",
-              "Dolls, plush & playsets", "Outdoor play, swim & blasters",
-              "Kids' craft & activity", "Playroom & active play"]
+    buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Funko Pop!",
+              "Board games", "Dolls, plush & playsets",
+              "Outdoor play, swim & blasters", "Kids' craft & activity",
+              "Playroom & active play"]
     tags: ["kids_interest", "family_activity", "playroom"]
     description: >
       Toys and games for a girl roughly ages 8-11, plus board games the
       whole household plays (a SCAN bucket — rarely bought, kept on
       purpose). Collectible and blind-box toys included. Nerf and water
       blasters are a repeat buy. Action figures and figurines are not
-      wanted. The playroom build-out (climbing holds, ninja course kits,
+      wanted, with ONE exception: Funko Pop! of any franchise, adult ones
+      included (Fallout, World of Warcraft, Marvel) — bid on in three
+      auctions and watched heavily (2026-10-02). KPop Demon Hunters is the
+      current favourite franchise across every form it comes in — Huntr/x
+      dolls, Furby Furblets, Funko — and is a personal match in any of
+      them. The playroom build-out (climbing holds, ninja course kits,
       swings, mats) is a live project — see "Playroom & active play".
     # "Dolls & plush" now covers dolls/plush/figures. These seeds catch the
     # remaining edges — craft and activity toys with no bucket of their own.
@@ -217,7 +223,12 @@ interests:
     tags: ["outdoor_maintenance", "yard_watering"]
     description: >
       Ongoing yard upkeep — mowers and trimmers, hoses and watering, hand
-      garden tools, lawn treatments, and tarps.
+      garden tools, lawn treatments, and tarps. Garden hoses are the
+      standing repeat buy (engaged with in four auctions since May, two won
+      on 2026-09-27): a decent hose — Flexzilla, VEVOR, heavy rubber,
+      kink-free or expandable — or a wall-mount hose reel is a personal
+      match, not just a bucket entry. Lawn levelling is a live project:
+      levelling rakes, lawn rollers and dethatchers have all been watched.
     seeds: ["mosquito", "bug zapper", "pest control", "wasp", "gazebo",
             "screen tent", "outdoor umbrella", "wheelbarrow", "garden cart"]
 
@@ -252,7 +263,8 @@ interests:
       drawn bids, and Stanley Quenchers and Thermos kids' bottles get
       watched. Treat Stanley / Owala / Hydro Flask / S'well / Yeti
       tumblers, bottles and travel mugs as a personal match, not just a
-      bucket entry. Food and drink itself now lives in its own interest below.
+      bucket entry — and Stanley lunch boxes and food jars too (an All Day
+      lunch box drew a bid on 2026-09-27). Food and drink itself now lives in its own interest below.
 
   - name: "Cleaning"
     buckets: ["Cleaning supplies & tools", "Handheld & cordless vacs",
@@ -318,6 +330,9 @@ interests:
       is not wanted.
       Nail is a distinct and consistent sub-interest — gel systems, press-on
       tips and manicure kits, not just polish.
+      ATTITUDE (the EWG-verified Canadian brand) is a repeat brand: its
+      mineral sunscreen was won on 2026-07-12 and its kids' 2-in-1 shampoo
+      & body wash on 2026-09-27. A sealed Attitude lot is a personal match.
     seeds: ["grooming", "personal care", "toiletries", "cosmetic",
             "salon", "spa set", "gift set bath"]
 

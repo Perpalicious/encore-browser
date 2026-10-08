@@ -143,7 +143,8 @@ interests:
       auctions and watched heavily (2026-10-02). KPop Demon Hunters is the
       current favourite franchise across every form it comes in — Huntr/x
       dolls, Furby Furblets, Funko — and is a personal match in any of
-      them. The playroom build-out (climbing holds, ninja course kits,
+      them. Disney Tangled / Rapunzel and Sanrio (Hello Kitty, Kuromi)
+      also drew Funko bids on 2026-10-04. The playroom build-out (climbing holds, ninja course kits,
       swings, mats) is a live project — see "Playroom & active play".
     # "Dolls & plush" now covers dolls/plush/figures. These seeds catch the
     # remaining edges — craft and activity toys with no bucket of their own.
@@ -181,6 +182,9 @@ interests:
       personal match, not just a bucket entry. Consoles and console games
       are NOT wanted; VR gear is. Drones, tablets, cameras and wearables
       are NOT wanted (the "Electronics" catch-all was retired 2026-09-15).
+      Razer gaming mice are a second, steadier thread — Basilisk (bid
+      2026-09-27, won 2026-10-04), DeathAdder, Viper and Naga all watched
+      repeatedly — and count as a personal match too.
 
   - name: "Smart home"
     buckets: ["Smart home", "Smart locks"]
@@ -201,8 +205,9 @@ interests:
       watched), tool storage and organisation, fasteners and adhesives,
       cords, and tie-downs for hauling. Household batteries, power banks
       and chargers are NOT wanted ("Batteries & chargers" retired
-      2026-09-15, zero engagement in four months); a power-tool battery for
-      a platform already owned still counts under "Power tools".
+      2026-09-15, zero engagement in four months) — except bulk AA/AAA
+      alkaline packs, see "Household batteries (bulk)". A power-tool
+      battery for a platform already owned still counts under "Power tools".
     # "Hand tools" now covers the tools and fasteners themselves. These are
     # the workshop consumables and PPE that still have no bucket.
     seeds: ["work glove", "safety glass", "safety goggle", "ear protection",
@@ -223,7 +228,11 @@ interests:
     tags: ["outdoor_maintenance", "yard_watering"]
     description: >
       Ongoing yard upkeep — mowers and trimmers, hoses and watering, hand
-      garden tools, lawn treatments, and tarps. Garden hoses are the
+      garden tools, lawn treatments, and tarps. EGO 56V is the cordless
+      platform of interest (hedge trimmer bid twice 2026-07-20; the
+      Multi-Head power head watched four times and a bristle-brush
+      attachment bid on 2026-10-04): any EGO 56V tool, power head or
+      attachment is a personal match. Garden hoses are the
       standing repeat buy (engaged with in four auctions since May, two won
       on 2026-09-27): a decent hose — Flexzilla, VEVOR, heavy rubber,
       kink-free or expandable — or a wall-mount hose reel is a personal
@@ -330,6 +339,11 @@ interests:
       is not wanted.
       Nail is a distinct and consistent sub-interest — gel systems, press-on
       tips and manicure kits, not just polish.
+      SUNSCREEN is the single most-bought thing in this interest — about
+      eleven bids across six auctions since July and four wins: La
+      Roche-Posay Anthelios, Neutrogena Ultra Sheer, Attitude mineral,
+      Thinksport / Thinkbaby, IT Cosmetics. A branded sunscreen at an
+      accepted grade is a personal match, face or body, kids' or adult.
       ATTITUDE (the EWG-verified Canadian brand) is a repeat brand: its
       mineral sunscreen was won on 2026-07-12 and its kids' 2-in-1 shampoo
       & body wash on 2026-09-27. A sealed Attitude lot is a personal match.
@@ -373,6 +387,21 @@ interests:
       appetite.
     seeds: ["wholesale lot", "case pack", "bulk lot", "pallet", "retail box"]
 
+
+  - name: "Household batteries (bulk)"
+    buckets: []
+    tags: ["household_batteries"]
+    description: >
+      Bulk alkaline AA and AAA packs only — roughly 24 count and up, name
+      brands (Duracell, Energizer, Amazon Basics, Powermax, ACDelco). A
+      100-count Powermax AAA pack was bid on 2026-10-04. Added with the
+      user's say-so on 2026-10-08 as a pseudo-bucket, deliberately NOT a
+      return of the retired "Batteries & chargers" bucket: chargers, power
+      banks, rechargeables, coin cells and small 4-8 packs are still not
+      wanted. ~33 lots a week match the seeds.
+    seeds: ["aa batter", "aaa batter", "aa alkaline", "aaa alkaline"]
+    exclude: ["rechargeable", "charger", "nimh", "eneloop", "lithium ion",
+              "power bank"]
 
   - name: "Pool & hot tub"
     buckets: ["Pool & hot tub care"]

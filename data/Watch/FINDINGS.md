@@ -1,14 +1,15 @@
 # What the bid/watch history actually says
 
-Source: 41 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-09-27**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 1,078 unique lots (370 bid, 708 watch-only).
-Outcomes: 272 Outbid, 98 May Have Won.
+Source: 44 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-10-04**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 1,163 unique lots (415 bid, 748 watch-only).
+Outcomes: 310 Outbid, 105 May Have Won.
 
-Last refreshed **2026-10-02**, which added 67 lots (27 bid, 40 watch) from
-auction 779118, closed 9/27/26 — see "What the 2026-09-27 refresh found".
-The refresh before it, **2026-09-23**, added 98 lots (39 bid, 59 watch) from
-auction 776904, closed 9/20/26. All 98 joined to the archived
+Last refreshed **2026-10-08**, which added 85 lots (45 bid, 40 watch) from
+auction 780620, closed 10/4/26 — see "What the 2026-10-04 refresh found".
+Before that, **2026-10-02** added 67 lots from auction 779118 (9/27/26), and
+**2026-09-23** added 98 lots (39 bid, 59 watch) from auction 776904, closed
+9/20/26. All 98 joined to the archived
 `data/archive/2026-09-20/auction_776904_for_agent.json` on `lot_number` with
 a matching title prefix, and — new this time — to
 `data/hammer/2026-09-20_776904.json` for what each product actually sold for.
@@ -976,6 +977,118 @@ the new bucket is the real test — expect ~190 Funko lots on the list.
 | bids | 343 | 370 | +27 |
 | pass recall vs real bids, same-week | 89.7% (35/39) | 92.6% (25/27) | both misses Funko |
 | shortlist recall vs real bids, same-week | 89.7% (35/39) | 92.6% -> 100% | Razer + Griot's, fixed by the edits |
+
+---
+
+# What the 2026-10-04 refresh found
+
+**One auction (780620, closed 10/4/26). 85 lots, 45 bids, 7 May Have Won** —
+65 distinct titles, the most bids in any single export so far. Three
+captures (967 x 3428, 981 x 3660, 1000 x 1146) attached in chat, copied to
+`Bids Temp/`, cropped into overlapping quarters; each capture's partial edge
+row matches the next one's first row, so the three are contiguous. All 85
+rows passed the prefix check against
+`data/categorized/auction_780620_for_agent.json` (28,036 lots, no delta) on
+the first pass. No hammer file for this week yet.
+
+This is the **first week flagged with the `Funko Pop!` bucket** (added
+2026-10-02, flags written the same day).
+
+## Recall
+
+| measured against the 45 real bids | before edits | after edits |
+|---|---|---|
+| shortlist (`tools/prefilter.py`), gate on or off | 39/45 = 86.7% | **44/45 = 97.8%** |
+| **the flagging pass as shipped** (`_categorized.json`) | **42/45 = 93.3%** | — |
+
+Over all 85 tracked lots the pass gave a bucket to 79. The six it did not:
+
+| lot | product | signal | why |
+|---|---|---|---|
+| 22997 | Powermax AAA 100-count | bid | "Batteries & chargers" retired 2026-09-15 |
+| 13858, 13870 | Anderson white umbrella x10 | bid, watch | no bucket — see below |
+| 3334 | clear "wedding" umbrella | watch | no bucket |
+| 14451 | inflatable ostrich costume | watch | no bucket; one-off |
+| 21361 | EGO 56V bristle brush attachment | bid | `Lawn equipment` reads as powered tools only |
+
+**Funko: the bucket works.** 352 Funko lots this week (not the ~190 of
+9/27 — supply swings), 351 flagged. Four Funko bids (KPop Demon Hunters
+Rumi; Tangled Rapunzel & Pascal x2; Sanrio Hello Kitty & Kuromi), all
+flagged, all outbid. At ~350 lots it is now one of the larger buckets; the
+user chose "any franchise" knowing that.
+
+**Umbrellas are a one-off** (user, 2026-10-08): the 9/20 clear umbrella and
+this week's clear and white umbrellas were for an event. Logged, not seeded.
+
+**Batteries come back narrowly** (user, 2026-10-08): bulk AA/AAA alkaline
+only, as the profile pseudo-bucket "Household batteries (bulk)" — personal
+picks, not a Bat's List bucket, and not the retired bucket under another
+name. Its seeds match 31 lots this week, all AA/AAA packs.
+
+## Repeat interests the pass flagged but never called personal
+
+These were all in a bucket; `personal_match` was false on nearly every one.
+Written into `profile.yaml` so the profile sees them.
+
+| thread | history | this week |
+|---|---|---|
+| **Sunscreen** | ~11 bids across 6 auctions since 7/12, 4 won (Attitude, IT Cosmetics, Neutrogena, La Roche-Posay) | LRP Anthelios x2 + LRP Mineral SPF 50 bid, the Mineral won; 0 of 178 sunscreen lots were personal |
+| **Razer gaming mice** | DeathAdder 6/28, Naga 6/21 and 9/6 x2, Basilisk bid 9/27 | Basilisk won, Basilisk 35K / Viper V3 / DeathAdder V3 x2 watched; 21/21 flagged, 0 personal |
+| **EGO 56V** | hedge trimmer bid twice 7/20, mower and pole saw watched | power head watched x4, brush attachment bid (missed) |
+
+Steady and already personal: Stanley (6 bids, all flagged and personal),
+Owala (2 bids), Shark WandVac (9 tracked, 1 bid), Kicking Horse Cliff Hanger
+(2 bids, 1 won), KPop Demon Hunters dolls (6 tracked, 2 bids), Philips
+OneBlade (2 bids), Attitude kids' shampoo (bid again after 9/27's win).
+
+## Seed gaps the shortlist had, all flagged by the pass anyway
+
+- **`spf ` was right-anchored**, so it missed every run-together grade
+  ("SPF60") — both La Roche-Posay Anthelios bids. Now `spf`, plus
+  `la roche`, `anthelios`.
+- `splash table`, `kidoozie` (Kidoozie Sand 'n Splash table, won).
+- `pull out organizer` / `basket` / `shelf` (VEVOR corner pull-out).
+- `ego ` (whole-word — matches only the 8 EGO lots), `power head`,
+  `multi head`. The old `seed_exempt: ["EGO"]` went with it.
+
+## What was changed (2026-10-08)
+
+1. `buckets.yaml`: the seeds above; `Lawn equipment` description names EGO
+   56V tools, power head, attachments and blades as matches.
+2. `profile.yaml`: sunscreen (Personal care), Razer mice (PC & desk), EGO
+   56V (Yard & lawn), Tangled/Rapunzel and Sanrio (Kids' toys), the new
+   "Household batteries (bulk)" pseudo-bucket, and the Garage & workshop
+   batteries sentence pointing at it.
+
+No bucket added; still 73. Re-measured on the same week: shortlist reaches
+81/85 tracked (was 75), missing only the umbrellas and the costume. Backtest
+against `auction_780620_categorized.json`: no bucket regressed; Skincare
+62.1% -> 69.8%, Lawn equipment 69.1% -> 75.3%, Outdoor play 70.4% -> 84.0%;
+lot recall 84.2% -> 84.6%.
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 1,078 | 1,163 | +85 from this export |
+| bids | 370 | 415 | +45 |
+| pass recall vs real bids, same-week | 92.6% (25/27) | 93.3% (42/45) | batteries, umbrella, EGO attachment |
+| shortlist recall vs real bids, same-week | 100% after 9/27 edits | 86.7% -> 97.8% | `spf`, EGO, Kidoozie, batteries seeds |
+
+## First run with these edits (780818, flagged 2026-10-08)
+
+28,100 lots, 21,104 distinct products, 8 chunks. 6,288 lots flagged (22.4%;
+780620 had 6,929), 551 personal picks, `bats_subtype` on 100%. Recall check
+put up 651 suspects (above the usual 400-500, led by Skincare & body at 181,
+which is the unanchored `spf` seed widening the net) and the chat confirmed
+189 (29%) — Skincare itself only 13 of 181, so the wider seed is mostly
+noise in `recall_check.py` and harmless to the pass.
+
+**Multi-bucket lots fell to 46 (0.7% of flagged), from 120 (1.7%) on
+780620.** Low in every chunk (1-12 each), not one bad chat, and the pairs
+that did come back are sensible (Adhesives + Kids' craft, Hand + Power
+tools, Audio + PC peripherals). Likely cause: these chats were run on
+ChatGPT's **High** reasoning setting, not **Very High**. Deployed anyway.
+Watch this number next week — if it stays near 0.7% on Very High, the
+pass is collapsing toward one bucket per lot again.
 
 ---
 

@@ -395,7 +395,10 @@ buckets:
       Powered and large lawn/yard equipment — mowers, string trimmers,
       leaf blowers, hedge trimmers, edgers, chainsaws, pressure washers,
       and similar outdoor power equipment. Branded or generic, corded,
-      cordless, or gas.
+      cordless, or gas. EGO 56V is the platform of interest: its bare tools,
+      the Multi-Head power head and every attachment for it (bristle brush,
+      edger, pole saw, cultivator), and EGO mower blades are all matches
+      even though an attachment alone is not a "powered" tool.
     examples: ["EGO", "Greenworks", "Ryobi", "Toro", "Husqvarna", "DeWalt"]
     subtypes: ["mowers", "string trimmers", "leaf blowers", "hedge trimmers",
                "chainsaws", "pressure washers", "snow blowers"]
@@ -403,8 +406,10 @@ buckets:
             "leaf blower", "hedge trimmer", "edger", "chainsaw", "chain saw",
             "pressure washer", "power washer", "snow blower", "snowblower",
             "tiller", "cultivator", "greenworks", "husqvarna", "toro ", "ego power",
-            "ryobi", "dewalt", "stihl", "echo trimmer", "craftsman mower"]
-    seed_exempt: ["EGO"]  # covered by "ego power"; bare "ego" is too short
+            "ryobi", "dewalt", "stihl", "echo trimmer", "craftsman mower",
+            # Whole-word: bare `ego` was too short, but "ego " cannot reach
+            # LEGO or EGOIST. An EGO brush attachment was bid on 2026-10-04.
+            "ego ", "power head", "multi head"]
 
   - name: "BBQ accessories"
     group: "Outdoor & garden"
@@ -1028,7 +1033,8 @@ buckets:
             "cabinet organizer", "drawer organizer", "pop container",
             "food storage", "pantry organizer", "snack container", "vacuum sealer",
             "locknlock", "lock n lock", "glass storage", "storage set",
-            "produce keeper", "cereal container"]
+            "produce keeper", "cereal container", "pull out organizer",
+            "pull out basket", "pull out shelf"]
 
   - name: "Dinnerware"
     group: "Kitchen & dining"
@@ -1295,10 +1301,13 @@ buckets:
                "serums & toners", "hand & foot care"]
     seeds: ["lotion", "moisturizer", "moisturiser", "body wash", "body butter",
             "body scrub", "face cream", "face wash", "facial cleanser",
-            "sunscreen", "sunblock", "spf ", "micellar", "shower gel",
+            # "spf" unanchored: "spf " missed run-together grades ("SPF60"),
+            # and with it two La Roche-Posay bids on 2026-10-04.
+            "sunscreen", "sunblock", "spf", "micellar", "shower gel",
             "hand cream", "body oil", "cerave", "cetaphil", "neutrogena",
             "aveeno", "the ordinary", "nivea", "vaseline", "eucerin",
-            "banana boat", "hawaiian tropic", "coppertone", "olay"]
+            "banana boat", "hawaiian tropic", "coppertone", "olay",
+            "la roche", "anthelios"]
     exclude: ["dog ", "pet ", "car wash"]
 
   - name: "Oral & dental care"
@@ -1616,7 +1625,8 @@ buckets:
             "water toy", "sand and water", "sand & water", "pool toy",
             "pool game", "diving game", "dive toy", "pool basketball",
             "swim goggle", "speedo", "life jacket", "swim vest", "puddle jumper",
-            "step2", "little tikes", "bestway", "funboy", "water sprinkler mat"]
+            "step2", "little tikes", "bestway", "funboy", "water sprinkler mat",
+            "splash table", "kidoozie"]
     seed_exempt: ["Intex"]  # Intex is mostly pool pumps and air mattresses here
 
   - name: "Kids' craft & activity"

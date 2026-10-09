@@ -18,23 +18,22 @@ export function normalize(s: string): string {
     .toLowerCase();
 }
 
-// Fields the FUZZY pass tolerates typos on. Deliberately narrow: the full
-// description and the joined category_path are NOT fuzzy-matched (matching
-// fuzzily across long free text was the main source of loose results). Those
-// two fields are still covered by exact substring in BOTH modes.
+// Fields the FUZZY pass tolerates typos on. Keep this product-facing: HiBid
+// category names are structural filters, not product text. In particular,
+// their combined "Keyboards / Mice" category would otherwise make a search
+// for "keyboard" return every mouse in that category.
 interface FuseDoc {
   lot_number: string;
   title: string;
-  subcategory: string;
 }
 
 interface ExactDoc {
   lot_number: string;
-  // Every searchable field, normalized and space-joined — used by exact mode.
+  // Product fields, normalized and space-joined — used by exact mode.
   all: string;
-  // description + category_path only — fuzzy mode substring-matches these so a
-  // query found only in the description/categories still hits in fuzzy mode.
-  descCat: string;
+  // Description stays exact in fuzzy mode so long free text cannot create
+  // loose fuzzy matches.
+  description: string;
 }
 
 export interface SearchIndex {
@@ -54,23 +53,20 @@ export function buildSearchIndex(lots: Lot[]): SearchIndex {
 
   for (const l of lots) {
     const title = normalize(l.title);
-    const subcategory = normalize(l.subcategory);
     const lotNo = normalize(l.lot_number);
     const description = normalize(l.description);
-    const categories = normalize(l.category_path.join(' '));
 
-    fuseDocs.push({ lot_number: l.lot_number, title, subcategory });
+    fuseDocs.push({ lot_number: l.lot_number, title });
     docs.push({
       lot_number: l.lot_number,
-      all: [title, subcategory, lotNo, description, categories].join('  '),
-      descCat: [description, categories].join('  '),
+      all: [title, lotNo, description].join('  '),
+      description,
     });
   }
 
   const fuse = new Fuse(fuseDocs, {
     keys: [
-      { name: 'title', weight: 0.7 },
-      { name: 'subcategory', weight: 0.2 },
+      { name: 'title', weight: 0.9 },
       { name: 'lot_number', weight: 0.1 },
     ],
     threshold: SEARCH_THRESHOLD,
@@ -109,10 +105,12 @@ function fuseTokenAnd(fuse: Fuse<FuseDoc>, tokens: string[]): Set<string> {
 
 /**
  * EXACT (default) matching: strict substring, diacritic-normalized and
- * case-insensitive, across ALL fields (title, subcategory, lot_number,
- * description, category_path). Multi-word queries AND-match — every token must
- * appear somewhere in the lot's text. "dewalt" returns only lots that actually
- * contain "dewalt", not fuzzy-adjacent noise.
+ * case-insensitive, across product fields (title, lot_number, description).
+ * Category names are excluded because they have a dedicated structural filter
+ * and combined HiBid labels such as "Keyboards / Mice" pollute product search.
+ * Multi-word queries AND-match — every token must appear somewhere in the
+ * lot's text. "dewalt" returns only lots that actually contain "dewalt", not
+ * fuzzy-adjacent noise.
  */
 export function exactMatchLotNumbers(index: SearchIndex, query: string): Set<string> {
   const tokens = tokenize(query);
@@ -125,10 +123,9 @@ export function exactMatchLotNumbers(index: SearchIndex, query: string): Set<str
 }
 
 /**
- * FUZZY (opt-in) matching: typo-tolerant Fuse over the narrow field set
- * (title + subcategory + lot_number), UNION-ed with exact substring over
- * description + category_path. The union keeps fuzzy mode a strict superset of
- * what those two long fields would match, without fuzzing across them.
+ * FUZZY (opt-in) matching: typo-tolerant Fuse over title + lot_number,
+ * UNION-ed with exact substring over description. The union keeps fuzzy mode a
+ * strict superset of description matches without fuzzing across long text.
  */
 export function fuzzyMatchLotNumbers(index: SearchIndex, query: string): Set<string> {
   const tokens = tokenize(query);
@@ -136,7 +133,7 @@ export function fuzzyMatchLotNumbers(index: SearchIndex, query: string): Set<str
 
   const out = fuseTokenAnd(index.fuse, tokens);
   for (const d of index.docs) {
-    if (!out.has(d.lot_number) && tokens.every((t) => d.descCat.includes(t))) {
+    if (!out.has(d.lot_number) && tokens.every((t) => d.description.includes(t))) {
       out.add(d.lot_number);
     }
   }

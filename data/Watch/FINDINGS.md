@@ -1,13 +1,14 @@
 # What the bid/watch history actually says
 
-Source: 44 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-10-04**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 1,163 unique lots (415 bid, 748 watch-only).
-Outcomes: 310 Outbid, 105 May Have Won.
+Source: 46 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-10-12**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 1,216 unique lots (441 bid, 775 watch-only).
+Outcomes: 335 Outbid, 106 May Have Won.
 
-Last refreshed **2026-10-08**, which added 85 lots (45 bid, 40 watch) from
-auction 780620, closed 10/4/26 — see "What the 2026-10-04 refresh found".
-Before that, **2026-10-02** added 67 lots from auction 779118 (9/27/26), and
+Last refreshed **2026-10-16**, which added 53 lots (26 bid, 27 watch) from
+auction 780818, closed 10/12/26 — see "What the 2026-10-12 refresh found".
+Before that, **2026-10-08** added 85 lots from auction 780620 (10/4/26),
+**2026-10-02** added 67 lots from auction 779118 (9/27/26), and
 **2026-09-23** added 98 lots (39 bid, 59 watch) from auction 776904, closed
 9/20/26. All 98 joined to the archived
 `data/archive/2026-09-20/auction_776904_for_agent.json` on `lot_number` with
@@ -1092,6 +1093,93 @@ pass is collapsing toward one bucket per lot again.
 
 ---
 
+# What the 2026-10-12 refresh found
+
+**One auction (780818, "Thanksgiving Monday Madness", closed 10/12/26). 53
+lots, 26 bids, 1 May Have Won.** Two captures (981 x 3653, 1000 x 3615),
+cropped into overlapping fifths. All 53 rows passed the prefix check
+against `data/categorized/auction_780818_for_agent.json` (28,100 lots, no
+delta) on the first pass.
+
+**HiBid changed the tile layout this week.** Lot number and title now sit
+*below* the image; the outcome is a small label in the image's top-left
+corner ("Outbid" / "May Have Won"); and watch-only tiles have a **grey**
+border, not blue. Red and green still mean Outbid and May Have Won. The two
+captures are contiguous: the sliver of a row at the top of the second
+(grey / red / red / red) matches the last row of the first.
+
+This is the first week flagged with the 2026-10-08 edits (flags written
+10/8), and they show: both sunscreen bids (Attitude, Vichy) and all five
+Razer Basilisk lots came back `personal_match: true`.
+
+## Recall
+
+| measured against the 26 real bids | before edits | after edits |
+|---|---|---|
+| shortlist (`tools/prefilter.py`), gate on or off | 20/26 = 76.9% | **25/26 = 96.2%** |
+| **the flagging pass as shipped** (`_categorized.json`) | **25/26 = 96.2%** | — |
+
+The pass gave a bucket to 50 of 53 tracked lots. The three it did not:
+
+| lot | product | signal | why |
+|---|---|---|---|
+| 26857 | Nina Ricci Nina EDT 80 ml | bid | no fragrance bucket — the first fragrance engagement in the whole history; one SKU, not seeded |
+| 3934 | Curvlife cat-eye press-on nails | watch | filed under "Bed / Bath Items", title says only "CAT EYE NAILS" — seeded |
+| 8534 | Bluey sherpa hoodie, kids | watch | kids' apparel has no bucket; one watch |
+
+The shortlist was the weaker half this week — six bids missed — and every
+one was a seed gap on a lot the pass flagged anyway:
+
+- **`Espresso & specialty appliances` excluded `coffee maker`**, which
+  vetoed every Nespresso titled "VERTUO NEXT COFFEE MAKER" (8 lots this
+  week) even though `vertuo` is a seed: excludes run first. Replaced by
+  `cup coffee maker` / `programmable coffee`; dropping the bare term
+  admitted exactly those 8 Vertuo lots and nothing else.
+- Philips shavers titled "HEAD SHAVER PRO" and "I9000 PRESTIGE SHAVER" (two
+  bids). Seeded specifically — not bare `shaver`, which is lint and ice
+  shavers too.
+- `aquaphor` (two bids), `naturalizer` (one bid; 15 lots, all shoes).
+
+## Threads running since spring that were never personal
+
+All flagged, all `personal_match: false`. Written into `profile.yaml`.
+
+| thread | history | this week |
+|---|---|---|
+| **Method cleaners** | 11 lots across 7 auctions since 5/31, bids 5/31, 6/21, 9/6 | dish soap 6-pack and granite cleaner, both bid |
+| **Nespresso** | Vertuo Next watched or bid 5/31, 7/19, 7/20 | Essenza Mini bid + watch, Vertuo Next x3 watched |
+| **UGG throws & bedding** | Whitecap throw 8/9 x2 and bid 9/20, Hedi sheets bid 9/13 | Nita throw bid, Euphoria throw watched |
+| **Baby-formula skincare** | Cetaphil Baby 7/27, Aveeno lotion bid 9/6 | Aquaphor Baby x2 and Aveeno Baby balm bid, Aveeno Baby watched |
+| **Philips shavers** beyond OneBlade | OneBlade bid 8/24, 10/4 x2 | i9000 Prestige, Head Shaver Pro 9000 and two OneBlades, all bid |
+
+Steady and already personal: Razer Basilisk (3 bids, 2 watches), keyboards
+and keycaps (Attack Shark, GMMK 3 Pro HE, GMK Pulse, ROG blind box), Shark
+FlexStyle, Play-Doh mega pack (bid for the third week running).
+
+## What was changed (2026-10-16)
+
+1. `buckets.yaml`: `Espresso` exclude as above; seeds `aquaphor`
+   (Skincare), Philips shaver models (Shaving & grooming), `naturalizer`
+   (Brand shoes adult), and press-on shapes `cat eye nail`, `curvlife`,
+   `fake nail`, `false nail`, `coffin nail`, `almond nail`, `stiletto nail`
+   (Cosmetics & nail — they hit only the one Curvlife lot this week).
+2. `profile.yaml`: Method (Cleaning), Nespresso (Kitchen), UGG (Bed &
+   bath), baby-formula skincare and Philips shavers (Personal care).
+
+No bucket added; still 73. Re-measured on the same week: shortlist reaches
+52/53 tracked (was 45). Backtest against `auction_780818_categorized.json`:
+no bucket regressed; Espresso 91.6% -> 98.3%, Shaving & grooming 63.8% ->
+68.1%, Brand shoes (adult) 66.3% -> 70.9%; lot recall 81.6% -> 82.2%.
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 1,163 | 1,216 | +53 from this export |
+| bids | 415 | 441 | +26 |
+| pass recall vs real bids, same-week | 93.3% (42/45) | 96.2% (25/26) | the perfume |
+| shortlist recall vs real bids, same-week | 97.8% after 10/8 edits | 76.9% -> 96.2% | Vertuo exclude, shaver / Aquaphor / Naturalizer seeds |
+
+---
+
 # How to refresh this
 
 Everything above is a **measurement**, not an opinion, and every number is
@@ -1140,7 +1228,9 @@ transcription accurate rather than approximate:
   clipped the fourth column of tiles. Detecting the coloured tile borders
   (red = Outbid, green = May Have Won, blue = watch-only) finds the real
   extents; take the full page width on the right, because a final row with
-  fewer than four tiles otherwise reports a too-narrow bound. This took two
+  fewer than four tiles otherwise reports a too-narrow bound. Since
+  2026-10-12 watch-only tiles are bordered **grey**, not blue, and the
+  outcome is a label in the image's corner — see that week's section. This took two
   re-crop cycles to get right — all of which needs the files on disk.
 
 Roughly 29 captures covered the first three months; the 2026-09-10 export of a

@@ -905,7 +905,8 @@ buckets:
             "reebok", "skechers", "vans ", "converse", "crocs", "birkenstock",
             "hoka", "on cloud", "brooks ", "salomon", "merrell", "keen ",
             "columbia boot", "columbia shoe", "clarks", "cole haan", "sperry",
-            "steve madden", "toms ", "under armour shoe", "jordan "]
+            "steve madden", "toms ", "under armour shoe", "jordan ",
+            "naturalizer"]
     seed_exempt: ["Hunter"]  # covered by "hunter boot" / "hunter rain"; bare
     # "hunter" is hunting gear
     exclude: ["boot tray", "shoe rack", "shoe organizer", "boot brush",
@@ -1197,8 +1198,12 @@ buckets:
             "rancilio", "philips 3200", "philips 4300", "philips 5400"]
     seed_exempt: ["Breville Barista", "GE Opal"]  # "barista express/pro" and
     # "opal ice" above are how titles spell them
-    exclude: ["keurig", "drip coffee", "coffee maker", "kettle", "toaster",
-              "coffee pod", "capsule", "k-cup", "k cup", "pods "]
+    # A bare "coffee maker" exclude vetoed every Nespresso Vertuo titled
+    # "VERTUO NEXT COFFEE MAKER" (8 lots, one watched, 2026-10-12); the
+    # narrower terms still keep 12-cup drip machines out.
+    exclude: ["keurig", "drip coffee", "cup coffee maker", "programmable coffee",
+              "kettle", "toaster", "coffee pod", "capsule", "k-cup", "k cup",
+              "pods "]
 
   - name: "Kitchen utensils & gadgets"
     group: "Kitchen & dining"
@@ -1307,7 +1312,7 @@ buckets:
             "hand cream", "body oil", "cerave", "cetaphil", "neutrogena",
             "aveeno", "the ordinary", "nivea", "vaseline", "eucerin",
             "banana boat", "hawaiian tropic", "coppertone", "olay",
-            "la roche", "anthelios"]
+            "la roche", "anthelios", "aquaphor"]
     exclude: ["dog ", "pet ", "car wash"]
 
   - name: "Oral & dental care"
@@ -1357,7 +1362,11 @@ buckets:
             "razor blade", "cartridge razor", "shaving cream", "aftershave",
             "epilator", "ipl hair", "lumea", "ulike", "gillette", "schick",
             "harry's", "wahl ", "andis ", "remington shaver", "bikini trimmer",
-            "nose trimmer", "intimate groom", "intimate trimmer"]
+            "nose trimmer", "intimate groom", "intimate trimmer",
+            # Philips shavers titled without "electric shaver" — two bids
+            # 2026-10-12. Not bare "shaver": that is lint and ice shavers.
+            "head shaver", "i9000", "s9000", "prestige shaver", "philips shaver",
+            "philips norelco"]
     exclude: ["hedge trimmer", "string trimmer", "grass trimmer", "edge trimmer"]
 
   - name: "Cosmetics & nail"
@@ -1384,7 +1393,11 @@ buckets:
             "nail kit", "nail tip", "nail lamp", "manicure", "pedicure",
             "gel x", "nail art", "lipstick", "mascara", "eyeshadow",
             "concealer", "makeup brush", "makeup set", "opi ", "modelones",
-            "glamnetic", "essie ", "maybelline", "apr s "]
+            "glamnetic", "essie ", "maybelline", "apr s ",
+            # Press-ons titled by shape alone ("CURVLIFE MEDIUM SQUARE CAT EYE
+            # NAILS"), filed under Bed / Bath; watched 2026-10-12, missed.
+            "cat eye nail", "curvlife", "fake nail", "false nail",
+            "coffin nail", "almond nail", "stiletto nail"]
     # HiBid drops the è: Après renders "APR S" in every title on disk, so the
     # old "apres " seed never matched once. Bid 7/27 (won) and twice 9/20.
 

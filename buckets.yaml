@@ -425,7 +425,8 @@ buckets:
             "skewer", "griddle", "charcoal", "grill light", "rotisserie",
             "traeger", "pit boss", "weber", "char-broil", "napoleon grill",
             "grill cover", "bbq cover", "grill basket", "grill mat", "grill press",
-            "smoker tube", "bbq glove", "grill scraper", "broil king"]
+            "smoker tube", "bbq glove", "grill scraper", "broil king",
+            "bbq access door"]
     seed_exempt: ["Napoleon"]  # covered by "napoleon grill"
 
   - name: "Garden hose"
@@ -508,7 +509,7 @@ buckets:
             "hot tub", "spa test", "pool test", "test strip", "filter cartridge",
             "pool filter", "filter sand", "pool pump", "krystal clear",
             "sand filter", "skimmer", "pool vacuum", "pool vac", "pool cleaner",
-            "robotic pool", "aiper", "dolphin nautilus", "polaris pool",
+            "robotic pool", "aiper", "dolphin nautilus", "polaris pool", "spa filter",
             "wybotics", "telescopic pole", "pool brush", "pool pole", "leaf rake",
             "pool cover", "solar cover", "winter cover", "pool ladder",
             "ladder mat", "pool adapter", "pool hose", "pool maintenance",
@@ -546,7 +547,7 @@ buckets:
       Bath towels, towel sets, hand towels, washcloths, and bath sheets.
     subtypes: ["bath towels", "towel sets", "hand towels", "washcloths"]
     seeds: ["bath towel", "towel set", "hand towel", "washcloth", "wash cloth",
-            "bath sheet", "beach towel", "towel bale"]
+            "bath sheet", "beach towel", "towel bale", "face towel"]
 
   - name: "Bed linens"
     group: "Home & bedroom"
@@ -746,6 +747,9 @@ buckets:
     group: "Toys & games"
     description: >
       Board games, card games, party games, tabletop games, and puzzles.
+      Also Beyblade and battling-top sets — Beyblade X / Burst battle sets,
+      Beystadium arenas, starter packs, launchers, and the unbranded
+      "12 tops + 3 launchers" kits — a standing interest since 2026-10-24.
     subtypes: ["board games", "card games", "party games", "puzzles",
                "tabletop games"]
     seeds: ["board game", "card game", "party game", "tabletop game",
@@ -753,7 +757,10 @@ buckets:
             "scrabble", "catan", "ticket to ride", "playing card", "chess",
             "dominoes", "family game", "game", "beyblade", "pokemon", "flash card",
             "trading card", "piece puzzle", "bingo", "poker", "yahtzee", "jenga",
-            "uno ", "tarot", "domino", "checkers", "backgammon", "cribbage"]
+            "uno ", "tarot", "domino", "checkers", "backgammon", "cribbage",
+            # Beyblade knockoffs never say "beyblade" (2026-10-24).
+            "blade top", "battling top", "battling set", "12 tops",
+            "string launcher"]
     exclude: ["video game", "game controller", "gaming mouse", "gaming keyboard",
               "gaming headset", "game console", "gaming chair"]
 

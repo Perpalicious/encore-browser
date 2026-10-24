@@ -1,13 +1,14 @@
 # What the bid/watch history actually says
 
-Source: 46 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-10-12**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 1,216 unique lots (441 bid, 775 watch-only).
-Outcomes: 335 Outbid, 106 May Have Won.
+Source: 51 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-10-18**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 1,344 unique lots (481 bid, 863 watch-only).
+Outcomes: 359 Outbid, 122 May Have Won.
 
-Last refreshed **2026-10-16**, which added 53 lots (26 bid, 27 watch) from
-auction 780818, closed 10/12/26 — see "What the 2026-10-12 refresh found".
-Before that, **2026-10-08** added 85 lots from auction 780620 (10/4/26),
+Last refreshed **2026-10-24**, which added 128 lots (40 bid, 88 watch) from
+auction 780819, closed 10/18/26 — see "What the 2026-10-18 refresh found".
+Before that, **2026-10-16** added 53 lots from auction 780818 (10/12/26),
+**2026-10-08** added 85 lots from auction 780620 (10/4/26),
 **2026-10-02** added 67 lots from auction 779118 (9/27/26), and
 **2026-09-23** added 98 lots (39 bid, 59 watch) from auction 776904, closed
 9/20/26. All 98 joined to the archived
@@ -1177,6 +1178,140 @@ no bucket regressed; Espresso 91.6% -> 98.3%, Shaving & grooming 63.8% ->
 | bids | 415 | 441 | +26 |
 | pass recall vs real bids, same-week | 93.3% (42/45) | 96.2% (25/26) | the perfume |
 | shortlist recall vs real bids, same-week | 97.8% after 10/8 edits | 76.9% -> 96.2% | Vertuo exclude, shaver / Aquaphor / Naturalizer seeds |
+
+---
+
+# What the 2026-10-18 refresh found
+
+**One auction (780819, "Sunday Mega Liquidation Event", closed 10/18/26).
+128 lots, 40 bids, 16 May Have Won** — the most wins in any single export.
+Five captures (973 x 3666, 968 x 3600, 960 x 3598, 962 x 2081 at a larger
+zoom, 951 x 3662) attached in chat, copied to `Bids Temp/780819_*.png`.
+Captures 1 and 5 both open on the auction header, so 5 is a second page or
+tab and its contiguity with 4 cannot be proven; 3 -> 4 chain on a partial
+green/grey row. All 128 rows passed the prefix check against
+`data/categorized/auction_780819_for_agent.json` on the first pass (one
+transcription slip, "OXO GOOD GRIPS" for "OXO NEW GOOD GRIPS", was mine, not
+a wrong lot). No hammer file for this week yet.
+
+## Recall
+
+| measured against the 40 real bids | before edits | after edits |
+|---|---|---|
+| shortlist (`tools/prefilter.py`), gate on | 31/40 = 77.5% | **32/40 = 80.0%** |
+| shortlist, gate off | 32/40 | 32/40 |
+| **the flagging pass as shipped** (`_categorized.json`) | **32/40 = 80.0%** | — |
+
+The lowest pass recall since August, but every miss is a lot with no bucket
+by design, not a lot the pass refused:
+
+| lot(s) | product | signal | why |
+|---|---|---|---|
+| 16436, 17164, 17524 (+17374 watch) | 32-pc mini 4-in-1 retractable pens | 3 bids, 1 won | no stationery bucket; one SKU, first appearance |
+| 21125, 15104 | Duracell CR123A 3V lithium, 6- and 12-count | 2 bids, 1 won | "Batteries & chargers" retired; the bulk pseudo-bucket is AA/AAA alkaline only |
+| 7451, 11350 | Fruit of the Loom hoodie XL, Champion joggers XL | 2 bids, 1 won | no apparel bucket — see open questions |
+| 11137 | L'Oréal EverPure sulfate-free shampoo | bid | graded "Excellent": the sealed-only consumable rule, working as written. The 10/04 EverPure bid was sealed and was flagged |
+
+Unflagged watches: Hanes EcoSmart hoodies XL and 2XL, Under Armour shorts,
+men's sweatpants (apparel again), MaxFree and Eneloop rechargeable AA,
+Amazon Basics AA (the pseudo-bucket's seeds missed "AA HIGH-PERFORMANCE
+BATTERIES" — seeded), Peeps lens cleaner x2, a folding desk, a vibration
+plate.
+
+## Beyblade is now a standing interest (user, 2026-10-24)
+
+"I'll be looking for Beyblades as well, moving forward." History already
+showed it: a Beyblade X Xtreme battle set bid on 10/04, and this week three
+Xtreme sets bid (one won), a Drop Attack set and two unbranded "12X BLADE
+TOPS" kits watched. The flagging was already fine — 15 Beyblade-style lots
+this week, **15 flagged, all in `Board games`** via the existing
+`beyblade` seed — but **0 personal**, because the profile describes toys
+for a girl 8-11 and says nothing about them.
+
+Kept in `Board games` rather than a new bucket: ~15 lots a week, every one
+already lands there, and the miss was personal_match, which is a profile
+fix. A bucket of its own is a one-line change later if the viewer needs it.
+The unbranded kits never say "beyblade"; across every archived week they
+title as "BLADE TOPS", "BATTLING TOP", "BATTLING SET", "12 TOPS, 3
+LAUNCHERS" and "TOP & STRING LAUNCHER", and each seed matched only those
+kits (14 lots across all archives, zero noise — "gyro" and "burst" were
+rejected: lamps, exercise balls).
+
+## Repeat threads the pass flagged but never called personal
+
+| thread | history | this week |
+|---|---|---|
+| **Global knives** | santoku / cook's knife bid 7/12, 7/19, 8/16, santoku won 10/04 | vegetable knife won (not personal), G79 cook's watched (personal) |
+| **Electric spin scrubbers** | bids 6/21, 9/20, 9/27 (Leebein, Tuyu, generic) | YKYI 4-head won, YKYI 8-head watched x2 |
+| **Hot tub filters** | Cryspool spa filter won 7/12 | EcoOne filter cleaner won, PWW50P3 cartridge 2-pack bid |
+| **Balance beams / gymnastics** | gymnastics Barbie watched 10/12 | Marfula beam won + bid, Fincome beam bid, gymnastics Barbie watched — the profile already *names* balance beams, still 0 of 3 personal |
+
+Steady and already personal: Owala and Stanley (5 bids), Philips OneBlade
+(2 bids, 1 won), Method granite, UGG Euphoria throw, Barbie 65th
+Anniversary (2 won), Shark WandVac and Bissell PowerClean (8 watches),
+Intex pool vacs. Flagged but **not** personal despite earlier profile
+edits: Glorious GPBT keycaps (won), Philips 3000X / Series 5000 shavers,
+Razer Pro Click V2 (a productivity mouse — the profile names gaming mice,
+so arguably right). Pass variance, not a missing sentence; watch it.
+
+The 10 storage ottomans (2 won) are one SKU over-listed, already flagged
+in `Seating & occasional furniture`. Not seeded further.
+
+## Seed gaps the shortlist had, all flagged by the pass anyway
+
+`spa filter` (Pool & hot tub care — the bid), `face towel` (Bath towels),
+`bbq access door` (BBQ accessories), the battling-top seeds above (Board
+games), and `aa high performance` / `aaa high performance` (Household
+batteries pseudo-bucket).
+
+## What was changed (2026-10-24)
+
+1. `buckets.yaml`: `Board games` description names Beyblade and battling
+   tops; seeds `blade top`, `battling top`, `battling set`, `12 tops`,
+   `string launcher`. Plus `spa filter`, `face towel`, `bbq access door`.
+2. `profile.yaml`: Beyblade (Kids' toys & games), gymnastics / balance
+   beams stated as a personal match (Playroom), Global knives (Kitchen),
+   electric spin scrubbers (Cleaning), hot tub filters and filter cleaner
+   (Pool & hot tub), the two AA/AAA seeds (Household batteries).
+
+No bucket added; still 73. Re-measured on the same week: shortlist reaches
+107/128 tracked (was 101). Backtest against
+`auction_780819_categorized.json`: no bucket regressed; Pool & hot tub
+73.7% -> 77.2%, BBQ accessories 87.5% -> 89.6%, Board games 90.1% ->
+91.4%, Bath towels 85.7% -> 100%; lot recall 83.7% -> 83.8%.
+
+## Answered 2026-10-24
+
+- **Men's apparel: L or XL.** `sizes.apparel.mens` is now `["L", "XL"]`;
+  2XL is still out. There is still no apparel bucket, so this only widens
+  what can be a personal pick.
+- **CR123A: not wanted again** — stocked now. Written into the Household
+  batteries pseudo-bucket so the two bids do not read as a new thread.
+- **Pens: the 32-piece set is a one-off**, but premium pens are wanted —
+  new pseudo-bucket "Premium pens" (`buckets: []`, tag `premium_pens`),
+  brand-gated on Parker Jotter-class makers. Its seeds hit 13 lots across
+  all nineteen archived weeks (Parker Jotter / IM, Monteverde, Lamy Safari,
+  two fountain-pen sets) and nothing else; `cartridge` was tried as an
+  exclude and dropped because it hid the Lamy.
+- **Sealed-only rule stays.** Excellent-graded consumables are judged from
+  the photos by hand; putting them on the list would flood it.
+
+**Food looked bare because the auction was.** Checked when asked: this
+auction's food buckets flagged 188 lots (Supplements 85, Coffee 56,
+Beverages 24, Snacks 16, Pantry 7) against 165 on 10/12 and 359 on 10/02,
+when Snacks alone was 173. HiBid filed only 23 lots under "Food &
+Beverage"; title matching found ~372 food-ish lots, and every sealed one
+left unflagged was a false friend — 50 Pedigree dog food, Zinus "green
+tea" mattresses, toothpaste tablets, coffee makers. The opened-grade
+leftovers were Keurig machines and popcorn makers. Nothing to fix; supply
+swings week to week.
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 1,216 | 1,344 | +128 from this export |
+| bids | 441 | 481 | +40 |
+| pass recall vs real bids, same-week | 96.2% (25/26) | 80.0% (32/40) | pens, CR123A, apparel, opened shampoo — all no-bucket by design |
+| shortlist recall vs real bids, same-week | 96.2% after 10/16 edits | 77.5% -> 80.0% | `spa filter`; the rest have no bucket |
 
 ---
 

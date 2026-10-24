@@ -31,7 +31,9 @@
 sizes:
   apparel:
     womens: "M"
-    mens: "L"
+    # L or XL (user, 2026-10-24): XL hoodies and joggers drew bids on
+    # 2026-10-18 and one was won. 2XL is still out.
+    mens: ["L", "XL"]
   # Deliberately unset (2026-09-15): shoe sizes are mislabelled in these
   # listings often enough that gating on them rejects the right pairs. The
   # Footwear interest is brand-gated instead and flags every size.
@@ -144,7 +146,11 @@ interests:
       current favourite franchise across every form it comes in — Huntr/x
       dolls, Furby Furblets, Funko — and is a personal match in any of
       them. Disney Tangled / Rapunzel and Sanrio (Hello Kitty, Kuromi)
-      also drew Funko bids on 2026-10-04. The playroom build-out (climbing holds, ninja course kits,
+      also drew Funko bids on 2026-10-04. BEYBLADE is a standing interest
+      (user, 2026-10-24): Beyblade X Xtreme battle sets bid on 10/04 and
+      10/18 (one won), Drop Attack and unbranded "blade tops" kits watched —
+      any Beyblade battle set, Beystadium, starter pack or launcher, and the
+      unbranded battling-top kits, is a personal match. The playroom build-out (climbing holds, ninja course kits,
       swings, mats) is a live project — see "Playroom & active play".
     # "Dolls & plush" now covers dolls/plush/figures. These seeds catch the
     # remaining edges — craft and activity toys with no bucket of their own.
@@ -159,7 +165,11 @@ interests:
       A playroom / active-play build-out for a kid — rock climbing holds
       and wall kits, ninja-warrior obstacle and slackline kits, monkey
       bars, swings and swing hangers, trampolines, gymnastics and crash
-      mats, balance beams, Pikler triangles, play couches. A live project,
+      mats, balance beams, Pikler triangles, play couches. Gymnastics is the
+      current theme: three folding / adjustable balance-beam bids on
+      2026-10-18 (Marfula won) and a gymnastics Barbie playset watched
+      twice — none came back personal, so say it plainly: a balance beam
+      or gymnastics mat is a personal match. A live project,
       so a complete, well-made set is a personal match even from a lesser
       brand; a single flimsy accessory is not.
     seeds: ["climbing hold", "ninja line", "ninja warrior", "obstacle course",
@@ -276,7 +286,10 @@ interests:
       watched. Treat Stanley / Owala / Hydro Flask / S'well / Yeti
       tumblers, bottles and travel mugs as a personal match, not just a
       bucket entry — and Stanley lunch boxes and food jars too (an All Day
-      lunch box drew a bid on 2026-09-27). Food and drink itself now lives in its own interest below.
+      lunch box drew a bid on 2026-09-27). GLOBAL (Yoshikin) is the knife
+      brand: santoku and cook's knives bid in five auctions since July, a
+      santoku won 10/04 and a vegetable knife 10/18 — any Global knife is a
+      personal match. Food and drink itself now lives in its own interest below.
 
   - name: "Cleaning"
     buckets: ["Cleaning supplies & tools", "Handheld & cordless vacs",
@@ -289,7 +302,9 @@ interests:
       PowerClean, Dustbuster and Shark Cyclone all bid), robot vacuums are
       watched as a separate purchase, a second shop vac is actively wanted,
       and the supplies side is sponges and dish wands (always looked for),
-      spin scrubbers, brand mops and brand cleaning solutions. Paper goods
+      spin scrubbers, brand mops and brand cleaning solutions. Electric
+      spin scrubbers specifically (YKYI, Leebein, Tuyu, Hoto) drew bids in
+      five auctions since June, one won 2026-10-18 — a personal match. Paper goods
       and generic cleaning kits are NOT wanted. METHOD is the cleaning brand
       — 11 lots across 7 auctions since May and 5 bids (granite, tub & tile,
       all-purpose, dish soap): any sealed Method cleaner or soap is a
@@ -412,10 +427,32 @@ interests:
       user's say-so on 2026-10-08 as a pseudo-bucket, deliberately NOT a
       return of the retired "Batteries & chargers" bucket: chargers, power
       banks, rechargeables, coin cells and small 4-8 packs are still not
-      wanted. ~33 lots a week match the seeds.
-    seeds: ["aa batter", "aaa batter", "aa alkaline", "aaa alkaline"]
+      wanted. ~33 lots a week match the seeds. CR123A lithium cells were
+      bid twice on 2026-10-18 and are now stocked — NOT wanted again
+      (user, 2026-10-24).
+    seeds: ["aa batter", "aaa batter", "aa alkaline", "aaa alkaline",
+            "aa high performance", "aaa high performance"]
     exclude: ["rechargeable", "charger", "nimh", "eneloop", "lithium ion",
               "power bank"]
+
+  - name: "Premium pens"
+    buckets: []
+    tags: ["premium_pens"]
+    description: >
+      Genuinely nice pens only — Parker (Jotter, IM, Urban, Sonnet), Lamy,
+      Montblanc, Monteverde, Kaweco, Sheaffer, Rotring, Fisher Space Pen,
+      Cross, Pilot Metropolitan / Vanishing Point, and fountain pens from a
+      recognisable maker. Added 2026-10-24 after a 32-piece mini ballpoint
+      set drew three bids: the user called that SKU a one-off, but a Parker
+      Jotter-class pen is a personal match. Office multipacks (Pentel,
+      uni-ball, Paper Mate, Bic gel 12-packs) and novelty pen sets are NOT
+      wanted. Rare — about a dozen such lots in nineteen weeks.
+    seeds: ["parker jotter", "parker im ", "parker pen", "parker urban",
+            "parker sonnet", "parker vector", "lamy ", "fountain pen",
+            "montblanc", "monteverde", "kaweco", "sheaffer", "rotring",
+            "fisher space pen", "cross pen", "cross classic", "waterman pen",
+            "pilot vanishing", "pilot metropolitan"]
+    exclude: ["refill", "ink bottle"]
 
   - name: "Pool & hot tub"
     buckets: ["Pool & hot tub care"]
@@ -425,6 +462,10 @@ interests:
       pumps, skimmers, robotic cleaners, covers and hot tub supplies. Got
       its own refined bucket on 2026-09-15; it is deliberately kept free
       of floats, noodles and pool toys (those are kids' outdoor play).
+      Hot tub FILTERS are the repeat buy: a spa filter cartridge won
+      2026-07-12, and a filter-cartridge 2-pack bid and EcoOne filter
+      cleaner won 2026-10-18 — spa filter cartridges and filter cleaners
+      are a personal match.
 
   - name: "Practical lighting"
     buckets: []

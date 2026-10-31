@@ -640,14 +640,22 @@ buckets:
     description: >
       General-purpose storage containers and totes — plastic storage
       bins, lidded totes, stackable containers, and organizing bins NOT
-      specific to kitchen or garage/workshop.
-    examples: ["Sterilite", "Rubbermaid", "IRIS"]
+      specific to kitchen or garage/workshop. Also ROLLING and UTILITY
+      CARTS of any brand (user, 2026-10-31) — tiered rolling / utility /
+      storage carts, slim gap carts, drawer carts, kitchen and bar /
+      serving carts. A gold acrylic 3-tier cart drew a bid on 2026-10-25
+      and ten carts that week went unflagged. NOT kitchen islands, hand
+      trucks, folding wagons, grill carts or TV stands.
+    examples: ["Sterilite", "Rubbermaid", "IRIS", "Spacelead", "Vasagle"]
     subtypes: ["storage bins", "lidded totes", "stackable containers",
-               "organizing bins", "storage drawers"]
+               "organizing bins", "storage drawers", "rolling carts"]
     seeds: ["storage bin", "storage tote", "tote", "storage container",
             "stackable bin", "stacking bin", "organizing bin", "storage box",
             "storage drawer", "under bed storage", "sterilite", "iris usa",
-            "storage cube", "collapsible bin", "rubbermaid"]
+            "storage cube", "collapsible bin", "rubbermaid",
+            "utility cart", "rolling cart", "storage cart", "kitchen cart",
+            "serving cart", "bar cart"]
+    exclude: ["hand truck", "tv stand", "kamado", "grill table"]
     seed_exempt: ["IRIS"]  # iris the flower; "iris usa" is seeded instead
 
   - name: "Laundry baskets"
@@ -1218,17 +1226,21 @@ buckets:
       QUALITY or BRANDED kitchen utensils and gadgets — notable-brand
       spatulas, tongs, whisks, peelers, graters, and tool sets. Favor
       recognizable brands and complete sets. Do NOT flag generic single
-      no-brand utensils (browse those by category instead).
+      no-brand utensils (browse those by category instead). Digital
+      kitchen and food scales count as a gadget: a KitchenAid scale drew a
+      bid on 2026-10-25 while three KitchenAid scales went unflagged.
     examples: ["OXO", "KitchenAid", "Joseph Joseph", "Zwilling"]
     subtypes: ["spatulas", "tongs", "whisks", "peelers", "graters",
-               "utensil sets", "measuring tools", "cutting boards"]
+               "utensil sets", "measuring tools", "cutting boards",
+               "kitchen scales"]
     seeds: ["spatula", "tongs", "whisk", "peeler", "grater", "utensil set",
             "kitchen tool", "measuring cup", "measuring spoon", "colander",
             "strainer", "ladle", "can opener", "mandoline", "cutting board",
             "kitchen shear", "rolling pin", "baking mat", "cookie cutter",
             "pot holder", "oven mitt", "trivet", "corkscrew", "bottle opener",
             "mixing bowl", "salad spinner", "garlic press", "oxo ",
-            "joseph joseph", "zwilling", "kitchenaid", "food mill"]
+            "joseph joseph", "zwilling", "kitchenaid", "food mill",
+            "kitchen scale", "food scale"]
 
   # ------------------------------------------------------------------
   # Added 2026-08-30 from three months of bid/watch history. See

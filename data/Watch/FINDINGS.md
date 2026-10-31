@@ -1,13 +1,14 @@
 # What the bid/watch history actually says
 
-Source: 51 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
-**2026-05-31 → 2026-10-18**. Transcribed and deduplicated to
-`data/Watch/history.tsv` — 1,344 unique lots (481 bid, 863 watch-only).
-Outcomes: 359 Outbid, 122 May Have Won.
+Source: 55 screenshots of the Encore "Bids" and "Watch List" tabs, auctions
+**2026-05-31 → 2026-10-25**. Transcribed and deduplicated to
+`data/Watch/history.tsv` — 1,386 unique lots (500 bid, 886 watch-only).
+Outcomes: 374 Outbid, 126 May Have Won.
 
-Last refreshed **2026-10-24**, which added 128 lots (40 bid, 88 watch) from
-auction 780819, closed 10/18/26 — see "What the 2026-10-18 refresh found".
-Before that, **2026-10-16** added 53 lots from auction 780818 (10/12/26),
+Last refreshed **2026-10-31**, which added 42 lots (19 bid, 23 watch) from
+auction 786612, closed 10/25/26 — see "What the 2026-10-25 refresh found".
+Before that, **2026-10-24** added 128 lots from auction 780819 (10/18/26),
+**2026-10-16** added 53 lots from auction 780818 (10/12/26),
 **2026-10-08** added 85 lots from auction 780620 (10/4/26),
 **2026-10-02** added 67 lots from auction 779118 (9/27/26), and
 **2026-09-23** added 98 lots (39 bid, 59 watch) from auction 776904, closed
@@ -1312,6 +1313,111 @@ swings week to week.
 | bids | 441 | 481 | +40 |
 | pass recall vs real bids, same-week | 96.2% (25/26) | 80.0% (32/40) | pens, CR123A, apparel, opened shampoo — all no-bucket by design |
 | shortlist recall vs real bids, same-week | 96.2% after 10/16 edits | 77.5% -> 80.0% | `spa filter`; the rest have no bucket |
+
+# What the 2026-10-25 refresh found
+
+**One auction (786612, "Sunday Mega Liquidation Event", closed 10/25/26).
+42 lots, 19 bids, 4 May Have Won** — the smallest export since September.
+Four captures (~768 x 1260, three tile rows each) attached in chat. Only
+the first opens on the auction header; all four start and end on clean row
+boundaries, so contiguity cannot be proven — a dropped row would look the
+same. The week's `_for_agent.json` had already been swept, so the join
+ran against the deployed bundle (`viewer/src/data/auction_bundle.json`,
+same auction, 28,146 lots), which carries title, condition and the
+shipped flags. All 42 passed the prefix check; lot 3940 needed whitespace
+collapsing ("LOL SURPRISE!  HP TOTS   SNITCH BALL"), not a different lot.
+Sale prices from `data/hammer/2026-10-25_786612.json`.
+
+**Done on the laptop, where `history.tsv` does not exist.** The 42 rows
+were written to `data/Watch/history_786612_pending.tsv` in the five-column
+format, full titles from the bundle. Append that file to `history.tsv` on
+the desktop; the totals at the top of this file assume it has been.
+
+## Recall
+
+| measured against the 19 real bids | before edits | after edits |
+|---|---|---|
+| shortlist (`tools/prefilter.py`), gate on or off | **18/19 = 94.7%** | **19/19 = 100%** |
+| **the flagging pass as shipped** (bundle) | **15/19 = 78.9%** | — |
+
+The shortlist rebuilt from the bundle (title + `category_path` joined with
+" - " + condition), the same haystack production uses. Four bids unflagged:
+
+| lot | product | outcome, sold for | why |
+|---|---|---|---|
+| 12366 | KitchenAid digital kitchen scale, Good | outbid, $11 | shortlisted via `kitchenaid`, refused. 11 kitchen scales this week; the pass flagged a Starfrit and none of the three KitchenAid ones. Seeded and named — see below |
+| 21359 | carbon-steel stovetop griddle 24", sealed | outbid, $6 | shortlisted (BBQ accessories, Brand cookware), refused: generic, unbranded cookware is outside the gate by design. No change |
+| 20087 | gold acrylic 3-tier utility cart | outbid, $21 | no bucket. 10 rolling / utility carts this week (Udear, Spacelead, Vevor), 0 flagged. The shortlist's only miss. Now wanted — see below |
+| 13194 | Pawaboo cat desk bed | **won, $4** | no pet bucket. 22 cat beds / window perches this week, 0 flagged. Not wanted — see below |
+
+Unflagged watches: Fruit of the Loom zip hoodie **2XL** (out of size, per
+the 10/24 answer), Dickies pullover hoodie XL (in size, but no apparel
+bucket), Hot Wheels Track Creator (2 of 18 Hot Wheels lots flagged).
+
+## Beyblade: the 10/24 profile edit worked
+
+**19 Beyblade lots this week, 19 flagged, 19 personal** — the week before
+it was 15 flagged and 0 personal. Nine tracked (five bids: Cobalt Dragoon,
+Victory Grip, Beystadium, Deluxe Launcher 2-pack, Rival Rumble; all
+outbid at $9-27). The largest single thread in the export.
+
+## Threads the pass flagged but did not call personal
+
+| thread | history | this week | personal |
+|---|---|---|---|
+| **Play-Doh** | mega pack bid three weeks running to 10/12 | Meadow and Blooms Blush bouquet kits, both bid | 0 of 20 Play-Doh lots |
+| **Funko Pop!** | bid in three auctions since 9/27 | Invader Zim GIR **won** ($6) | 22 of 106; GIR not among them |
+| Que Pasa spicy queso chips | none | 2 bids (1 won), 1 watch — 3 sealed sold at $9-10 | 0 of 4; one SKU, not a thread |
+| walking pads | one watched in summer (§7) | DeerRun 3-in-1 watched x2 (sold $28 / $42.50) | 0 of 20 flagged; watch-only |
+
+Steady and already personal: Shark StainStriker HairPro Pet (three sealed
+bids, all outbid; five sealed sold at $55-75, median $57.50), KitchenAid
+tilt-head glass bowl (bid, $37.50), La Roche-Posay Anthelios tinted SPF 50
+(won), Razer BlackWidow V3 / V4 Pro and Logitech G Pro TKL keyboards
+(watched; the V4 Pro sold at $180 open box), X-Shot Pro blaster.
+
+## What was changed (2026-10-31)
+
+1. `buckets.yaml`: `Kitchen utensils & gadgets` names digital kitchen and
+   food scales and adds subtype `kitchen scales`, seeds `kitchen scale`,
+   `food scale`. Those two seeds hit exactly the 11 scales this week and
+   nothing else. The bucket keeps its brand gate, so the generic ones
+   still rest on the model's judgement.
+2. `buckets.yaml`: `Storage bins & totes` takes rolling and utility carts
+   of any brand (user's say-so, below) — subtype `rolling carts`, seeds
+   `utility cart`, `rolling cart`, `storage cart`, `kitchen cart`,
+   `serving cart`, `bar cart`, excludes `hand truck`, `tv stand`,
+   `kamado`, `grill table`. Across all 21 hammer weeks (197,292 distinct
+   titles) the seeds hit 113, and the only off-target ones were a hand
+   truck, a TV stand, a Kamado Joe grill cart and an outdoor grill-table
+   "bar cart" — hence the excludes. Kitchen islands deliberately not
+   seeded. This week the bucket's shortlist goes 132 -> 142, exactly the
+   ten carts, and loses nothing.
+3. `profile.yaml`: every Funko Pop! is a personal match, not only the
+   franchises named; Play-Doh in any form is a personal match (Kids' toys
+   & games). Storage & organization names the carts.
+
+No bucket added; still 73. Shortlist over the week 8,237 -> 8,255 lots
+(+8 scales, +10 carts); tracked reach 36/42 -> 37/42 and every bid now
+shortlisted. No `--backtest` this time — it
+needs the week's `_for_agent.json` and `_categorized.json`, and neither is
+on the laptop. `tools/tests/test_prefilter.py`, `test_chunk_flagging.py`,
+`test_render_prompts.py` and `build/tests/test_groups.py` pass, as does
+the full `tools/tests` + `build/tests` suite (280).
+
+## Answered 2026-10-31
+
+- **Rolling / utility carts: wanted.** "Could be a nice addition" — added
+  to `Storage bins & totes` as above rather than as a 74th bucket.
+- **Cat beds: not wanted** — the household already has one (the won
+  Pawaboo). No pet bucket; a future cat-bed bid is not a new thread.
+
+| | before | after | cause |
+|---|---|---|---|
+| tracked lots | 1,344 | 1,386 | +42 from this export |
+| bids | 481 | 500 | +19 |
+| pass recall vs real bids, same-week | 80.0% (32/40) | 78.9% (15/19) | KitchenAid scale (seeded), utility cart, cat bed, generic griddle |
+| shortlist recall vs real bids, same-week | 80.0% after 10/24 edits | 94.7% -> 100% | utility-cart seeds |
 
 ---
 

@@ -1,8 +1,8 @@
 # Encore Lot Browser — Project Instructions
 
-This repo scrapes weekly HiBid/Encore auctions, runs them through two
-ChatGPT passes (combined Bat's List + personal match, and resale
-valuation), builds a static bundle, and deploys it to GitHub Pages via a local
+This repo scrapes weekly HiBid/Encore auctions, runs them through a
+ChatGPT flagging pass (combined Bat's List + personal match; the resale
+valuation pass is off by default — see below), builds a static bundle, and deploys it to GitHub Pages via a local
 `gh-pages` branch push (NOT via GitHub Actions — the repo is capped on
 Actions storage, so deploys must go through `npx gh-pages`, never `git
 push` to trigger a workflow).
@@ -11,11 +11,20 @@ Machine paths: desktop (Grink) = `~/projects/encore-browser`, laptop
 (Chickalettis) = `~/code/encore-browser`. Always confirm which machine
 you're on and use the right path.
 
+**Resale is OFF by default (user decision, 2026-10-31).** Every weekly run and
+every delta is a flagging-only week unless the user explicitly asks for resale
+that week: skip `tools/slim_resale.py`, the resale chat and
+`tools/expand_resale.py`, build without `--resale`, and verify with
+`--no-resale`. Do not offer or prompt for the resale chat. The tools, prompt
+and viewer controls are all still in place, so turning it back on for a week is
+just running the "resale weeks only" lines below. The viewer's resale toggle,
+sorts and confidence filter stay visible and simply match nothing.
+
 ## When the user asks to run this week's auction
 
 Ask for the auction ID(s) if not already given. Then follow this
 sequence exactly. **Stop and wait for the user at the marked points —
-the two ChatGPT passes cannot be run by you; they require the user to
+the ChatGPT passes cannot be run by you; they require the user to
 paste the input file into a ChatGPT chat and paste the response back.**
 
 ### 0. Sync, pull last week's hammer prices, then sweep last week aside
@@ -145,7 +154,8 @@ live. Do not replace this step with a quick inline one-liner over
 in `tools/slim.py` for the full history, including how to recover the report
 image if it is ever worth OCRing.
 
-Then build the resale pass's smaller input (skip on a flagging-only week):
+**Resale weeks only (off by default — skip unless the user asked):** build the
+resale pass's smaller input:
 ```bash
 python3 tools/slim_resale.py <ID>
 ```
@@ -249,7 +259,8 @@ The pass returns **matches only** and must end with
 detector — a response that stops early loses its tail, so a missing or wrong
 sentinel is caught in step 5.
 
-If the week also needs resale, the same checklist ends with the resale chat:
+Only if the user asked for resale this week (off by default), the same
+checklist ends with the resale chat:
 paste `auction_<ID>_resale_prompt.md`, attach `auction_<ID>_for_resale.json`
 with **no** config files (`docs/PASS_SOURCES.md`: the resale pass has no
 notion of buckets), save as `auction_<ID>_resale_deduped.json`.
@@ -319,7 +330,7 @@ This reports `Merged <n_added> new items` — **`n_added` must be 0.** Anything
 else means a `lot_number` that isn't in this week's auction, which is either a
 hallucinated row or a stale file. Stop and investigate.
 
-On a week that also ran resale, fan each valuation back out:
+On a week that also ran resale (off by default), fan each valuation back out:
 ```bash
 python3 tools/expand_resale.py <ID>
 ```
@@ -329,7 +340,7 @@ product went unvalued — the signature of a truncated ChatGPT run.
 
 Now verify:
 ```bash
-python3 tools/verify_passes.py <ID>          # add --no-resale on a flagging-only week
+python3 tools/verify_passes.py <ID> --no-resale   # drop --no-resale only on a resale week
 ```
 This checks required fields, duplicate lot_numbers, and that each file's
 lot_numbers match **this week's** slimmed file. That last check is the one
@@ -366,19 +377,20 @@ proceed with a malformed, stale, or markdown-wrapped file.
 ```bash
 python -m build --raw data/raw/auction_<ID>.json \
   --categorized data/categorized/auction_<ID>_categorized.json \
-  --resale data/categorized/auction_<ID>_resale.json \
   --hammer data/hammer/ \
   --output viewer/src/data/auction_bundle.json --drop-orphans
 ```
-Drop the `--resale` line on a flagging-only week; the build treats resale as
-optional and every lot simply keeps a null valuation. `--hammer` is optional
+On a resale week (off by default), add
+`--resale data/categorized/auction_<ID>_resale.json`; without it the build
+treats resale as optional and every lot simply keeps a null valuation. `--hammer` is optional
 the same way — drop it and every lot keeps a null `hammer_key` with no sale
 history shown. Unlike resale it is a *directory*, and it is cumulative: every
 file `tools/hammer.py` has ever written is read, newest week first.
 
 Check the build's own output for:
 - `category_path` coverage ~100%
-- resale coverage ~matches total lot count (or 0 on a flagging-only week)
+- resale coverage 0 (the default flagging-only week), or ~matches total lot
+  count on a week that ran resale
 - hammer coverage in the 20-40% band when `--hammer` was passed, plus
   another 10-15% "via another condition" (41.2% + 14.0% measured 2026-09-16
   against twelve weeks). That is normal, not a failure — about a third of
@@ -410,8 +422,10 @@ print('hammer products:', len((b.get('hammer') or {}) if isinstance(b, dict) els
 print('scrapes:', b.get('scrapes') if isinstance(b, dict) else None)
 "
 ```
-Report these numbers to the user. If resale or personal_match coverage
-is 0 or unexpectedly low, STOP and investigate — do not deploy. Likely
+Report these numbers to the user. If personal_match coverage is 0 or
+unexpectedly low — or, on a week that ran resale, resale coverage is — STOP
+and investigate; do not deploy. `0 with resale` is expected on the default
+flagging-only week. Likely
 causes: a filename mismatch between what was merged/built and what's on
 disk, or a `--categorized`/`--resale` flag pointing at a stale file.
 
@@ -488,10 +502,11 @@ fully deployed (steps 1-9 done, `auction_<ID>_categorized.json` exists).
    categorized file, not in an earlier unmerged delta) and prints the exact
    commands for the delta ID `<ID>_dN`. It refuses if nothing is new or if
    the raw carries no `first_seen` (an old scraper wrote it).
-3. Run the printed commands: `slim.py`, `slim_resale.py`, `chunk_flagging.py`
+3. Run the printed commands: `slim.py`, `chunk_flagging.py`
    under `<ID>_dN`, the ChatGPT chats (STOP and hand off exactly as in step
-   4), then `expand_flags.py`, `recall_check.py plan`/`apply`,
-   `expand_resale.py`, all under `<ID>_dN`. Chunking under the delta ID is
+   4), then `expand_flags.py`, `recall_check.py plan`/`apply`, all under
+   `<ID>_dN`. Skip the printed `slim_resale.py` / `expand_resale.py` lines —
+   resale is off by default. Chunking under the delta ID is
    safe — its files are `auction_<ID>_dN_*` and never touch the parent's. The
    never-re-run rule still applies to `chunk_flagging.py <ID>`. Note the
    delta's chunking regenerates the shared `context.yaml`, and `slim.py`'s

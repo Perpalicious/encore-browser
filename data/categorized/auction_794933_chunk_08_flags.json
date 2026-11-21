@@ -1,0 +1,22 @@
+[
+{"lot_number":"628","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wiper blades","personal_match":false},
+{"lot_number":"19777","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wiper blades","personal_match":false},
+{"lot_number":"19757","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wiper blades","personal_match":false},
+{"lot_number":"20636","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wiper blades","personal_match":false},
+{"lot_number":"20759","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wash & shampoo","personal_match":false},
+{"lot_number":"22479","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"interior care","personal_match":true,"personal_tags":["car_care"],"match_strength":"moderate","match_types":["personal_use"],"personal_reasoning":"Chemical Guys detailing bundle, a brand the household buys repeatedly."},
+{"lot_number":"12471","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wax & sealant","personal_match":false},
+{"lot_number":"13412","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"wax & sealant","personal_match":true,"personal_tags":["car_care"],"match_strength":"moderate","match_types":["personal_use"],"personal_reasoning":"Unused Meguiar's polish, a detailing brand bid on repeatedly."},
+{"lot_number":"24399","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"applicators & towels","personal_match":false},
+{"lot_number":"17168","is_bats_list":true,"bats_buckets":["Car care & detailing"],"bats_subtype":"applicators & towels","personal_match":false},
+{"lot_number":"6297","is_bats_list":true,"bats_buckets":["Handheld & cordless vacs"],"bats_subtype":"car vacs","personal_match":false},
+{"lot_number":"15699","is_bats_list":true,"bats_buckets":["Power tools"],"bats_subtype":"tire inflators","personal_match":false},
+{"lot_number":"1376","is_bats_list":true,"bats_buckets":["Power tools"],"bats_subtype":"tool batteries","personal_match":false},
+{"lot_number":"18946","is_bats_list":true,"bats_buckets":["3D printing supplies"],"bats_subtype":"printer parts","personal_match":false},
+{"lot_number":"18554","is_bats_list":true,"bats_buckets":["BBQ accessories"],"bats_subtype":"grill parts","personal_match":false},
+{"lot_number":"6095","is_bats_list":true,"bats_buckets":["Tie-downs"],"bats_subtype":"tie-down kits","personal_match":false},
+{"lot_number":"10696","is_bats_list":false,"bats_buckets":[],"personal_match":true,"personal_tags":["practical_lighting"],"match_strength":"moderate","match_types":["personal_use"],"personal_reasoning":"Hella LED work light, new sealed, fits the utility lighting interest."},
+{"lot_number":"17212","is_bats_list":false,"bats_buckets":[],"personal_match":true,"personal_tags":["tesla_model_3"],"match_strength":"moderate","match_types":["personal_use"],"personal_reasoning":"NEMA 14-50 adapter plausible for Model 3 charging."},
+{"lot_number":"10461","is_bats_list":false,"bats_buckets":[],"personal_match":true,"personal_tags":["tesla_model_3"],"match_strength":"moderate","match_types":["personal_use"],"personal_reasoning":"NACS Level 1/2 charger fits a Tesla Model 3."},
+{"chunk_complete":"27662"}
+]

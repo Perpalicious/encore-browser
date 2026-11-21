@@ -1,0 +1,2260 @@
+[
+{
+"lot_number": "11631",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "17655",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "20430",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "15681",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "17607",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "24243",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "3302",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "20419",
+"is_bats_list": true,
+"bats_buckets": [
+"Smart locks"
+],
+"bats_subtype": "keypad locks",
+"personal_match": false
+},
+{
+"lot_number": "2323",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": true,
+"personal_tags": [
+"home_organization"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Gold rolling bar cart, the kind of cart the profile now wants."
+},
+{
+"lot_number": "22981",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": false
+},
+{
+"lot_number": "8900",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": true,
+"personal_tags": [
+"home_organization"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "3-tier metal rolling utility cart, Excellent condition, like the cart bid on 10/25."
+},
+{
+"lot_number": "13987",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": false
+},
+{
+"lot_number": "14698",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": true,
+"personal_tags": [
+"home_organization"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "3-tier metal rolling cart in Excellent condition, matching the cart interest."
+},
+{
+"lot_number": "13902",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": false
+},
+{
+"lot_number": "15499",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": false
+},
+{
+"lot_number": "7096",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": true,
+"personal_tags": [
+"home_organization"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Vasagle slim 4-tier rolling cart, a wanted cart type."
+},
+{
+"lot_number": "11906",
+"is_bats_list": true,
+"bats_buckets": [
+"Storage bins & totes"
+],
+"bats_subtype": "rolling carts",
+"personal_match": false
+},
+{
+"lot_number": "23444",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "laundry care",
+"personal_match": false
+},
+{
+"lot_number": "2430",
+"is_bats_list": true,
+"bats_buckets": [
+"Skincare & body"
+],
+"bats_subtype": "face care",
+"personal_match": false
+},
+{
+"lot_number": "12481",
+"is_bats_list": true,
+"bats_buckets": [
+"Car care & detailing"
+],
+"bats_subtype": "wax & sealant",
+"personal_match": false
+},
+{
+"lot_number": "24712",
+"is_bats_list": true,
+"bats_buckets": [
+"Car care & detailing"
+],
+"bats_subtype": "wax & sealant",
+"personal_match": false
+},
+{
+"lot_number": "10040",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "18793",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "6230",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "10038",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "943",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "11666",
+"is_bats_list": true,
+"bats_buckets": [
+"Oral & dental care"
+],
+"bats_subtype": "whitening",
+"personal_match": false
+},
+{
+"lot_number": "7155",
+"is_bats_list": true,
+"bats_buckets": [
+"Pool & hot tub care"
+],
+"bats_subtype": "chemicals",
+"personal_match": false
+},
+{
+"lot_number": "13879",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "docks & consumables",
+"personal_match": false
+},
+{
+"lot_number": "11609",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "docks & consumables",
+"personal_match": false
+},
+{
+"lot_number": "16042",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "24651",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "13411",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": false
+},
+{
+"lot_number": "20902",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": true,
+"personal_tags": [
+"cleaning_consumable"
+],
+"match_strength": "strong",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Method all-purpose cleaner 8-pack in New (Adjusted Quantity), the repeat cleaning brand."
+},
+{
+"lot_number": "20928",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": true,
+"personal_tags": [
+"cleaning_consumable"
+],
+"match_strength": "strong",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Method bamboo cleaner spray 8-pack in New (Adjusted Quantity), the repeat cleaning brand."
+},
+{
+"lot_number": "1899",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "cleaning solutions",
+"personal_match": true,
+"personal_tags": [
+"cleaning_consumable"
+],
+"match_strength": "strong",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Sealed Method bathroom cleaner 4-pack, the repeat cleaning brand."
+},
+{
+"lot_number": "17977",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "21004",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "23083",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "19571",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "20954",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "22823",
+"is_bats_list": true,
+"bats_buckets": [
+"Car care & detailing"
+],
+"bats_subtype": "wax & sealant",
+"personal_match": false
+},
+{
+"lot_number": "12191",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "docks & consumables",
+"personal_match": false
+},
+{
+"lot_number": "11027",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "15343",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "24849",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "11008",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "9520",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "20647",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "laundry care",
+"personal_match": false
+},
+{
+"lot_number": "2655",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "laundry care",
+"personal_match": false
+},
+{
+"lot_number": "7659",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "laundry care",
+"personal_match": false
+},
+{
+"lot_number": "4207",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "shop & wet/dry vacs",
+"personal_match": true,
+"personal_tags": [
+"second_shop_vac"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Amazon Basics wet/dry shop vac, a second shop vac is wanted; Fair grade so check function."
+},
+{
+"lot_number": "20377",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "shop & wet/dry vacs",
+"personal_match": false
+},
+{
+"lot_number": "834",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "shop & wet/dry vacs",
+"personal_match": false
+},
+{
+"lot_number": "17632",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "shop & wet/dry vacs",
+"personal_match": false
+},
+{
+"lot_number": "15889",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "3740",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "17312",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "627",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "16688",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "11691",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "7266",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "27500",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "5524",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "15408",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "12033",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "5409",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "452",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "2675",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "1335",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "14149",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "strong",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Dyson V11 cordless, in the most-bid vac category."
+},
+{
+"lot_number": "3705",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "16041",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": false
+},
+{
+"lot_number": "7954",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": false
+},
+{
+"lot_number": "2301",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": false
+},
+{
+"lot_number": "6986",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "21721",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "4274",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "13240",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "11159",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "16218",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "16952",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "23953",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "15431",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "15860",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "12313",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "27547",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "10034",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "11935",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "16912",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "19058",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "10621",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "10646",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "2696",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "577",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "375",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "23149",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "3699",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "12923",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "4469",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "17500",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "19302",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "19942",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "6886",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "10598",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "12641",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "1607",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "8953",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "2016",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "2744",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "613",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "8150",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "8849",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "3697",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "2641",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "5545",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "15446",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "2076",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "11473",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "1338",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "219",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "321",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "10145",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "239",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "14682",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "9418",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "4672",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "501",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "7930",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "14456",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "7910",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "shop & wet/dry vacs",
+"personal_match": true,
+"personal_tags": [
+"second_shop_vac"
+],
+"match_strength": "strong",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "DeWalt 20V wet/dry vac in Excellent, matching the second shop vac wanted."
+},
+{
+"lot_number": "20185",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": false
+},
+{
+"lot_number": "17587",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": false
+},
+{
+"lot_number": "14074",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": false
+},
+{
+"lot_number": "12508",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Sealed Dreame L40 Ultra robot vac and mop, robots are a watched purchase."
+},
+{
+"lot_number": "4426",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Dreame X50 Ultra robot vac and mop in Excellent, a watched purchase."
+},
+{
+"lot_number": "11771",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuums",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Sealed Ecovacs Deebot X12 robot vac, a watched purchase."
+},
+{
+"lot_number": "11129",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuums",
+"personal_match": false
+},
+{
+"lot_number": "8681",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuums",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Roomba Max 715 robot vac, Roomba drew a bid before."
+},
+{
+"lot_number": "2289",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "docks & consumables",
+"personal_match": false
+},
+{
+"lot_number": "14536",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Black+Decker Dustbuster, a repeat-bid handheld."
+},
+{
+"lot_number": "10959",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "car vacs",
+"personal_match": false
+},
+{
+"lot_number": "13721",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "car vacs",
+"personal_match": false
+},
+{
+"lot_number": "4581",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "car vacs",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Sealed Dyson Car+Boat handheld, in the most-bid vac category."
+},
+{
+"lot_number": "5453",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "car vacs",
+"personal_match": false
+},
+{
+"lot_number": "5537",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "car vacs",
+"personal_match": false
+},
+{
+"lot_number": "21145",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "filters & accessories",
+"personal_match": false
+},
+{
+"lot_number": "21143",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "hair dryers",
+"personal_match": true,
+"personal_tags": [
+"hair_care"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Dyson Supersonic in Excellent, a premium styler of the brand type bid on."
+},
+{
+"lot_number": "12587",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "426",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "2178",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "23328",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "112",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "449",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "1592",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "7624",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "upright vacuums",
+"personal_match": false
+},
+{
+"lot_number": "4534",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "canister vacuums",
+"personal_match": false
+},
+{
+"lot_number": "22633",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "13756",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "13484",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "13776",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "15702",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "filters & bags",
+"personal_match": false
+},
+{
+"lot_number": "10373",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "16510",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "2917",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "steam mops",
+"personal_match": false
+},
+{
+"lot_number": "1270",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "2642",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "14537",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "20339",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "6199",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "carpet & spot cleaners",
+"personal_match": false
+},
+{
+"lot_number": "16057",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "hard floor cleaners",
+"personal_match": false
+},
+{
+"lot_number": "203",
+"is_bats_list": true,
+"bats_buckets": [
+"Vacuums & floor care"
+],
+"bats_subtype": "shop & wet/dry vacs",
+"personal_match": true,
+"personal_tags": [
+"second_shop_vac"
+],
+"match_strength": "strong",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Vacmaster 6 gal wet/dry vac, the exact second shop vac wanted; New With Defects."
+},
+{
+"lot_number": "10539",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "19669",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "16969",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "25369",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "27704",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "12703",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "12317",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "2727",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "374",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "12008",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "16106",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "cordless stick vacs",
+"personal_match": false
+},
+{
+"lot_number": "19463",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": false
+},
+{
+"lot_number": "6172",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Shark Cyclone handheld, a repeat-bid type."
+},
+{
+"lot_number": "7563",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Shark Cyclone handheld, a repeat-bid type."
+},
+{
+"lot_number": "18924",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"proven_resale"
+],
+"match_strength": "strong",
+"match_types": [
+"proven_resale"
+],
+"personal_reasoning": "Shark WandVac is proven resale, flag every reappearance at any quantity."
+},
+{
+"lot_number": "6153",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"proven_resale"
+],
+"match_strength": "strong",
+"match_types": [
+"proven_resale"
+],
+"personal_reasoning": "Shark WandVac is proven resale, flag every reappearance at any quantity."
+},
+{
+"lot_number": "5932",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"proven_resale"
+],
+"match_strength": "moderate",
+"match_types": [
+"proven_resale"
+],
+"personal_reasoning": "Shark WandVac is proven resale, flag every reappearance; Heavily Used grade."
+},
+{
+"lot_number": "12690",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": true,
+"personal_tags": [
+"proven_resale"
+],
+"match_strength": "moderate",
+"match_types": [
+"proven_resale"
+],
+"personal_reasoning": "Shark WandVac is proven resale, flag every reappearance; Heavily Used grade."
+},
+{
+"lot_number": "10067",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "handheld vacs",
+"personal_match": false
+},
+{
+"lot_number": "8015",
+"is_bats_list": true,
+"bats_buckets": [
+"Handheld & cordless vacs"
+],
+"bats_subtype": "filters & accessories",
+"personal_match": false
+},
+{
+"lot_number": "11858",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Sealed Mova E40 Ultra robot vac and mop, robots are a watched purchase."
+},
+{
+"lot_number": "8500",
+"is_bats_list": true,
+"bats_buckets": [
+"Robot vacuums & mops"
+],
+"bats_subtype": "robot vacuum & mop",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Narwal Freo Z10 robot vac and mop, robots are a watched purchase."
+},
+{
+"lot_number": "1918",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "1397",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "16003",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "20046",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "1031",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "10555",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "14837",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "5869",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "6554",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "27634",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "9847",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "12170",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "13132",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "564",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "11572",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "6135",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "8599",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "mops & brooms",
+"personal_match": false
+},
+{
+"lot_number": "10400",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "spin scrubbers",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Rubbermaid Reveal cordless scrubber kit, matching the power-scrubber interest."
+},
+{
+"lot_number": "20464",
+"is_bats_list": true,
+"bats_buckets": [
+"Cleaning supplies & tools"
+],
+"bats_subtype": "spin scrubbers",
+"personal_match": true,
+"personal_tags": [
+"cleaning_equipment"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Unused Rubbermaid Reveal cordless scrubber kit, matching the power-scrubber interest."
+},
+{
+"lot_number": "1531",
+"is_bats_list": true,
+"bats_buckets": [
+"Pool & hot tub care"
+],
+"bats_subtype": "pool vacuums",
+"personal_match": false
+},
+{
+"lot_number": "19473",
+"is_bats_list": true,
+"bats_buckets": [
+"Pool & hot tub care"
+],
+"bats_subtype": "robotic pool cleaners",
+"personal_match": true,
+"personal_tags": [
+"pool_maintenance"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Sealed robotic pool vacuum for seasonal pool upkeep."
+},
+{
+"lot_number": "19582",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "multi-stylers",
+"personal_match": false
+},
+{
+"lot_number": "15455",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "multi-stylers",
+"personal_match": true,
+"personal_tags": [
+"hair_care"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Shark FlexStyle IonCurl in Excellent, a styler that has been bid on."
+},
+{
+"lot_number": "13274",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "multi-stylers",
+"personal_match": true,
+"personal_tags": [
+"hair_care"
+],
+"match_strength": "moderate",
+"match_types": [
+"personal_use"
+],
+"personal_reasoning": "Shark FlexStyle IonCurl in Excellent, a styler that has been bid on."
+},
+{
+"lot_number": "21073",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "straighteners",
+"personal_match": false
+},
+{
+"lot_number": "24203",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "straighteners",
+"personal_match": false
+},
+{
+"lot_number": "11130",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "hot brushes",
+"personal_match": false
+},
+{
+"lot_number": "26783",
+"is_bats_list": true,
+"bats_buckets": [
+"Hair styling tools"
+],
+"bats_subtype": "hot brushes",
+"personal_match": false
+},
+{
+"lot_number": "2163",
+"is_bats_list": true,
+"bats_buckets": [
+"Kitchen storage & organization"
+],
+"bats_subtype": "food containers",
+"personal_match": false
+},
+{
+"chunk_complete": "20741"
+}
+]

@@ -1,0 +1,450 @@
+{
+  "lot_set_sha": "da2db5bb913f3281",
+  "total_lots": 27987,
+  "candidates": 9349,
+  "bucket_sizes": {
+    "Cleaning supplies & tools": 267,
+    "Adhesives & tape": 81,
+    "Audio & headphones": 112,
+    "Dolls, plush & playsets": 432,
+    "Snacks & confectionery": 31,
+    "Vacuums & floor care": 291,
+    "Power tools": 312,
+    "Board games": 740,
+    "Kids' craft & activity": 143,
+    "Cosmetics & nail": 74,
+    "Dinnerware": 47,
+    "Insulated drinkware": 218,
+    "PC peripherals": 166,
+    "Weights, bars & racks": 149,
+    "Outdoor play, swim & blasters": 157,
+    "Hand tools": 307,
+    "Glassware & drinkware": 24,
+    "Hair care products": 45,
+    "Lego": 98,
+    "Kitchen storage & organization": 100,
+    "Funko Pop!": 68,
+    "Garden & lawncare misc": 68,
+    "Lawn treatment & pest control": 50,
+    "Networking": 211,
+    "Bikes, scooters & skates": 104,
+    "Skincare & body": 115,
+    "Car care & detailing": 34,
+    "Lawn equipment": 165,
+    "Smart locks": 97,
+    "Extension cords & power strips": 38,
+    "Storage bins & totes": 119,
+    "Oral & dental care": 389,
+    "Bed linens": 158,
+    "Gym accessories": 97,
+    "Bath towels": 28,
+    "Mixers, blenders & food prep": 271,
+    "Kitchen utensils & gadgets": 275,
+    "Pantry & cooking staples": 9,
+    "Smart home": 254,
+    "Shaving & grooming": 303,
+    "Hair styling tools": 208,
+    "Monitors & displays": 110,
+    "Brand shoes (adult)": 194,
+    "Laundry baskets": 283,
+    "Brand cookware": 129,
+    "BBQ accessories": 138,
+    "Espresso & specialty appliances": 128,
+    "Robot vacuums & mops": 44,
+    "Brand chef knives": 51,
+    "VR headsets & accessories": 3,
+    "Barbies": 37,
+    "Gardening tools": 22,
+    "Coffee & espresso": 30,
+    "Seating & occasional furniture": 92,
+    "Nets, goals & hoops": 28,
+    "Pool & hot tub care": 54,
+    "3D printing supplies": 50,
+    "Garden hose": 30,
+    "Keyboards, keycaps & switches": 63,
+    "Handheld & cordless vacs": 111,
+    "Backyard games": 21,
+    "Garage & tool organization": 50,
+    "Surprise toys": 10,
+    "Outdoor furniture & hammocks": 53,
+    "Brand shoes (kids)": 14,
+    "Bedding & pillows": 37,
+    "Supplements & protein": 5,
+    "Tie-downs": 7,
+    "Playroom & active play": 45,
+    "King bed frames": 73,
+    "Hatchimals": 1,
+    "Nightstands": 15
+  },
+  "zero_candidate_buckets": [
+    "Beverages & drink mixes"
+  ],
+  "unconfigured_buckets": [],
+  "boundaries": [
+    {
+      "bucket": "~profile only",
+      "start": 0,
+      "count": 1625
+    },
+    {
+      "bucket": "Hatchimals",
+      "start": 1625,
+      "count": 1
+    },
+    {
+      "bucket": "VR headsets & accessories",
+      "start": 1626,
+      "count": 3
+    },
+    {
+      "bucket": "Supplements & protein",
+      "start": 1629,
+      "count": 5
+    },
+    {
+      "bucket": "Tie-downs",
+      "start": 1634,
+      "count": 7
+    },
+    {
+      "bucket": "Pantry & cooking staples",
+      "start": 1641,
+      "count": 9
+    },
+    {
+      "bucket": "Surprise toys",
+      "start": 1650,
+      "count": 10
+    },
+    {
+      "bucket": "Brand shoes (kids)",
+      "start": 1660,
+      "count": 14
+    },
+    {
+      "bucket": "Nightstands",
+      "start": 1674,
+      "count": 15
+    },
+    {
+      "bucket": "Backyard games",
+      "start": 1689,
+      "count": 21
+    },
+    {
+      "bucket": "Gardening tools",
+      "start": 1710,
+      "count": 22
+    },
+    {
+      "bucket": "Glassware & drinkware",
+      "start": 1732,
+      "count": 24
+    },
+    {
+      "bucket": "Bath towels",
+      "start": 1756,
+      "count": 28
+    },
+    {
+      "bucket": "Nets, goals & hoops",
+      "start": 1784,
+      "count": 20
+    },
+    {
+      "bucket": "Coffee & espresso",
+      "start": 1804,
+      "count": 30
+    },
+    {
+      "bucket": "Garden hose",
+      "start": 1834,
+      "count": 30
+    },
+    {
+      "bucket": "Snacks & confectionery",
+      "start": 1864,
+      "count": 31
+    },
+    {
+      "bucket": "Car care & detailing",
+      "start": 1895,
+      "count": 34
+    },
+    {
+      "bucket": "Barbies",
+      "start": 1929,
+      "count": 37
+    },
+    {
+      "bucket": "Bedding & pillows",
+      "start": 1966,
+      "count": 36
+    },
+    {
+      "bucket": "Extension cords & power strips",
+      "start": 2002,
+      "count": 38
+    },
+    {
+      "bucket": "Robot vacuums & mops",
+      "start": 2040,
+      "count": 44
+    },
+    {
+      "bucket": "Hair care products",
+      "start": 2084,
+      "count": 44
+    },
+    {
+      "bucket": "Playroom & active play",
+      "start": 2128,
+      "count": 43
+    },
+    {
+      "bucket": "Dinnerware",
+      "start": 2171,
+      "count": 47
+    },
+    {
+      "bucket": "3D printing supplies",
+      "start": 2218,
+      "count": 48
+    },
+    {
+      "bucket": "Garage & tool organization",
+      "start": 2266,
+      "count": 50
+    },
+    {
+      "bucket": "Lawn treatment & pest control",
+      "start": 2316,
+      "count": 50
+    },
+    {
+      "bucket": "Brand chef knives",
+      "start": 2366,
+      "count": 51
+    },
+    {
+      "bucket": "Outdoor furniture & hammocks",
+      "start": 2417,
+      "count": 53
+    },
+    {
+      "bucket": "Pool & hot tub care",
+      "start": 2470,
+      "count": 53
+    },
+    {
+      "bucket": "Keyboards, keycaps & switches",
+      "start": 2523,
+      "count": 58
+    },
+    {
+      "bucket": "Funko Pop!",
+      "start": 2581,
+      "count": 68
+    },
+    {
+      "bucket": "Garden & lawncare misc",
+      "start": 2649,
+      "count": 48
+    },
+    {
+      "bucket": "King bed frames",
+      "start": 2697,
+      "count": 73
+    },
+    {
+      "bucket": "Cosmetics & nail",
+      "start": 2770,
+      "count": 73
+    },
+    {
+      "bucket": "Adhesives & tape",
+      "start": 2843,
+      "count": 81
+    },
+    {
+      "bucket": "Seating & occasional furniture",
+      "start": 2924,
+      "count": 89
+    },
+    {
+      "bucket": "Gym accessories",
+      "start": 3013,
+      "count": 97
+    },
+    {
+      "bucket": "Smart locks",
+      "start": 3110,
+      "count": 97
+    },
+    {
+      "bucket": "Lego",
+      "start": 3207,
+      "count": 98
+    },
+    {
+      "bucket": "Kitchen storage & organization",
+      "start": 3305,
+      "count": 100
+    },
+    {
+      "bucket": "Bikes, scooters & skates",
+      "start": 3405,
+      "count": 99
+    },
+    {
+      "bucket": "Monitors & displays",
+      "start": 3504,
+      "count": 110
+    },
+    {
+      "bucket": "Handheld & cordless vacs",
+      "start": 3614,
+      "count": 106
+    },
+    {
+      "bucket": "Audio & headphones",
+      "start": 3720,
+      "count": 112
+    },
+    {
+      "bucket": "Skincare & body",
+      "start": 3832,
+      "count": 113
+    },
+    {
+      "bucket": "Storage bins & totes",
+      "start": 3945,
+      "count": 95
+    },
+    {
+      "bucket": "Espresso & specialty appliances",
+      "start": 4040,
+      "count": 127
+    },
+    {
+      "bucket": "Brand cookware",
+      "start": 4167,
+      "count": 121
+    },
+    {
+      "bucket": "BBQ accessories",
+      "start": 4288,
+      "count": 117
+    },
+    {
+      "bucket": "Kids' craft & activity",
+      "start": 4405,
+      "count": 137
+    },
+    {
+      "bucket": "Weights, bars & racks",
+      "start": 4542,
+      "count": 130
+    },
+    {
+      "bucket": "Outdoor play, swim & blasters",
+      "start": 4672,
+      "count": 145
+    },
+    {
+      "bucket": "Bed linens",
+      "start": 4817,
+      "count": 149
+    },
+    {
+      "bucket": "Lawn equipment",
+      "start": 4966,
+      "count": 156
+    },
+    {
+      "bucket": "PC peripherals",
+      "start": 5122,
+      "count": 152
+    },
+    {
+      "bucket": "Brand shoes (adult)",
+      "start": 5274,
+      "count": 180
+    },
+    {
+      "bucket": "Hair styling tools",
+      "start": 5454,
+      "count": 207
+    },
+    {
+      "bucket": "Networking",
+      "start": 5661,
+      "count": 201
+    },
+    {
+      "bucket": "Insulated drinkware",
+      "start": 5862,
+      "count": 192
+    },
+    {
+      "bucket": "Smart home",
+      "start": 6054,
+      "count": 247
+    },
+    {
+      "bucket": "Cleaning supplies & tools",
+      "start": 6301,
+      "count": 246
+    },
+    {
+      "bucket": "Mixers, blenders & food prep",
+      "start": 6547,
+      "count": 265
+    },
+    {
+      "bucket": "Kitchen utensils & gadgets",
+      "start": 6812,
+      "count": 147
+    },
+    {
+      "bucket": "Laundry baskets",
+      "start": 6959,
+      "count": 283
+    },
+    {
+      "bucket": "Vacuums & floor care",
+      "start": 7242,
+      "count": 197
+    },
+    {
+      "bucket": "Shaving & grooming",
+      "start": 7439,
+      "count": 303
+    },
+    {
+      "bucket": "Hand tools",
+      "start": 7742,
+      "count": 265
+    },
+    {
+      "bucket": "Power tools",
+      "start": 8007,
+      "count": 177
+    },
+    {
+      "bucket": "Oral & dental care",
+      "start": 8184,
+      "count": 295
+    },
+    {
+      "bucket": "Dolls, plush & playsets",
+      "start": 8479,
+      "count": 375
+    },
+    {
+      "bucket": "Board games",
+      "start": 8854,
+      "count": 495
+    }
+  ]
+}

@@ -1,0 +1,2288 @@
+# ===== buckets.yaml ================================================
+
+# Bat's List — curated item types to flag at auction.
+# The Agent matches SEMANTICALLY against these descriptions.
+# `examples` are illustrative hints, NOT an exhaustive whitelist —
+# generic/off-brand items still match if they fit the description
+# UNLESS the description sets a brand or quality bar, in which case
+# that bar is the whole point of the bucket.
+#
+# SCOPE POLICY (2026-09-15, user decision — do not reverse without the user's
+# explicit permission in the conversation where the edit is made):
+#
+#   Bat's List is a TARGETED list, not a scan of the auction. Before this
+#   date 40% of every auction was flagged (11,160 of 28,034 lots on
+#   2026-09-13) while the bid/watch history showed the household engaging
+#   with ~1 in 80 of them. The main viewer already does the "large search";
+#   this list exists to be short enough to actually read.
+#
+#   - Do NOT widen a bucket description back out. Phrases like "Branded or
+#     generic", "flag every working X", or "favor" softened into "also
+#     include" are exactly what was removed. A low flag rate is NOT a reason
+#     to widen a bucket; if something wanted is being missed, add the specific
+#     product or brand, not the whole type.
+#   - Do NOT re-add a retired bucket or its scope under another name.
+#     Retired 2026-09-15 (zero or near-zero engagement across four months of
+#     history): "Electronics" (catch-all; replaced by "Monitors & displays"
+#     and "Networking"), "Batteries & chargers", "Tarps",
+#     "Sports & recreation gear" (replaced by "Backyard games",
+#     "Nets, goals & hoops", "Bikes, scooters & skates").
+#   - SCAN buckets — kept broad on purpose even though they rarely convert —
+#     are exactly these and no others: the Food & drink group,
+#     "Board games", "Kitchen utensils & gadgets", "Coffee & espresso",
+#     "Extension cords & power strips".
+#   - Every bucket that names brands is a brand gate: a no-name item of the
+#     same type is NOT a match. Spell brands the way titles do
+#     ("PHILIPS ONEBLADE", "PHILIPS ONE", "DR. MARTENS") so the gate
+#     captures rather than excludes.
+#
+# `group` assigns each bucket to a top-level group for two-level
+# Bat's List navigation in the viewer. The Agent IGNORES `group`
+# (it only matters to the build script / viewer).
+#
+# Four fields drive tools/prefilter.py and are NOT shown to the Agent:
+#
+#   seeds:      lexical shortlist terms. Lowercased, anchored at a word
+#               boundary on the LEFT only — `tote` matches "TOTES" and `key`
+#               matches "KEYBOARD" but not "MONKEY". Include both type words
+#               and brand names, since many titles are a bare brand.
+#   categories: HiBid breadcrumb PREFIXES, matched on whole " - " segments.
+#               This is the only axis that reaches a bare-SKU lot whose title
+#               carries no usable keyword at all.
+#   exclude:    veto terms. A lot matching one is never shortlisted for this
+#               bucket, at zero model cost.
+#   aliases:    former names of this bucket, so --backtest can score a
+#               previous week's labels after a rename.
+#   condition_in: allowlist over the structured `condition` field. Use ONLY on
+#               sealed consumables, where anything below a "new" grade means the
+#               pack was opened and the lot is an automatic pass (see
+#               profile.yaml `not_wanted`). This is a fact from the scrape, not
+#               the quality judgement forbidden below — never use it to encode
+#               "good brand". A lot with no condition recorded is never gated
+#               out. Values are HiBid's own gradings, verbatim, and must match
+#               CONDITION_LABELS in scraper/condition.py exactly — a value that
+#               is not in that list matches nothing and silently empties the
+#               bucket.
+#               OUTER-BOX RULE (2026-09-23): Cosmetics & nail and Snacks &
+#               confectionery also admit "Brand New - Open Box" and
+#               "Excellent"; Skincare & body admits Open Box only, because
+#               "Excellent" is that category's commonest grade and took its
+#               shortlist from 155 to 532. Graders use those two grades
+#               inconsistently, and the bids showed they usually mean an opened
+#               outer box around sealed units (a twin-pack sleeve, a 42-bag
+#               carton, a box of nail tips). Bat checks the photos before
+#               bidding. "Good" and below stays out everywhere, and the other
+#               gated buckets keep the sealed-only list: widening all of them
+#               to Good would flood the list. See data/Watch/FINDINGS.md,
+#               2026-09-20 refresh.
+#
+# THE PREFILTER MUST NEVER ENCODE A QUALITY GATE. Several buckets below say
+# "QUALITY or BRANDED ... do NOT flag generic". That judgement belongs to the
+# Agent, reading `description`. Seed those buckets with plain TYPE words so
+# the shortlist stays wide; encoding the gate as a keyword rule would turn
+# curation into string matching and destroy it.
+#
+# `subtypes` IS shown to the Agent — it is the advisory vocabulary for
+# `bats_subtype`, the drill-down's third level. Reusing wording is the whole
+# point; forty near-synonyms are useless as navigation.
+
+buckets:
+  - name: "Smart home"
+    group: "Electronics & gaming"
+    description: >
+      Smart lighting and home-automation devices — smart bulbs, LED light
+      strips, smart switches and plugs, smart thermostats, smart hubs,
+      sensors, video doorbells, and anything app- or voice-controlled for
+      the home. Branded or off-brand both qualify.
+    examples: ["Hue", "Lifx", "Govee", "Lepro", "Ecobee", "Nest", "Wyze", "Kasa", "Sengled"]
+    subtypes: ["smart bulbs", "light strips", "smart plugs", "thermostats",
+               "sensors", "video doorbells", "smart hubs"]
+    seeds: ["smart bulb", "smart light", "light strip", "led strip", "smart plug",
+            "smart switch", "smart outlet", "thermostat", "smart hub", "video doorbell",
+            "doorbell camera", "motion sensor", "smart sensor", "alexa", "google home",
+            "smart speaker", "hue", "lifx", "govee", "lepro", "ecobee", "wyze",
+            "kasa", "sengled", "smart home", "ring sensor", "ring alarm",
+            "ring camera", "blink camera", "arlo", "security camera",
+            "smart doorbell", "echo dot", "echo show", "smart display"]
+    seed_exempt: ["Nest"]  # nesting bowls, nesting tables
+
+  - name: "Smart locks"
+    group: "Electronics & gaming"
+    description: >
+      Smart and keyless locks of every kind — not just doors. Smart door
+      locks and deadbolts, keypad/keyless entry locks, fingerprint and app-
+      or Bluetooth-controlled locks, smart gate locks, smart padlocks, and
+      outdoor/garage smart locks. Any keyless-entry hardware counts.
+      Branded or generic.
+    examples: ["August", "Schlage Encode", "Yale Assure", "Level", "Wyze Lock", "Master Lock smart", "eufy"]
+    subtypes: ["door locks", "deadbolts", "keypad locks", "padlocks", "lock boxes"]
+    seeds: ["smart lock", "keyless lock", "keyless entry", "keypad lock",
+            "fingerprint lock", "deadbolt", "smart deadbolt", "smart padlock",
+            "schlage", "yale assure", "august lock", "eufy lock", "lockbox",
+            "lock box"]
+    seed_exempt: ["August", "Level", "Wyze Lock", "Master Lock smart", "eufy"]
+
+  - name: "Monitors & displays"
+    group: "Electronics & gaming"
+    description: >
+      Computer monitors and displays for a desk setup — gaming monitors,
+      ultrawides, 4K/high-refresh panels, portable USB-C monitors, and
+      monitor arms/mounts sold on their own. Recognizable brands (LG,
+      Samsung, Dell, ASUS, Acer, BenQ, MSI, Gigabyte, AOC). Not TVs, not
+      projectors, not baby or blood-pressure monitors. Replaced the
+      "Electronics" catch-all on 2026-09-15 — of 28 tracked lots in that
+      bucket across four months, every one was a keyboard, mouse or tablet
+      already held by another bucket.
+    examples: ["LG UltraGear", "Samsung Odyssey", "Dell", "ASUS ROG", "BenQ"]
+    subtypes: ["gaming monitors", "ultrawides", "office monitors",
+               "portable monitors", "monitor arms"]
+    seeds: ["monitor", "ultrawide", "ultragear", "odyssey g", "portable display",
+            "monitor arm", "monitor mount", "144hz", "165hz", "240hz"]
+    categories: ["Computers & Electronics - Computers - Monitors"]
+    seed_exempt: ["Samsung Odyssey", "Dell", "ASUS ROG", "BenQ"]  # brand words
+    # span laptops, phones and TVs; "monitor" + the Monitors breadcrumb carry them
+    exclude: ["blood pressure monitor", "baby monitor", "bp monitor",
+              "monitor stand riser", "heart rate monitor", "glucose monitor",
+              "air quality monitor", "monitor light"]
+
+  - name: "Networking"
+    group: "Electronics & gaming"
+    description: >
+      Home networking — Wi-Fi routers, mesh systems, range extenders,
+      modems, network switches, and Wi-Fi/ethernet adapters and cards.
+      Recognizable brands (TP-Link, ASUS, Netgear, eero, Google, Ubiquiti).
+      Not cables, not phone accessories.
+    examples: ["TP-Link Deco", "ASUS", "Netgear Orbi", "eero", "Ubiquiti"]
+    subtypes: ["routers", "mesh systems", "range extenders", "switches",
+               "wifi adapters", "modems"]
+    seeds: ["router", "mesh wifi", "wifi 6", "wifi 7", "wi-fi 6", "range extender",
+            "wifi extender", "modem", "network switch", "ethernet switch",
+            "wifi adapter", "tp-link deco", "tp link deco", "deco m", "deco x",
+            "deco be", "netgear orbi", "orbi rbk", "orbi mesh", "eero", "archer ",
+            "nighthawk", "ubiquiti", "ubiquiti unifi", "unifi dream", "unifi u6",
+            "unifi u7", "powerline adapter", "poe switch"]
+    categories: ["Computers & Electronics - Computers - Networking"]
+    seed_exempt: ["ASUS"]  # sells far more laptops and monitors than routers
+    exclude: ["ethernet cable", "cat6 cable", "cat 6 cable", "patch cable",
+              "router bit", "router table", "wood router", "plunge router",
+              "trim router", "router mount", "sprinkler"]
+
+  - name: "Keyboards, keycaps & switches"
+    group: "Electronics & gaming"
+    aliases: ["Keyboards & PC peripherals", "Mechanical keyboards"]
+    description: >
+      Keyboards and the hobby around them — mechanical, gaming and
+      wireless keyboards in every layout (full, TKL, 75%, 65%, 60%,
+      Alice/ergo), plus keycap sets, key switches, barebones kits, and
+      keyboard-specific accessories (cases, plates, coiled cables, wrist
+      rests). A product line or model name identifies a keyboard as surely
+      as the word does — "MX KEYS FOR MAC", "G915 X", "APEX PRO", "Q1 MAX",
+      "ALTO KEYS" are all keyboards. Enthusiast/mechanical boards rank
+      first; membrane and office boards from a real brand still count.
+      Mice and everything else input-related go under "PC peripherals".
+      Split from "Keyboards & PC peripherals" on 2026-09-15: ~90% of the
+      history in that bucket was keyboards, and mice were two thirds of
+      its lots.
+    examples: ["Keychron", "Logitech G915 / MX Keys / Alto Keys", "Razer",
+               "SteelSeries Apex", "GMMK / Glorious", "Akko", "Ducky",
+               "Corsair", "HyperX", "Yunzii", "Ajazz", "RK Royal Kludge",
+               "Wooting", "NuPhy"]
+    subtypes: ["mechanical keyboards", "gaming keyboards", "wireless keyboards",
+               "membrane keyboards", "keycaps", "key switches",
+               "barebones kits", "keyboard accessories"]
+    seeds: ["keyboard", "keycap", "key switch", "keyswitch", "tkl", "tenkeyless",
+            "mechanical key", "hot swap", "hot-swap", "barebone", "wrist rest",
+            "keychron", "ducky", "gmmk", "glorious", "akko", "yunzii", "ajazz",
+            "royal kludge", "nuphy", "wooting", "apex pro", "apex 3", "apex 5",
+            "apex 7", "apex 9", "g915", "g515", "g715", "g pro x", "pro x 60",
+            "mx keys", "mx mechanical", "alto keys", "k70", "k65", "k100",
+            "huntsman", "blackwidow", "deathstalker", "alloy origins",
+            "alloy rise", "q1 max", "q1 pro", "k2 pro", "k8 pro", "v1 max",
+            "linear switch", "tactile switch", "clicky switch", "num pad",
+            "numpad", "macro pad", "coiled cable"]
+    categories: ["Computers & Electronics - Computers - Peripherals - Keyboards / Mice"]
+    exclude: ["ignition key switch", "ignition switch", "piano", "midi",
+              "keyboard tray", "keyboard stand", "keyboard piano",
+              "rgb fan", "pwm fan", "case fan", "fan controller", "icue rx",
+              "icue commander", "argb 120", "clutch module", "pedal",
+              "driving force shifter", "shifter for", "racing wheel",
+              "mouse", "mousepad", "mouse pad"]
+    seed_exempt: ["Razer", "SteelSeries Apex", "Corsair", "HyperX"]  # bare brand
+    # words pull mice, headsets and case fans; model names above carry the boards
+
+  - name: "PC peripherals"
+    group: "Electronics & gaming"
+    description: >
+      Desk-side PC hardware other than keyboards — gaming and productivity
+      mice (Logitech G / MX, Razer, Pulsar, Glorious, SteelSeries),
+      mousepads and desk mats, webcams, graphics tablets (Wacom, Huion,
+      XP-Pen), docking stations and USB-C hubs, capture cards, and
+      controllers/wheels for PC. Recognizable brands; no-name mice and
+      generic hubs are not a match. Keyboards go under "Keyboards, keycaps
+      & switches"; headsets under "Audio & headphones"; monitors under
+      "Monitors & displays".
+    examples: ["Logitech G / MX Master", "Razer", "Pulsar", "Wacom", "Elgato",
+               "CalDigit", "Anker dock"]
+    subtypes: ["gaming mice", "productivity mice", "mousepads & desk mats",
+               "webcams", "graphics tablets", "docks & hubs",
+               "capture cards", "controllers & wheels"]
+    seeds: ["gaming mouse", "wireless mouse", "mx master", "mx anywhere",
+            "mx vertical", "lift vertical", "g502", "g305", "g309", "g703",
+            "g pro wireless", "superlight", "naga", "basilisk", "viper",
+            "deathadder", "pulsar x", "model o", "model d", "trackball",
+            "mouse pad", "mousepad", "desk mat", "webcam", "brio ", "c920",
+            "c922", "wacom", "intuos", "huion", "xp pen", "xp-pen",
+            "docking station", "usb c hub", "usb-c hub", "thunderbolt dock",
+            "capture card", "elgato", "stream deck", "caldigit",
+            "driving force", "racing wheel", "flight stick", "hotas"]
+    categories: ["Computers & Electronics - Computers - Peripherals - Keyboards / Mice"]
+    seed_exempt: ["Razer", "Pulsar", "Anker dock"]  # model names above carry them
+    # "keyboard " is right-anchored: the haystack includes the category, and
+    # a bare `keyboard` matched "Keyboards / Mice" and vetoed 160 of the 170
+    # lots this bucket shortlists (found 2026-10-02, a Razer Basilisk bid).
+    exclude: ["mouse trap", "mouse pad heating", "keyboard ", "rgb fan",
+              "pwm fan", "case fan", "fan controller", "phone case",
+              "usb cable", "usb c to"]
+
+  - name: "VR headsets & accessories"
+    group: "Electronics & gaming"
+    aliases: ["Video games & VR"]
+    description: >
+      Virtual reality only — VR headsets (Meta Quest, PSVR2, Valve Index,
+      HTC Vive, Pico), VR controllers, head straps, facial interfaces, link
+      cables, prescription lens inserts, charging docks, and VR-specific
+      accessories. Narrowed from "Video games & VR" on 2026-09-15:
+      consoles, controllers and games are NOT wanted (2 watches, 0 bids in
+      four months) — only VR-related gear. A Nintendo Switch, PS5 or Xbox
+      is not a match.
+    examples: ["Meta Quest 3", "PSVR2", "Valve Index", "HTC Vive", "Pico 4",
+               "BoboVR", "Kiwi Design"]
+    subtypes: ["vr headsets", "vr controllers", "head straps & batteries",
+               "lens inserts", "vr accessories"]
+    seeds: ["vr headset", "meta quest", "oculus", "quest 2", "quest 3", "psvr",
+            "valve index", "htc vive", "pico 4", "bobovr", "kiwi design",
+            "vr cover", "link cable", "virtual reality", "vr controller",
+            "vr strap", "head strap", "vr lens"]
+    exclude: ["vr45", "vr46"]
+
+  - name: "Power tools"
+    group: "Tools & garage"
+    description: >
+      Power tools and accessories — drills, drivers, saws, sanders,
+      grinders, impact drivers, rotary/multi-tools, and tool
+      batteries/chargers. Branded or generic, corded or cordless.
+    examples: ["DeWalt", "Milwaukee", "Makita", "Bosch", "Ryobi", "Ridgid", "Metabo"]
+    subtypes: ["drills", "impact drivers", "circular saws", "reciprocating saws",
+               "sanders", "grinders", "rotary tools", "nailers", "tool batteries"]
+    seeds: ["drill", "impact driver", "circular saw", "reciprocating saw", "jigsaw",
+            "miter saw", "table saw", "sander", "angle grinder", "rotary tool",
+            "multi-tool", "multi tool", "nail gun", "nailer", "heat gun", "power tool",
+            "oscillating tool", "dremel", "dewalt", "milwaukee", "makita", "bosch",
+            "ryobi", "ridgid", "metabo", "craftsman", "porter cable", "drill bit",
+            "driver bit", "saw blade", "socket set", "wrench set", "screwdriver",
+            "air compressor", "stud finder", "laser level", "caulking gun",
+            "glue gun", "soldering", "rotary hammer", "planer", "router bit",
+            "spray gun", "paint sprayer", "wood router", "router table"]
+
+  - name: "Hand tools"
+    group: "Tools & garage"
+    description: >
+      Non-powered hand tools and workshop hardware — chisels, wrenches and
+      socket sets, pliers, hammers, screwdrivers, clamps and vises, levels,
+      tape measures, utility knives, and hand saws. Also fasteners and
+      consumable hardware bought in bulk: bolts, nuts, screws, washers,
+      anchors, cable ties. Real tool brands or clearly workshop-grade;
+      NOT generic all-in-one "379-pc home tool kit" boxes, "gift for men"
+      socket gadgets, or a single bulk-listed part (the 76 lots of one
+      speed handle on 2026-09-13). Clamps are a repeat interest (Bessey,
+      Irwin). (Anything powered goes under "Power tools"; storage for
+      tools goes under "Garage & tool organization".)
+    examples: ["Irwin", "Bessey", "Stanley", "Knipex", "Channellock", "Estwing",
+               "Bahco", "Milwaukee hand tools", "DeWalt mechanics sets", "Wera"]
+    subtypes: ["chisels", "wrenches & sockets", "pliers", "hammers",
+               "screwdrivers", "clamps & vises", "measuring tools",
+               "hand saws", "fasteners", "brand tool sets"]
+    seeds: ["chisel", "hand tool", "wrench", "socket set", "ratchet set",
+            "pliers", "hammer", "screwdriver", "utility knife", "clamp",
+            "vise", "level ", "tape measure", "hand saw", "hacksaw",
+            "allen key", "hex key", "torque", "bolt", "nut and bolt", "screw",
+            "fastener", "washer set", "wall anchor", "cable tie", "zip tie",
+            "hardware kit", "tool set", "irwin", "knipex", "channellock",
+            "estwing", "stanley tool", "bessey", "wera ", "mechanics tool",
+            "bar clamp", "stud finder", "bolt cutter"]
+    exclude: ["power tool", "cordless drill", "impact driver", "speed handle",
+              "gift for men", "kids tool", "toy tool", "drill toy",
+              "arm & hammer", "arm and hammer", "hammermill", "clamp-on",
+              "clamp on", "clamp lid"]
+    seed_exempt: ["Stanley", "Bahco", "DeWalt mechanics sets"]  # Stanley is also a
+    # drinkware brand here; "mechanics tool" above covers the DeWalt sets
+
+  - name: "Tie-downs"
+    group: "Tools & garage"
+    description: >
+      Ratchet straps, tie-down straps, bungee cords, cargo straps, and
+      securing/hauling straps.
+    subtypes: ["ratchet straps", "bungee cords", "cargo straps", "tow straps"]
+    seeds: ["ratchet strap", "tie down", "tie-down", "bungee", "cargo strap",
+            "tow strap", "cam buckle", "cargo net", "recovery strap",
+            "lashing strap"]
+
+  - name: "Garage & tool organization"
+    group: "Tools & garage"
+    description: >
+      Garage, workshop, and tool organization — tool chests and cabinets,
+      pegboards and hooks, tool racks and holders, wall-mount systems,
+      workshop shelving, and tool storage solutions. (Workshop/tool
+      focused; general bins go under "Storage bins & totes", food
+      containers under "Kitchen storage & organization".)
+    examples: ["Husky", "Gladiator", "Craftsman", "Wera"]
+    subtypes: ["tool chests", "tool bags", "pegboards", "wall racks",
+               "workshop shelving", "tool organizers"]
+    seeds: ["tool chest", "tool cabinet", "tool box", "toolbox", "tool bag",
+            "pegboard", "peg board", "tool rack", "tool organizer", "tool holder",
+            "wall mount rack", "workbench", "work bench", "garage shelf",
+            "garage shelving", "utility shelving", "gladiator", "husky ", "wera",
+            "garage shelv"]
+    seed_exempt: ["Craftsman"]  # Craftsman spans tools, mowers and storage
+
+  - name: "3D printing supplies"
+    group: "Tools & garage"
+    description: >
+      3D printing materials, parts, and machines — filament (PLA, PETG,
+      ABS, etc.), resin, hotends, nozzles, build plates and sheets,
+      printer parts and upgrades, and 3D printers themselves. Branded or
+      generic. These run expensive retail, so auction wins are valuable.
+    examples: ["Bambu", "Prusa", "Polymaker", "Sunlu", "Elegoo", "Creality"]
+    subtypes: ["filament", "resin", "printers", "nozzles", "build plates",
+               "printer parts"]
+    seeds: ["3d print", "filament", "pla ", "petg", "abs filament", "tpu filament",
+            "3d printer", "hotend", "hot end", "build plate", "print bed",
+            "nozzle 0", "bambu", "prusa", "polymaker", "sunlu", "elegoo",
+            "creality", "anycubic", "resin print"]
+
+  - name: "Adhesives & tape"
+    group: "Tools & garage"
+    description: >
+      Tapes, glues, and bonding products — duct tape, heavy-duty/Gorilla
+      tape, masking and painter's tape, super glue, epoxy, mounting
+      strips/tape, and similar adhesives.
+    examples: ["Gorilla", "3M", "Scotch", "Loctite"]
+    subtypes: ["duct tape", "painters tape", "super glue", "epoxy",
+               "mounting tape", "electrical tape"]
+    seeds: ["duct tape", "gorilla tape", "gorilla glue", "masking tape",
+            "painters tape", "painter's tape", "electrical tape", "super glue",
+            "superglue", "epoxy", "mounting tape", "mounting strip", "adhesive",
+            "double sided tape", "packing tape", "scotch tape", "loctite",
+            "caulk", "sealant", "gorilla ", "3m ", "velcro", "hook and loop",
+            "command strip", "glue stick", "wood glue", "contact cement",
+            "thread locker", "silicone sealant", "foam tape", "duck tape"]
+    seed_exempt: ["Scotch"]  # scotch whisky, Scotch-Brite cleaning pads
+
+  - name: "Extension cords & power strips"
+    group: "Tools & garage"
+    description: >
+      Extension cords, power strips, surge protectors, and power
+      adapters/multi-outlets. Indoor or outdoor rated.
+    examples: ["Belkin", "APC", "Cordinate"]
+    subtypes: ["extension cords", "power strips", "surge protectors",
+               "outlet adapters"]
+    seeds: ["extension cord", "power strip", "surge protector", "power bar",
+            "outlet adapter", "wall tap", "multi outlet", "cord reel", "belkin",
+            "cordinate", "apc ", "power cord", "outlet strip", "usb wall charger",
+            "wall charger", "power adapter", "outlet extender", "smart strip"]
+
+  - name: "Lawn equipment"
+    group: "Outdoor & garden"
+    description: >
+      Powered and large lawn/yard equipment — mowers, string trimmers,
+      leaf blowers, hedge trimmers, edgers, chainsaws, pressure washers,
+      and similar outdoor power equipment. Branded or generic, corded,
+      cordless, or gas. EGO 56V is the platform of interest: its bare tools,
+      the Multi-Head power head and every attachment for it (bristle brush,
+      edger, pole saw, cultivator), and EGO mower blades are all matches
+      even though an attachment alone is not a "powered" tool.
+    examples: ["EGO", "Greenworks", "Ryobi", "Toro", "Husqvarna", "DeWalt"]
+    subtypes: ["mowers", "string trimmers", "leaf blowers", "hedge trimmers",
+               "chainsaws", "pressure washers", "snow blowers"]
+    seeds: ["lawn mower", "lawnmower", "string trimmer", "weed eater", "weed wacker",
+            "leaf blower", "hedge trimmer", "edger", "chainsaw", "chain saw",
+            "pressure washer", "power washer", "snow blower", "snowblower",
+            "tiller", "cultivator", "greenworks", "husqvarna", "toro ", "ego power",
+            "ryobi", "dewalt", "stihl", "echo trimmer", "craftsman mower",
+            # Whole-word: bare `ego` was too short, but "ego " cannot reach
+            # LEGO or EGOIST. An EGO brush attachment was bid on 2026-10-04.
+            "ego ", "power head", "multi head"]
+
+  - name: "BBQ accessories"
+    group: "Outdoor & garden"
+    description: >
+      BBQ, grill, and smoker accessories — grates, smoke tubes/boxes,
+      pellet hoppers, grill tools, covers, and related parts. Branded or
+      generic.
+    examples: ["Napoleon", "Traeger", "Pit Boss", "Weber", "Char-Broil"]
+    subtypes: ["grill grates", "grill tools", "smoker accessories",
+               "pellets", "thermometers"]
+    seeds: ["grill grate", "grill tool", "grill brush", "bbq tool", "smoke tube",
+            "smoker box", "wood pellet", "grill thermometer", "meat thermometer",
+            "skewer", "griddle", "charcoal", "grill light", "rotisserie",
+            "traeger", "pit boss", "weber", "char-broil", "napoleon grill",
+            "grill cover", "bbq cover", "grill basket", "grill mat", "grill press",
+            "smoker tube", "bbq glove", "grill scraper", "broil king",
+            "bbq access door"]
+    seed_exempt: ["Napoleon"]  # covered by "napoleon grill"
+
+  - name: "Garden hose"
+    group: "Outdoor & garden"
+    description: >
+      Garden hoses, hose nozzles, sprayers, shutoffs, hose reels, and
+      hose connectors/fittings.
+    subtypes: ["hoses", "nozzles", "sprinklers", "hose reels", "fittings",
+               "hose timers", "irrigation"]
+    seeds: ["garden hose", "hose nozzle", "hose reel", "hose connector",
+            "hose fitting", "expandable hose", "soaker hose", "sprinkler",
+            "spray nozzle", "hose splitter", "quick connect hose",
+            # Timers were watched 8x over 3 months and matched nothing.
+            "hose timer", "water timer", "watering timer", "irrigation",
+            "b-hyve", "bhyve", "drip system", "watering wand", "melnor",
+            "orbit b", "hose faucet"]
+
+  - name: "Gardening tools"
+    group: "Outdoor & garden"
+    description: >
+      Hand tools and implements for gardening and yard work — trowels,
+      pruners, secateurs, loppers, shears, spades, shovels, rakes, hoes,
+      hand cultivators, weeders, garden forks, watering cans, and garden
+      kneelers. Branded or generic, if clearly gardening hand tools.
+    examples: ["Fiskars", "Felco", "Corona", "Wolf-Garten"]
+    subtypes: ["pruners", "loppers", "shears", "shovels", "rakes", "trowels",
+               "watering cans"]
+    seeds: ["pruner", "pruning", "secateur", "lopper", "garden shear",
+            "hedge shear", "trowel", "garden spade", "shovel", "garden rake",
+            "leaf rake", "garden hoe", "cultivator hand", "weeder", "garden fork",
+            "watering can", "garden kneeler", "fiskars", "felco",
+            # Lawn levelling is a live project (watched 6/7 and 9/27).
+            "lawn level", "leveling rake", "levelling rake", "lawn roller",
+            "dethatch"]
+    seed_exempt: ["Corona", "Wolf-Garten"]  # Corona is a beer brand here
+
+  - name: "Garden & lawncare misc"
+    group: "Outdoor & garden"
+    description: >
+      Gardening and lawncare consumables, materials, and accessories that
+      aren't tools or power equipment. Explicitly includes grass/lawn seed
+      and flower/vegetable seeds, compost, fertilizer and plant food, soil
+      and potting mix/topsoil, mulch and bark, and lawn treatments
+      (weed-and-feed, grub control, lime, lawn care/treatment products).
+      Also garden/landscape edging, plant supports and stakes, garden
+      netting, weed barrier/landscape fabric, planters and plant pots, and
+      similar yard/garden supplies.
+    examples: ["Scotts", "Miracle-Gro", "Vigoro"]
+    subtypes: ["grass seed", "fertilizer", "soil & mulch", "planters",
+               "landscape fabric", "lawn treatments", "plant supports"]
+    seeds: ["grass seed", "lawn seed", "flower seed", "vegetable seed", "compost",
+            "fertilizer", "plant food", "potting mix", "potting soil", "topsoil",
+            "mulch", "weed and feed", "weed & feed", "grub control", "lawn treatment",
+            "landscape edging", "garden edging", "plant stake", "garden netting",
+            "weed barrier", "landscape fabric", "planter", "plant pot", "flower pot",
+            "scotts", "miracle-gro", "miracle gro", "vigoro"]
+
+  - name: "Pool & hot tub care"
+    group: "Outdoor & garden"
+    description: >
+      Maintaining a pool and hot tub — chlorine, shock, pH/alkalinity
+      balancers, algaecide, clarifier, hot tub/spa chemicals (Canadian Spa,
+      SpaGuard, Leisure Time), test strips and kits, filter cartridges and
+      filter sand, pumps and filter systems (Intex Krystal Clear), skimmers
+      and wall-mount skimmers, pool vacuums and robotic pool cleaners
+      (Aiper, Dolphin, Polaris, Wybotics) and their parts, telescopic poles
+      and brushes, leaf rakes, solar and winter covers, ladders and ladder
+      mats, and hose adapters. Refined by design: NOT floats, noodles,
+      inflatable pools, pool toys or foot spas — those go under "Outdoor
+      play, swim & blasters" or nowhere. A Brita "reduces chlorine" filter
+      is not a match. Was a seed-only interest until 2026-09-15.
+    examples: ["Intex Krystal Clear", "Aiper", "Dolphin", "Canadian Spa Co.",
+               "HTH", "Clorox Pool&Spa", "Aqua Joe", "Polaris"]
+    subtypes: ["chemicals", "test strips", "filters & sand", "pumps & filter systems",
+               "skimmers & brushes", "robotic pool cleaners", "pool vacuums",
+               "covers", "ladders & parts", "hot tub"]
+    seeds: ["pool chlorine", "chlorine tablet", "chlorine puck", "pool shock",
+            "shock treatment", "algaecide", "pool clarifier", "ph increaser",
+            "ph reducer", "alkalinity", "spa chemical", "hot tub chemical",
+            "hot tub", "spa test", "pool test", "test strip", "filter cartridge",
+            "pool filter", "filter sand", "pool pump", "krystal clear",
+            "sand filter", "skimmer", "pool vacuum", "pool vac", "pool cleaner",
+            "robotic pool", "aiper", "dolphin nautilus", "polaris pool", "spa filter",
+            "wybotics", "telescopic pole", "pool brush", "pool pole", "leaf rake",
+            "pool cover", "solar cover", "winter cover", "pool ladder",
+            "ladder mat", "pool adapter", "pool hose", "pool maintenance",
+            "leisure time", "spaguard", "canadian spa", "hth ", "pool&spa",
+            "pool and spa"]
+    seed_exempt: ["Dolphin", "Aqua Joe", "Polaris"]  # dolphin toys, Aqua Joe hoses,
+    # Polaris ATVs; "dolphin nautilus" / "polaris pool" / the type words carry them
+    exclude: ["pool float", "pool noodle", "inflatable pool", "kiddie pool",
+              "pool toy", "foot spa", "spa bath", "brita", "chlorine taste",
+              "reduces chlorine", "dog pool", "spa day", "spa gift", "spa set",
+              "face spa", "facespa", "nail spa", "pool table", "pool cue",
+              "billiard"]
+
+  - name: "Outdoor furniture & hammocks"
+    group: "Outdoor & garden"
+    description: >
+      Outdoor and patio furniture and comfortable seating — hammocks and
+      hammock stands, patio/outdoor loungers and chaise lounges, outdoor
+      chairs, sofas, gliders and benches, porch and patio swings, Adirondack
+      chairs, and patio seating sets. Comfortable outdoor furniture for
+      relaxing. Branded or generic.
+    examples: ["ENO", "Sunnydaze", "Keter", "Adirondack"]
+    subtypes: ["hammocks", "patio chairs", "loungers", "patio sets",
+               "swings & gliders", "adirondack chairs"]
+    seeds: ["hammock", "patio chair", "patio set", "patio furniture",
+            "outdoor chair", "outdoor furniture", "chaise lounge", "lounger",
+            "adirondack", "porch swing", "patio swing", "glider chair",
+            "zero gravity chair", "camping chair", "folding chair", "sunnydaze",
+            "keter", "eno hammock"]
+    seed_exempt: ["ENO"]  # bare "eno" matches "enough"
+
+  - name: "Bath towels"
+    group: "Home & bedroom"
+    description: >
+      Bath towels, towel sets, hand towels, washcloths, and bath sheets.
+    subtypes: ["bath towels", "towel sets", "hand towels", "washcloths"]
+    seeds: ["bath towel", "towel set", "hand towel", "washcloth", "wash cloth",
+            "bath sheet", "beach towel", "towel bale", "face towel"]
+
+  - name: "Bed linens"
+    group: "Home & bedroom"
+    description: >
+      Bed sheets, sheet sets, pillowcases, duvet covers, comforters, and
+      bedding sets. Decent bamboo / viscose-from-bamboo sheets and
+      recognizable-brand sets (UGG, Nautica, Lacoste, Brooklinen, Boll &
+      Branch, Cariloha, Cozy Earth) are what actually gets picked up here;
+      king is the household size. Deliberately not narrowed on 2026-09-15.
+    examples: ["Cariloha", "Cozy Earth", "UGG", "Nautica", "Lacoste", "Brooklinen"]
+    subtypes: ["bamboo sheets", "sheet sets", "pillowcases", "duvet covers",
+               "comforters", "bedding sets"]
+    seeds: ["sheet set", "bed sheet", "fitted sheet", "flat sheet", "pillowcase",
+            "pillow case", "duvet cover", "comforter", "bedding set", "bed skirt",
+            "coverlet", "bamboo sheet", "bamboo bed", "viscose from bamboo",
+            "cariloha", "cozy earth", "brooklinen", "boll & branch",
+            "percale", "sateen"]
+    seed_exempt: ["UGG", "Nautica", "Lacoste"]  # apparel brands; "sheet set" carries them
+
+  - name: "Bedding & pillows"
+    group: "Home & bedroom"
+    description: >
+      BRAND bedding only — throws and blankets from a recognizable brand
+      (UGG, Pendleton, Barefoot Dreams, Brookstone, Bearaby weighted),
+      premium pillows and toppers (Tempur-Pedic, Purple, Coop, Casper,
+      Beckham), and branded down/down-alternative duvet inserts. That is
+      the whole bucket. NOT mattresses, NOT generic pillow packs,
+      memory-foam-anything with no brand, mattress protectors, or plain
+      fleece throws. Shrunk on 2026-09-15: 693 lots a week, 0 bids in four
+      months; the only watches were an UGG throw and a reading pillow.
+    examples: ["UGG", "Pendleton", "Barefoot Dreams", "Tempur-Pedic", "Purple",
+               "Coop", "Casper", "Bearaby"]
+    subtypes: ["brand throws & blankets", "premium pillows", "toppers",
+               "weighted blankets", "duvet inserts"]
+    seeds: ["ugg ", "pendleton", "barefoot dreams", "bearaby", "tempur",
+            "purple pillow", "purple harmony", "casper", "beckham hotel",
+            "weighted blanket", "down duvet", "down comforter", "down pillow",
+            "brookstone", "sunbeam heated", "heated blanket", "electric blanket"]
+    seed_exempt: ["Coop", "Purple"]  # "cooper", "chicken coop"; bare "purple" is a colour
+    exclude: ["pillowcase", "pillow case", "throw pillow cover", "mattress"]
+
+  - name: "Nightstands"
+    group: "Home & bedroom"
+    description: >
+      Nightstands, bedside tables, and bedroom side tables.
+    subtypes: ["nightstands", "bedside tables"]
+    seeds: ["nightstand", "night stand", "bedside table", "bedside cabinet",
+            "side table"]
+
+  - name: "King bed frames"
+    group: "Home & bedroom"
+    description: >
+      King-size bed frames, headboards, and complete king beds.
+      King size specifically (not queen/full/twin).
+    subtypes: ["bed frames", "headboards", "complete beds"]
+    seeds: ["bed frame", "headboard", "platform bed", "bed base", "king bed"]
+
+  - name: "Cleaning supplies & tools"
+    group: "Cleaning & storage"
+    description: >
+      The cleaning gear this household actually buys — dish sponges and
+      scrub sponges of every kind (Scrub Daddy, Scotch-Brite, Magic
+      Eraser), soap-dispensing dish wands and their refill heads (OXO,
+      Scotch-Brite), electric spin scrubbers, brand mops and brooms
+      (O-Cedar, Swiffer, Libman, Rubbermaid Reveal), sink caddies and
+      drying racks, and BRAND cleaning solutions and laundry care (Method,
+      OxiClean, Lysol, Clorox, Tide, Mrs. Meyer's). NOT paper towels,
+      trash bags, generic spray bottles, no-name microfiber packs or
+      "100-pc cleaning kit" boxes. Consumables prefer New.
+    examples: ["Scrub Daddy", "OXO dish wand", "Scotch-Brite", "Method",
+               "OxiClean", "O-Cedar", "Rubbermaid Reveal", "Simplehuman"]
+    subtypes: ["sponges", "dish wands", "spin scrubbers", "mops & brooms",
+               "drying racks & caddies", "cleaning solutions", "laundry care",
+               "scrub brushes"]
+    seeds: ["sponge", "scrub daddy", "scrub mommy", "dish wand", "dishwand",
+            "soap dispensing", "scotch-brite", "scotch brite", "magic eraser",
+            "spin scrubber", "power scrubber", "scrub brush", "o-cedar",
+            "o cedar", "swiffer", "libman", "rubbermaid reveal", "mop ",
+            "broom", "squeegee", "sink caddy", "dish rack", "drying rack",
+            "method ", "oxiclean", "lysol", "clorox", "tide ", "mrs. meyer",
+            "mrs meyer", "all purpose cleaner", "bathroom cleaner",
+            "laundry detergent", "stain remover", "dish soap", "dawn ",
+            "simplehuman", "oxo good grips"]
+    # Vacuums, steam mops and carpet machines moved to "Vacuums & floor care".
+    exclude: ["vacuum", "steam mop", "carpet cleaner", "shop vac",
+              "paper towel", "trash bag", "garbage bag", "spray bottle"]
+
+  - name: "Storage bins & totes"
+    group: "Cleaning & storage"
+    description: >
+      General-purpose storage containers and totes — plastic storage
+      bins, lidded totes, stackable containers, and organizing bins NOT
+      specific to kitchen or garage/workshop. Also ROLLING and UTILITY
+      CARTS of any brand (user, 2026-10-31) — tiered rolling / utility /
+      storage carts, slim gap carts, drawer carts, kitchen and bar /
+      serving carts. A gold acrylic 3-tier cart drew a bid on 2026-10-25
+      and ten carts that week went unflagged. NOT kitchen islands, hand
+      trucks, folding wagons, grill carts or TV stands.
+    examples: ["Sterilite", "Rubbermaid", "IRIS", "Spacelead", "Vasagle"]
+    subtypes: ["storage bins", "lidded totes", "stackable containers",
+               "organizing bins", "storage drawers", "rolling carts"]
+    seeds: ["storage bin", "storage tote", "tote", "storage container",
+            "stackable bin", "stacking bin", "organizing bin", "storage box",
+            "storage drawer", "under bed storage", "sterilite", "iris usa",
+            "storage cube", "collapsible bin", "rubbermaid",
+            "utility cart", "rolling cart", "storage cart", "kitchen cart",
+            "serving cart", "bar cart"]
+    exclude: ["hand truck", "tv stand", "kamado", "grill table"]
+    seed_exempt: ["IRIS"]  # iris the flower; "iris usa" is seeded instead
+
+  - name: "Laundry baskets"
+    group: "Cleaning & storage"
+    description: >
+      Laundry baskets, hampers, laundry bags, and laundry sorters.
+    subtypes: ["laundry baskets", "hampers", "laundry bags", "sorters"]
+    seeds: ["laundry basket", "laundry hamper", "hamper", "laundry bag",
+            "laundry sorter", "clothes basket", "laundry cart"]
+
+  - name: "Barbies"
+    group: "Toys & games"
+    description: >
+      Barbie dolls, playsets, vehicles, dreamhouses, and Barbie accessories.
+    subtypes: ["dolls", "playsets", "vehicles", "dreamhouses"]
+    seeds: ["barbie", "dreamhouse", "dream house"]
+
+  - name: "Surprise toys"
+    group: "Toys & games"
+    description: >
+      LOL Surprise and Na Na Na Surprise toys — dolls, blind packs/balls,
+      playsets, and accessories.
+    subtypes: ["blind packs", "dolls", "playsets"]
+    seeds: ["lol surprise", "l.o.l. surprise", "na na na surprise", "blind bag",
+            "blind box", "surprise ball", "mystery pack"]
+
+  - name: "Lego"
+    group: "Toys & games"
+    description: >
+      Lego sets, Lego pieces and parts, Lego building tables, and
+      Lego-compatible building-brick sets. Includes Duplo.
+    examples: ["Lego", "Duplo", "KidKraft Lego table"]
+    subtypes: ["lego sets", "duplo", "building bricks", "lego tables"]
+    seeds: ["lego", "duplo", "building brick", "building block set",
+            "brick set", "mega bloks"]
+
+  - name: "Hatchimals"
+    group: "Toys & games"
+    description: >
+      Hatchimals toys — eggs, CollEGGtibles, playsets, and accessories.
+    subtypes: ["eggs", "colleggtibles", "playsets"]
+    seeds: ["hatchimal", "colleggtible"]
+
+  # Added 2026-10-02 with the user's say-so. The 2026-09-15 rescope excluded
+  # Funko from "Dolls, plush & playsets" as drawing nothing, but the history
+  # holds bids in three auctions (5/31 won, 9/6, 9/27 x2) and the 9/27 week
+  # tracked 8 of 194 Funko lots, ~17x the auction's base rate. Its own bucket
+  # rather than a widened Dolls bucket: the engagement spans adult franchises
+  # (Fallout, World of Warcraft, WandaVision) as well as kids' ones.
+  - name: "Funko Pop!"
+    group: "Toys & games"
+    description: >
+      Funko Pop! vinyl figures and Funko multipacks (Bitty Pop!, 4-packs) of
+      ANY franchise — KPop Demon Hunters, Bluey, Pokemon, Fallout, World of
+      Warcraft, Marvel and so on. This is the one collectible-figure line
+      that is wanted; other action figures, figurines and statues are still
+      NOT. Chase and exclusive variants are worth noting in the reasoning.
+      Box grade matters to collectors, but Open Box and Excellent were both
+      engaged with, so do not reject on those grades alone.
+    examples: ["Funko Pop!", "Funko Bitty Pop!"]
+    subtypes: ["pop! figures", "multipacks & bitty pops"]
+    seeds: ["funko"]
+
+  - name: "Dolls, plush & playsets"
+    group: "Toys & games"
+    aliases: ["Dolls & plush"]
+    description: >
+      Dolls and doll-world toys for a girl aged 8-11 — fashion and baby
+      dolls (Disney Princess, Baby Alive, Polly Pocket, Gabby's Dollhouse,
+      Bluey), doll clothes and accessories, dollhouses and character
+      playsets, and plush/interactive plush (Furby, Squishmallows). KPop
+      Demon Hunters is a current favourite franchise: Mattel Huntr/x dolls
+      and Furby Furblets were bid on in three auctions, and a Huntr/x doll
+      or figure is a match. Barbie goes under "Barbies", LOL/Na Na Na under
+      "Surprise toys", Funko under "Funko Pop!". NOT other action figures,
+      NOT collectible figurines or statues — those were a third of the old
+      bucket and drew nothing in four months.
+    examples: ["Gabby's Dollhouse", "Disney Princess", "Baby Alive",
+               "Polly Pocket", "Furby", "Squishmallows", "Bluey", "Melissa & Doug",
+               "KPop Demon Hunters"]
+    subtypes: ["dolls", "doll clothes & accessories", "dollhouses & playsets",
+               "plush & interactive plush"]
+    seeds: ["doll", "plush", "stuffed animal", "squishmallow", "playset",
+            "play set", "dollhouse", "doll house", "gabby", "baby alive",
+            "polly pocket", "furby", "furblet", "paw patrol", "bluey",
+            "melissa & doug", "melissa and doug", "styling head",
+            "baby doll", "fashion doll", "disney princess", "frozen doll",
+            "our generation", "american girl",
+            # Huntr/x dolls and figures sit in "Toys - Action Figures" with no
+            # doll word in the title; a sealed Rumi doll went unflagged 9/27.
+            "demon hunter", "huntr x"]
+    exclude: ["barbie", "lol surprise", "na na na surprise", "hatchimal",
+              "action figure", "figurine", "funko", "statue"]
+    seed_exempt: ["Disney"]  # spans every category in these auctions
+
+  - name: "Board games"
+    group: "Toys & games"
+    description: >
+      Board games, card games, party games, tabletop games, and puzzles.
+      Also Beyblade and battling-top sets — Beyblade X / Burst battle sets,
+      Beystadium arenas, starter packs, launchers, and the unbranded
+      "12 tops + 3 launchers" kits — a standing interest since 2026-10-24.
+    subtypes: ["board games", "card games", "party games", "puzzles",
+               "tabletop games"]
+    seeds: ["board game", "card game", "party game", "tabletop game",
+            "jigsaw puzzle", "puzzle", "trivia game", "dice game", "monopoly",
+            "scrabble", "catan", "ticket to ride", "playing card", "chess",
+            "dominoes", "family game", "game", "beyblade", "pokemon", "flash card",
+            "trading card", "piece puzzle", "bingo", "poker", "yahtzee", "jenga",
+            "uno ", "tarot", "domino", "checkers", "backgammon", "cribbage",
+            # Beyblade knockoffs never say "beyblade" (2026-10-24).
+            "blade top", "battling top", "battling set", "12 tops",
+            "string launcher"]
+    exclude: ["video game", "game controller", "gaming mouse", "gaming keyboard",
+              "gaming headset", "game console", "gaming chair"]
+
+  - name: "Backyard games"
+    group: "Sports & fitness"
+    description: >
+      Lawn and backyard games the family plays — cornhole boards and bag
+      sets, ladder toss, washer toss, bocce, Kan Jam, Spikeball, giant
+      Jenga/Connect 4, croquet, badminton / volleyball / pickleball net
+      sets, ring toss, horseshoes, and yard-size dart or disc games.
+      Replacement bags and bolas count. Carved out of "Sports & recreation
+      gear" on 2026-09-15 — this is one of the two things the household
+      actually checks that bucket for.
+    examples: ["GoSports", "Franklin Sports", "Spikeball", "Kan Jam",
+               "Yard Games", "Triumph"]
+    subtypes: ["cornhole", "toss games", "bocce & croquet", "net sets",
+               "giant games", "disc games"]
+    seeds: ["cornhole", "bean bag toss", "ladder toss", "ladderball",
+            "ladder ball", "washer toss", "bocce", "kan jam", "kanjam",
+            "spikeball", "giant jenga", "giant connect", "yard dice",
+            "croquet", "badminton set", "volleyball set", "pickleball set",
+            "ring toss", "horseshoe", "yard game", "lawn game", "backyard game",
+            "gosports", "disc golf", "frisbee", "bolo set", "bolas"]
+    seed_exempt: ["Franklin Sports", "Triumph"]  # "franklin" is a surname across
+    # the catalogue; "triumph" is a motorcycle brand
+
+  - name: "Nets, goals & hoops"
+    group: "Sports & fitness"
+    description: >
+      Nets and goals for backyard practice — soccer goals and nets, pop-up
+      goals, rebounders, hockey nets and shooting targets, portable and
+      wall-mount basketball hoops, golf practice nets, batting/pitch-back
+      nets, and ball-return trainers. The balls, sticks and pads themselves
+      are NOT wanted any more — only the nets, goals and hoops. Carved out
+      of "Sports & recreation gear" on 2026-09-15.
+    examples: ["Franklin Sports", "GoSports", "Lifetime", "Spalding hoop",
+               "SKLZ", "Pro-Spin"]
+    subtypes: ["soccer goals", "rebounders", "hockey nets", "basketball hoops",
+               "golf nets", "batting nets", "table tennis sets"]
+    seeds: ["soccer goal", "soccer net", "pop up goal", "rebounder",
+            "hockey net", "hockey goal", "shooting target", "basketball hoop",
+            "basketball net", "portable hoop", "golf net", "practice net",
+            "batting net", "pitchback", "pitch back", "hitting net",
+            "sports net", "goal net", "training net", "ping pong", "table tennis",
+            "lacrosse goal", "backstop", "sklz"]
+    seed_exempt: ["Franklin Sports", "GoSports", "Lifetime", "Spalding hoop",
+                  "Pro-Spin"]  # brand words span balls, sheds and paddles; the
+    # goal / net / hoop type words above carry every one of them
+    exclude: ["mosquito net", "cargo net", "bed net", "hair net", "fishing net",
+              "netting", "safety net"]
+
+  - name: "Bikes, scooters & skates"
+    group: "Sports & fitness"
+    description: >
+      Kids' and adult bikes, balance bikes and trikes, kick and electric
+      scooters, skateboards, roller skates and inline skates, plus the
+      protective gear that goes with them — helmets, knee and elbow pads —
+      and bike locks (Kryptonite, ABUS). Recognizable brands or clearly
+      complete, working units; NOT inner tubes, bike covers, seat cushions
+      or bottle cages. Carved out of "Sports & recreation gear" on
+      2026-09-15.
+    examples: ["Schwinn", "Huffy", "Razor", "Kryptonite", "Bell helmet",
+               "Rollerblade", "Micro"]
+    subtypes: ["bikes", "balance bikes & trikes", "scooters", "skateboards",
+               "skates", "helmets & pads", "bike locks"]
+    seeds: ["bicycle", "bike ", "balance bike", "tricycle", "trike", "scooter",
+            "skateboard", "roller skate", "inline skate", "rollerblade",
+            "bike helmet", "knee pad", "elbow pad", "knee & elbow",
+            "bike lock", "u-lock", "u lock", "kryptonite", "abus ", "schwinn",
+            "huffy", "razor scooter", "razor a5", "micro scooter"]
+    seed_exempt: ["Razor", "Bell helmet", "Micro"]  # razor blades, Bell + "helmet"
+    # is already a seed, "micro" is in thousands of titles
+    exclude: ["bike cover", "inner tube", "bike seat cover", "saddle cushion",
+              "bottle holder", "bike rack", "exercise bike", "dirt bike",
+              "motorbike", "bike shorts", "bike trainer", "bike stand"]
+
+  - name: "Weights, bars & racks"
+    group: "Sports & fitness"
+    aliases: ["Home gym & weightlifting"]
+    description: >
+      The hardware of a home gym — barbells and Olympic bars, weight plates
+      (bumper AND iron), dumbbells and adjustable dumbbells, kettlebells,
+      power racks and squat stands, benches, cable machines and functional
+      trainers, and cardio machines (treadmills, rowers, bikes,
+      ellipticals). Also gym flooring and stall mats. Resells well; bumper
+      plates especially. Bands, mats, rollers and attachments go under
+      "Gym accessories".
+    examples: ["Rogue", "REP", "CAP Barbell", "Bowflex", "NordicTrack", "Eleiko",
+               "Signature Fitness", "BalanceFrom"]
+    subtypes: ["barbells", "weight plates", "dumbbells", "kettlebells",
+               "racks & stands", "benches", "cable machines", "cardio machines",
+               "gym flooring"]
+    seeds: ["barbell", "olympic bar", "weight plate", "bumper plate", "dumbbell",
+            "kettlebell", "power rack", "squat rack", "squat stand", "weight bench",
+            "treadmill", "exercise bike", "elliptical", "rowing machine",
+            "cable machine", "functional trainer", "smith machine", "weight set",
+            "gym floor", "stall mat", "rogue fitness", "bowflex", "nordictrack",
+            "weight rack", "eleiko", "cap barbell", "adjustable dumbbell",
+            "dip station", "trap bar", "ez curl", "curl bar", "lat pulldown machine",
+            "home gym"]
+    seed_exempt: ["Rogue", "REP", "Signature Fitness", "BalanceFrom"]  # "rep" matches
+    # "repair"; the other two only ever appear with a plate/dumbbell type word
+
+  - name: "Gym accessories"
+    group: "Sports & fitness"
+    description: >
+      The small stuff around the home gym — resistance bands, cable
+      attachments (lat bars, handles, tricep ropes), lifting straps and
+      belts, wrist wraps, yoga and exercise mats, foam rollers, ab wheels,
+      jump ropes, weighted vests, pull-up bars, balance boards, medicine
+      and stability balls, and boxing gloves/bags. Split from the weights
+      bucket on 2026-09-15 so the racks and plates are not buried under
+      117 lots of one yoga mat.
+    examples: ["Rogue", "Amazon Basics", "TRX", "Bowflex", "Gaiam"]
+    subtypes: ["resistance bands", "cable attachments", "straps & belts",
+               "mats", "foam rollers", "pull-up bars", "weighted vests",
+               "boxing gear", "balance & stability"]
+    seeds: ["resistance band", "cable attachment", "lat pulldown bar",
+            "tricep rope", "lifting strap", "weight belt", "lifting belt",
+            "wrist wrap", "yoga mat", "exercise mat", "gym mat", "foam roller",
+            "ab roller", "ab wheel", "jump rope", "weighted vest", "pull up bar",
+            "push up bar", "balance board", "wobble board", "balance disc",
+            "medicine ball", "stability ball", "exercise ball", "battle rope",
+            "agility ladder", "door gym", "boxing glove", "punching bag",
+            "trx ", "gymnastic ring", "grip strengthener", "step platform"]
+    seed_exempt: ["Rogue", "Amazon Basics", "Bowflex", "Gaiam"]  # type words carry them
+
+  - name: "Brand shoes (adult)"
+    group: "Footwear"
+    aliases: ["Brand boots & shoes"]
+    description: >
+      Adult footwear from a BIG recognizable brand — Hunter, UGG, Sorel,
+      Blundstone, Dr. Martens, Timberland, Bogs, Kamik, Nike, Adidas, New
+      Balance, Asics, Puma, Reebok, Skechers, Vans, Converse, Crocs,
+      Birkenstock, Hoka, On, Brooks, Salomon, Merrell, Keen, Columbia,
+      Clarks, Cole Haan, Sperry. Boots, sneakers, sandals, slippers, clogs.
+      Off-brand and no-name footwear is NOT a match regardless of how good
+      it looks. Sizes are frequently mislabeled in these listings, so do
+      NOT reject a branded shoe on size — flag it and put the listed size
+      in the reasoning; the buyer checks. Kids' sizes go under "Brand
+      shoes (kids)".
+    examples: ["Hunter", "UGG", "Nike", "Adidas", "Crocs", "Blundstone",
+               "Dr. Martens", "Sorel", "Birkenstock", "New Balance", "Hoka"]
+    subtypes: ["winter boots", "rain boots", "work boots", "sneakers",
+               "sandals & slides", "slippers", "clogs", "casual shoes"]
+    seeds: ["hunter boot", "hunter rain", "ugg ", "sorel", "blundstone",
+            "dr. marten", "dr marten", "doc marten", "timberland", "bogs ",
+            "kamik", "nike ", "adidas", "new balance", "asics", "puma ",
+            "reebok", "skechers", "vans ", "converse", "crocs", "birkenstock",
+            "hoka", "on cloud", "brooks ", "salomon", "merrell", "keen ",
+            "columbia boot", "columbia shoe", "clarks", "cole haan", "sperry",
+            "steve madden", "toms ", "under armour shoe", "jordan ",
+            "naturalizer"]
+    seed_exempt: ["Hunter"]  # covered by "hunter boot" / "hunter rain"; bare
+    # "hunter" is hunting gear
+    exclude: ["boot tray", "shoe rack", "shoe organizer", "boot brush",
+              "shoe polish", "boot dryer", "kids", "toddler", "youth",
+              "child", "little kid", "big kid", "infant", "crocs jibbitz",
+              "jibbitz", "socks", "backpack", "hoodie", "t-shirt", "t-sh",
+              "tee ", "shorts", "leggings", "jacket", "cap ", "hat ",
+              "boxer", "brief", "undershirt", "underwear", "sheet set",
+              "sheet", "throw", "ball", "glove", "crewneck", "crew neck",
+              "pants", "jogger", "sweatshirt", "polo", "bra ", "tank top",
+              "sports bra", "duffel", "gym bag", "ball pump", "shin guard"]
+
+  - name: "Brand shoes (kids)"
+    group: "Footwear"
+    description: >
+      Kids' and toddler footwear from a BIG recognizable brand — UGG,
+      Crocs, Nike, Adidas, New Balance, Native, Bogs, Kamik, Sorel, Hunter,
+      Skechers, Vans, Converse, Puma, Keen, Merrell, Stride Rite, Hoka.
+      Boots, sneakers, sandals, clogs, slippers in kids', youth, toddler
+      and little/big-kid sizes. Off-brand kids' shoes are NOT a match.
+      Sizes are frequently mislabeled — flag branded pairs regardless of
+      the listed size and note it in the reasoning.
+    examples: ["UGG kids", "Crocs kids", "Native", "Nike kids", "Adidas kids",
+               "Bogs", "Kamik", "Stride Rite"]
+    subtypes: ["kids' boots", "kids' sneakers", "kids' sandals", "kids' clogs",
+               "toddler shoes"]
+    seeds: ["kids ugg", "ugg kids", "ugg unisex-child", "unisex-child",
+            "unisex child", "crocs kids", "kids crocs", "kids classic clog",
+            "native shoes", "native jefferson", "nike kids", "kids nike",
+            "adidas kids", "kids adidas", "new balance kids", "toddler shoe",
+            "toddler boot", "toddler sneaker", "kids boot", "kids sneaker",
+            "youth boot", "youth sneaker", "little kid", "big kid",
+            "stride rite", "bogs kids", "kamik kids", "kids sandal",
+            "sorel kids", "hunter kids", "skechers kids", "vans kids",
+            "converse kids", "keen kids", "merrell kids", "puma kids"]
+    seed_exempt: ["Native", "Bogs", "Kamik"]  # "native shoes" / "bogs kids" /
+    # "kamik kids" above; bare "native" and "bogs" collide with plants and swamps
+    exclude: ["boot tray", "shoe rack", "shoe organizer", "socks", "backpack",
+              "hoodie", "t-shirt", "shorts", "leggings", "jacket", "pajama",
+              "costume"]
+
+  - name: "Brand chef knives"
+    group: "Kitchen & dining"
+    description: >
+      Quality chef knives and kitchen cutlery — chef knives, santoku,
+      paring, utility and bread knives, knife sets, and knife blocks.
+      Recognizable knife brands OR clearly quality kitchen knives even if
+      the title doesn't say "knife" (e.g. "cutlery set", a brand name alone).
+    examples: ["Shun", "Wüsthof", "Henckels", "Global", "Mac", "Miyabi", "Victorinox", "Dalstrong"]
+    subtypes: ["chef knives", "knife sets", "knife blocks", "paring knives",
+               "santoku", "steak knives", "sharpeners"]
+    seeds: ["knife", "knives", "santoku", "cutlery", "chef kni", "paring",
+            "cleaver", "knife block", "knife set", "steak knife", "bread knife",
+            "shun", "wusthof", "wüsthof", "henckels", "miyabi", "victorinox",
+            "dalstrong", "knife sharpener", "sharpening steel"]
+    seed_exempt: ["Global", "Mac"]  # both match far too much as bare words
+    exclude: ["utility knife", "box cutter", "pocket knife", "hunting knife",
+              "putty knife"]
+
+  - name: "Brand cookware"
+    group: "Kitchen & dining"
+    description: >
+      GOOD cookware only — skillets, fry pans, saucepans, sauté pans, dutch
+      ovens, stock pots, cookware sets and serious bakeware from a
+      recognized quality maker: All-Clad, Made In, Tramontina (tri-ply),
+      Le Creuset, Staub, Lodge, de Buyer, Zwilling, Demeyere, Hestan,
+      Cuisinart MultiClad, Calphalon Premier, HexClad, Scanpan, Smithey,
+      Field, Matfer Bourgeat. Fully-clad multi-ply stainless, enameled or
+      bare cast iron, and carbon steel are the tells. A random single-ply
+      stainless pan, a no-name nonstick set, or a "20-pc granite cookware"
+      box is NOT a match, whatever the condition.
+    examples: ["All-Clad", "Made In", "Tramontina tri-ply", "Le Creuset", "Staub",
+               "Lodge", "de Buyer", "Zwilling", "Demeyere", "HexClad"]
+    subtypes: ["skillets", "saucepans", "dutch ovens", "cookware sets",
+               "bakeware", "sheet pans", "stock pots"]
+    seeds: ["skillet", "fry pan", "frying pan", "saucepan", "sauce pan",
+            "dutch oven", "cookware", "stock pot", "stockpot", "saute pan",
+            "sauté pan", "roasting pan", "baking sheet", "sheet pan", "bakeware",
+            "cake pan", "muffin pan", "loaf pan", "casserole dish", "cast iron",
+            "le creuset", "all-clad", "all clad", "staub", "lodge cast",
+            "calphalon", "de buyer", "made in cookware", "griddle pan", "lodge ",
+            "tramontina", "tri-ply", "tri ply", "triply", "multiclad",
+            "multi-clad", "demeyere", "hestan", "hexclad", "scanpan",
+            "smithey", "carbon steel", "zwilling", "matfer", "enameled cast",
+            "enamelled cast", "5-ply", "d3 ", "d5 "]
+    seed_exempt: ["Made In"]  # "made in china" appears in thousands of titles
+    exclude: ["granite cookware", "nonstick set", "non-stick set", "single ply",
+              "carbon steel knife", "carbon steel blade"]
+
+  - name: "Coffee & espresso"
+    group: "Food & drink"
+    aliases: ["Starbucks coffee"]
+    description: >
+      Coffee to actually drink, from any recognisable roaster — whole bean,
+      ground, K-cups and pods, instant, and espresso. Whole bean and ground
+      matter most (beans get ground at home for iced coffee); pods are still
+      worth flagging. Also reusable pod filters and grinders.
+      Starbucks counts too — it used to have its own bucket and was folded
+      in here (12 lots a fortnight did not justify a whole bucket).
+      Coffee MAKERS go under "Kitchen appliances".
+    examples: ["Lavazza", "Kicking Horse", "Illy", "Death Wish", "Peet's", "Tim Hortons"]
+    subtypes: ["whole bean", "ground coffee", "k-cups", "pods", "instant coffee",
+               "espresso", "grinders", "starbucks"]
+    seeds: ["whole bean", "ground coffee", "k-cup", "k cup", "keurig pod",
+            "coffee pod", "nespresso pod", "instant coffee", "espresso bean",
+            "coffee bean", "coffee grinder", "burr grinder", "reusable k cup",
+            "lavazza", "kicking horse", "illy ", "death wish", "peet",
+            "tim hortons", "folgers", "maxwell house", "mccafe", "nescafe",
+            "wolfgang puck", "coffee 1", "coffee 2", "roast coffee", "starbucks"]
+    exclude: ["coffee maker", "coffee machine", "coffee table", "coffee mug"]
+
+  - name: "Kitchen storage & organization"
+    group: "Kitchen & dining"
+    description: >
+      Food storage and pantry organization — airtight food storage
+      containers (e.g. OXO Pop / "pop" containers), canisters, dry-goods
+      containers and sets, pantry bins, and spice/jar organizers.
+    examples: ["OXO Pop", "Rubbermaid Brilliance", "Snapware", "Pyrex"]
+    subtypes: ["food containers", "canisters", "pantry bins",
+               "spice organizers", "lid organizers"]
+    seeds: ["food storage container", "food container", "airtight container",
+            "canister", "pantry bin", "spice rack", "spice organizer",
+            "jar organizer", "lid organizer", "oxo pop", "snapware", "pyrex",
+            "brilliance", "meal prep container", "lunch container",
+            "cabinet organizer", "drawer organizer", "pop container",
+            "food storage", "pantry organizer", "snack container", "vacuum sealer",
+            "locknlock", "lock n lock", "glass storage", "storage set",
+            "produce keeper", "cereal container", "pull out organizer",
+            "pull out basket", "pull out shelf"]
+
+  - name: "Dinnerware"
+    group: "Kitchen & dining"
+    aliases: ["Shatterproof / outdoor dishware"]
+    description: >
+      QUALITY or BRANDED dinnerware and serving pieces — notable-brand
+      plates, bowls, mugs, dinnerware sets, and serving platters. Favor
+      recognizable brands, complete sets, and quality stoneware/porcelain.
+      Do NOT flag generic single no-brand pieces (browse those by category
+      instead).
+    examples: ["Corelle", "Mikasa", "Fiestaware", "Denby", "Tervis"]
+    subtypes: ["dinnerware sets", "plates", "bowls", "mugs", "serving platters",
+               "melamine & outdoor", "acrylic tumblers"]
+    seeds: ["dinnerware", "dinner plate", "salad plate", "serving platter",
+            "serving bowl", "cereal bowl", "mug set", "plate set", "bowl set",
+            "china set", "stoneware", "porcelain", "coffee mug", "ceramic mug",
+            "mug ", "dish rack set", "corelle", "mikasa",
+            "fiestaware", "denby", "dish set",
+            # Folded in from "Shatterproof / outdoor dishware" (~4 lots/week).
+            "melamine", "tritan", "acrylic tumbler", "shatterproof",
+            "unbreakable", "outdoor dinnerware", "picnic set", "tervis"]
+
+  - name: "Glassware & drinkware"
+    group: "Kitchen & dining"
+    description: >
+      QUALITY or BRANDED glassware — notable-brand glass tumbler sets,
+      stemware, whisky and cocktail glasses, decanters, carafes and
+      pitchers. Favor recognizable brands and complete sets. Do NOT flag
+      generic single no-brand glasses (browse those by category instead).
+      Insulated stainless tumblers, water bottles and travel mugs go under
+      "Insulated drinkware" — this bucket is glass (and the odd acrylic
+      set), not thermal.
+    examples: ["Libbey", "Glencairn", "Riedel", "Bormioli Rocco", "Tervis"]
+    subtypes: ["glass sets", "stemware", "whisky & cocktail glasses",
+               "decanters & carafes", "pitchers", "glass mugs"]
+    seeds: ["glass tumbler", "drinking glass", "drinkware", "glassware",
+            "wine glass", "stemware", "pint glass", "beer glass", "highball",
+            "rocks glass", "whisky glass", "whiskey glass", "cocktail glass",
+            "shot glass", "decanter", "carafe", "glass pitcher", "glass set",
+            "libbey", "glencairn", "riedel", "bormioli", "tervis"]
+
+  - name: "Insulated drinkware"
+    group: "Kitchen & dining"
+    description: >
+      Vacuum-insulated stainless tumblers, water bottles, travel mugs and
+      can/bottle holders — the Stanley Quencher / IceFlow, Owala FreeSip,
+      Hydro Flask, S'well, Yeti Rambler, Contigo, Thermos family — plus
+      heated smart mugs (Ember), kids' insulated bottles (Thermos
+      Funtainer), shaker bottles, and lids, straws and handles sold for
+      them. Recognizable brands are the point, but a generic stainless
+      double-wall tumbler or bottle still counts if the title says
+      insulated/stainless/vacuum. Insulated FOOD jars and lunch bags go
+      under "Kitchen storage & organization"; glass and plain plastic cups
+      under "Glassware & drinkware" or "Dinnerware".
+    examples: ["Stanley", "Owala", "Hydro Flask", "S'well", "Yeti", "Contigo",
+               "Thermos", "Simple Modern", "BrüMate", "Ember"]
+    subtypes: ["tumblers", "water bottles", "travel mugs", "kids' bottles",
+               "can & bottle holders", "heated mugs", "shaker bottles",
+               "lids & accessories"]
+    seeds: ["tumbler", "water bottle", "travel mug", "insulated bottle",
+            "insulated mug", "insulated tumbler", "insulated cup",
+            "stainless bottle", "stainless tumbler", "stainless steel bottle",
+            "vacuum insulated", "vacuum bottle", "double wall", "thermal bottle",
+            "sports bottle", "shaker bottle", "blenderbottle", "koozie",
+            "can cooler", "can holder", "can insulator", "colster",
+            "hopsulator",
+            "stanley", "quencher", "iceflow", "owala", "freesip",
+            "hydro flask", "hydroflask", "s'well", "swell", "yeti",
+            "contigo", "thermos", "funtainer", "simple modern", "brumate",
+            "brümate", "corkcicle", "ember mug", "ember travel", "klean kanteen",
+            "iron flask", "iron  flask", "takeya", "rtic", "ello ", "bubba",
+            "camelbak", "nalgene", "hydrapak", "bjpkpk", "urzop"]
+    exclude: ["thermostat", "wet/dry", "wet and dry", "wet dry", "shop vac",
+              "soft cooler", "hard cooler", "food jar", "lunch bag",
+              "stanley tool", "microphone"]
+    seed_exempt: ["Ember"]  # bare "ember" is Marshall Emberton speakers; seeded as "ember mug"
+
+  - name: "Pantry & cooking staples"
+    group: "Food & drink"
+    aliases: ["Specialty cooking & baking ingredients"]
+    description: >
+      Food to cook with — oils and vinegars, sauces and condiments, spices
+      and seasoning, pasta, rice and flour, canned and jarred goods, syrups
+      and honey, plus premium baking ingredients. Branded or generic; this is
+      a SCAN bucket, so breadth beats selectivity. Auction grocery lots may
+      show "best before" dates — flag regardless; Bat will assess.
+      CONSUMABLE: prefer "Brand New - Sealed". On sealed grocery goods an
+      "Excellent" or "Good" grade usually means the seal is broken or the
+      pack is opened, which is an automatic pass. "Best Before (Grocery)"
+      is new stock near its date — fine, Bat will assess.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Callebaut", "Valrhona", "King Arthur", "Nielsen-Massey", "Thai Kitchen"]
+    subtypes: ["oils & vinegars", "sauces & condiments", "spices & seasoning",
+               "pasta, rice & grains", "canned & jarred", "baking ingredients",
+               "syrups & sweeteners"]
+    seeds: ["baking chocolate", "cocoa powder", "couverture", "specialty flour",
+            "bread flour", "vanilla extract", "vanilla bean", "olive oil",
+            "balsamic", "vinegar", "maple syrup", "honey", "sea salt",
+            "spice set", "callebaut", "valrhona", "king arthur", "nielsen-massey",
+            "saffron", "truffle oil",
+            # Broadened 2026-08-30: the old seeds scored 0 engagement on 87
+            # supply lots because they only reached premium baking.
+            "pasta", "canned", "seasoning", "hot sauce", "soy sauce",
+            "coconut milk", "broth", "condiment", "ketchup",
+            "mustard", "mayonnaise", "peanut butter", "jam ", "preserves",
+            "quinoa", "oatmeal", "cereal", "thai kitchen"]
+
+  - name: "Mixers, blenders & food prep"
+    group: "Kitchen & dining"
+    aliases: ["Kitchen appliances"]
+    description: >
+      The kitchen appliances this household actually bids on — stand
+      mixers, hand mixers, countertop blenders, immersion/hand blenders,
+      food processors and choppers, and their attachments and bowls.
+      Recognizable brands: KitchenAid, Vitamix, Breville, Braun, Cuisinart,
+      Ninja, Blendtec, Bosch, Magimix, Smeg. NOT toasters, kettles, air
+      fryers, coffee makers, rice cookers, slow cookers, sandwich makers or
+      microwaves — those were 60% of the old "Kitchen appliances" bucket
+      and drew zero engagement in four months. Every one of the 23 tracked
+      lots in that bucket was a mixer, blender, Nespresso, Creami or sous
+      vide.
+    examples: ["KitchenAid", "Vitamix", "Braun MultiQuick", "Breville",
+               "Cuisinart", "Ninja", "Blendtec", "Bosch"]
+    subtypes: ["stand mixers", "hand mixers", "blenders", "immersion blenders",
+               "food processors", "choppers", "mixer attachments"]
+    seeds: ["stand mixer", "hand mixer", "blender", "food processor", "chopper",
+            "immersion blender", "kitchenaid", "vitamix", "blendtec",
+            "multiquick", "magimix", "nutribullet", "nutri ninja", "ninja blast",
+            "ninja pro", "ninja bn", "ninja bl", "ninja detect", "ninja foodi power",
+            "mixer attachment", "pasta attachment", "slicer attachment",
+            "mixer bowl", "tilt-head", "tilt head", "bowl-lift", "bowl lift",
+            "artisan mixer", "handy mix", "smeg "]
+    seed_exempt: ["Breville", "Cuisinart", "Ninja", "Bosch"]  # each sells far more
+    # toasters, kettles, air fryers or power tools; type words carry the mixers
+    exclude: ["toaster", "kettle", "air fryer", "coffee maker", "rice cooker",
+              "slow cooker", "sandwich maker", "waffle maker", "microwave",
+              "blender bottle", "blenderbottle", "shaker bottle", "cement mixer",
+              "paint mixer", "mortar mixer"]
+
+  - name: "Espresso & specialty appliances"
+    group: "Kitchen & dining"
+    description: >
+      The few other countertop machines worth a look — espresso machines
+      and Nespresso/Vertuo machines (Breville, De'Longhi, Philips, Nespresso),
+      the Ninja Creami and Slushi, sous vide circulators (Breville Joule,
+      Anova), cold-press juicers, and ice makers. Recognizable brands only.
+      Drip coffee makers, Keurig pod brewers, kettles and toasters are NOT
+      a match. Coffee beans and pods stay under "Coffee & espresso".
+    examples: ["Breville Barista", "Nespresso Vertuo", "De'Longhi", "Ninja Creami",
+               "Ninja Slushi", "Breville Joule", "Anova", "GE Opal"]
+    subtypes: ["espresso machines", "nespresso machines", "ice cream & slushi makers",
+               "sous vide", "juicers", "ice makers"]
+    seeds: ["espresso machine", "espresso maker", "nespresso", "vertuo",
+            "barista express", "barista pro", "bambino", "de'longhi", "delonghi",
+            "dedica", "creami", "slushi", "sous vide", "joule", "anova",
+            "cold press juicer", "slow juicer", "nugget ice", "ice maker",
+            "opal ice", "milk frother", "lattissima", "jura ", "gaggia",
+            "rancilio", "philips 3200", "philips 4300", "philips 5400"]
+    seed_exempt: ["Breville Barista", "GE Opal"]  # "barista express/pro" and
+    # "opal ice" above are how titles spell them
+    # A bare "coffee maker" exclude vetoed every Nespresso Vertuo titled
+    # "VERTUO NEXT COFFEE MAKER" (8 lots, one watched, 2026-10-12); the
+    # narrower terms still keep 12-cup drip machines out.
+    exclude: ["keurig", "drip coffee", "cup coffee maker", "programmable coffee",
+              "kettle", "toaster", "coffee pod", "capsule", "k-cup", "k cup",
+              "pods "]
+
+  - name: "Kitchen utensils & gadgets"
+    group: "Kitchen & dining"
+    description: >
+      QUALITY or BRANDED kitchen utensils and gadgets — notable-brand
+      spatulas, tongs, whisks, peelers, graters, and tool sets. Favor
+      recognizable brands and complete sets. Do NOT flag generic single
+      no-brand utensils (browse those by category instead). Digital
+      kitchen and food scales count as a gadget: a KitchenAid scale drew a
+      bid on 2026-10-25 while three KitchenAid scales went unflagged.
+    examples: ["OXO", "KitchenAid", "Joseph Joseph", "Zwilling"]
+    subtypes: ["spatulas", "tongs", "whisks", "peelers", "graters",
+               "utensil sets", "measuring tools", "cutting boards",
+               "kitchen scales"]
+    seeds: ["spatula", "tongs", "whisk", "peeler", "grater", "utensil set",
+            "kitchen tool", "measuring cup", "measuring spoon", "colander",
+            "strainer", "ladle", "can opener", "mandoline", "cutting board",
+            "kitchen shear", "rolling pin", "baking mat", "cookie cutter",
+            "pot holder", "oven mitt", "trivet", "corkscrew", "bottle opener",
+            "mixing bowl", "salad spinner", "garlic press", "oxo ",
+            "joseph joseph", "zwilling", "kitchenaid", "food mill",
+            "kitchen scale", "food scale"]
+
+  # ------------------------------------------------------------------
+  # Added 2026-08-30 from three months of bid/watch history. See
+  # data/Watch/FINDINGS.md — 40% of real bids matched no bucket at all.
+  #
+  # CONSUMABLE buckets carry a condition line in their description.
+  # Measured on 54,463 supply lots: personal-care consumables run
+  # ~57% "Excellent" / ~25% "Good" and only ~14% sealed. On a sealed
+  # consumable those middle grades mean opened, which is an automatic
+  # pass — so the condition bar is what makes these buckets scannable
+  # (Skincare & body: 892/week raw, ~90/week once sealed-only).
+  # ------------------------------------------------------------------
+
+  - name: "Hair care products"
+    group: "Personal care"
+    description: >
+      Hair care you apply — shampoo, conditioner, masks, oils and serums,
+      dry shampoo, styling product, and hair colour. Branded or generic.
+      Hair DRYERS and stylers go under "Hair styling tools".
+      CONSUMABLE: prefer "Brand New - Sealed". "Brand New - Open Box",
+      "Excellent" or "Good" on a bottle almost always means opened or
+      part-used, which is an automatic pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Pantene", "Head & Shoulders", "Olaplex", "Garnier", "Dove"]
+    subtypes: ["shampoo", "conditioner", "hair masks & oils", "styling product",
+               "dry shampoo", "hair colour"]
+    seeds: ["shampoo", "conditioner", "hair mask", "hair oil", "hair serum",
+            "dry shampoo", "hair spray", "hairspray", "hair gel", "hair mousse",
+            "leave in", "hair color", "hair colour", "hair dye", "everpure",
+            "pantene", "head & shoulders", "olaplex", "garnier", "dove ",
+            "tresemme", "aussie ", "herbal essences", "moroccanoil"]
+    exclude: ["dog shampoo", "pet shampoo", "car shampoo", "wash shampoo"]
+
+  - name: "Hair styling tools"
+    group: "Personal care"
+    description: >
+      PREMIUM powered hair tools only — Shark FlexStyle / SpeedStyle /
+      SmoothStyle, Dyson Airwrap / Supersonic / Airstrait, ghd, T3,
+      BaBylissPRO, Hot Tools Pro, Bio Ionic, Drybar, L'ange, Beachwaver,
+      CHI, Remington Pro (T|Studio). Dryers, multi-stylers, straighteners,
+      curling irons and hot brushes from those makers. A no-name curling
+      wand, a drugstore Conair dryer, a "5-in-1 hot air brush" with no
+      brand, or the Revlon One-Step volumizer (~$50 new, ~100 lots a week,
+      not worth reselling) is NOT a match. These are APPLIANCES, so
+      ordinary used condition is fine — a Shark or Dyson in Fair is still
+      worth flagging. Narrowed on 2026-09-15: 723 lots a week, and every
+      one of the 4 tracked was a FlexStyle or Airwrap.
+    examples: ["Shark FlexStyle", "Dyson Airwrap", "ghd", "T3", "BaBylissPRO",
+               "Hot Tools", "Drybar"]
+    subtypes: ["hair dryers", "straighteners", "curling irons", "multi-stylers",
+               "hot brushes"]
+    seeds: ["shark hd", "flexstyle", "speedstyle", "smoothstyle", "shark hair",
+            "airwrap", "supersonic", "airstrait", "dyson hair", "ghd ",
+            "babyliss", "hot tools", "bio ionic", "drybar", "l'ange", "lange hair",
+            "beachwaver", "chi ", "remington pro", "t3 ", "t3 cura", "t3 aire",
+            "t3 singlepass", "t3 twirl"]
+    exclude: ["conair", "hair clipper", "hair removal", "nose trimmer",
+              "revlon", "one-step volumizer", "one step volumizer"]
+
+  - name: "Skincare & body"
+    group: "Personal care"
+    description: >
+      Skin and body products — lotions and moisturisers, body wash, face
+      wash and cleansers, serums and toners, sunscreen, body butter and
+      scrubs, hand cream. Branded or generic; this is a SCAN bucket.
+      CONSUMABLE, OUTER-BOX RULE (Open Box only): flag "Brand New - Sealed"
+      and "Brand New - Open Box" alike. Open Box here usually means an
+      opened outer box or sleeve around sealed bottles (a twin-pack, a gift
+      set), and Bat checks the photos for an intact seal before bidding, so
+      do not refuse a lot on that grade alone. Unlike the other OUTER-BOX
+      buckets, "Excellent" is NOT accepted here — it is this category's
+      commonest grade and would triple the list. "Excellent", "Good" and
+      below mean opened or part-used: a pass.
+    # OUTER-BOX RULE, narrowed — see header. Open Box only; "Excellent" was
+    # tried and dropped the same day (shortlist 155 -> 532 on 776904).
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)",
+                   "Brand New - Open Box"]
+    examples: ["CeraVe", "Cetaphil", "Neutrogena", "Aveeno", "The Ordinary"]
+    subtypes: ["body lotion", "face care", "sunscreen", "body wash",
+               "serums & toners", "hand & foot care"]
+    seeds: ["lotion", "moisturizer", "moisturiser", "body wash", "body butter",
+            "body scrub", "face cream", "face wash", "facial cleanser",
+            # "spf" unanchored: "spf " missed run-together grades ("SPF60"),
+            # and with it two La Roche-Posay bids on 2026-10-04.
+            "sunscreen", "sunblock", "spf", "micellar", "shower gel",
+            "hand cream", "body oil", "cerave", "cetaphil", "neutrogena",
+            "aveeno", "the ordinary", "nivea", "vaseline", "eucerin",
+            "banana boat", "hawaiian tropic", "coppertone", "olay",
+            "la roche", "anthelios", "aquaphor"]
+    exclude: ["dog ", "pet ", "car wash"]
+
+  - name: "Oral & dental care"
+    group: "Personal care"
+    description: >
+      Teeth and mouth — BRAND powered devices and their heads (Philips
+      Sonicare, Philips One, Oral-B iO / Pro, Waterpik, Quip, Burst), plus
+      brand consumables: Crest and Colgate toothpaste and whitening strips,
+      Listerine, floss, retainer and denture cleaners. Powered devices are
+      appliances and ordinary used condition is fine; pastes, rinses and
+      strips are CONSUMABLE and should prefer New. A no-name "sonic
+      toothbrush with 8 heads" or generic water flosser is NOT a match.
+      Note the spellings: "PHILIPS ONE" and "PHILIPS SONICARE" both count.
+    examples: ["Philips Sonicare", "Philips One", "Oral-B iO", "Waterpik", "Quip",
+               "Crest 3D White", "Colgate"]
+    subtypes: ["electric toothbrushes", "brush heads", "water flossers",
+               "toothpaste & rinse", "whitening", "retainer care"]
+    seeds: ["toothbrush", "toothpaste", "water flosser", "waterflosser",
+            "dental floss", "mouthwash", "whitening strip", "retainer clean",
+            "denture", "oral b", "oral-b", "sonicare", "philips one",
+            "philips sonic", "waterpik", "quip ", "burst ", "colgate", "crest ",
+            "listerine", "interdental", "brush head", "diamondclean",
+            "protectiveclean", "io series"]
+
+  - name: "Shaving & grooming"
+    group: "Personal care"
+    description: >
+      Shaving and body grooming from a BRAND — Philips OneBlade / Norelco /
+      Bodygroom (a repeat bid), Braun Series, Panasonic Arc, Remington,
+      Wahl, Andis, Manscaped, Meridian, Gillette / GilletteLabs, Schick,
+      Harry's; epilators and IPL devices from Braun, Philips Lumea or
+      Ulike. Electric shavers, beard and body trimmers, cartridge razors
+      and blades, shave prep and aftershave. A no-name "5-in-1 grooming
+      kit" is NOT a match. Powered devices are appliances; creams, blades
+      and refills are CONSUMABLE and should prefer New. Titles spell it
+      "PHILIPS ONEBLADE", "PHILIPS ONE BLADE" and "ONEBLADE" — all count.
+      Note: "trimmer" alone is ambiguous — hedge and string trimmers are
+      Lawn equipment, not this bucket.
+    examples: ["Philips OneBlade", "Philips Norelco", "Braun Series 9",
+               "Panasonic Arc", "Manscaped", "Gillette", "Braun Silk-épil"]
+    subtypes: ["electric shavers", "razors & blades", "beard trimmers",
+               "body groomers", "hair removal", "shave prep"]
+    seeds: ["electric shaver", "beard trimmer", "body groomer", "oneblade",
+            "one blade", "philips one", "norelco", "bodygroom", "braun series",
+            "braun silk", "silk-epil", "silk épil", "panasonic arc", "panasonic es",
+            "manscaped", "lawn mower 4", "lawn mower 5", "meridian trimmer",
+            "razor blade", "cartridge razor", "shaving cream", "aftershave",
+            "epilator", "ipl hair", "lumea", "ulike", "gillette", "schick",
+            "harry's", "wahl ", "andis ", "remington shaver", "bikini trimmer",
+            "nose trimmer", "intimate groom", "intimate trimmer",
+            # Philips shavers titled without "electric shaver" — two bids
+            # 2026-10-12. Not bare "shaver": that is lint and ice shavers.
+            "head shaver", "i9000", "s9000", "prestige shaver", "philips shaver",
+            "philips norelco"]
+    exclude: ["hedge trimmer", "string trimmer", "grass trimmer", "edge trimmer"]
+
+  - name: "Cosmetics & nail"
+    group: "Personal care"
+    description: >
+      Makeup and nail — nail polish and gel systems, press-on nails and
+      tips, manicure kits and lamps, plus colour cosmetics (lipstick,
+      mascara, foundation, eyeshadow) and makeup tools. Nail is the
+      stronger half of this bucket in practice.
+      CONSUMABLE, OUTER-BOX RULE: flag "Brand New - Sealed", "Brand New -
+      Open Box" and "Excellent" alike — graders use the last two
+      inconsistently, and on nail tips, press-ons, gels and kits they
+      usually mean the box was opened, not that anything was used (Après
+      Gel-X tips and Extend Gel were both bid on at "Excellent"). Bat checks
+      the photos before bidding. "Good" and below is a pass.
+    # OUTER-BOX RULE — see header. The three "new" gradings plus the two
+    # that usually mean an opened outer box; "Good" and below stay out.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)",
+                   "Brand New - Open Box", "Excellent"]
+    examples: ["OPI", "Modelones", "Glamnetic", "Essie", "Maybelline"]
+    subtypes: ["nail polish", "gel systems", "press-on nails", "manicure kits",
+               "nail lamps", "colour cosmetics", "makeup tools"]
+    seeds: ["nail polish", "gel polish", "press on nail", "press-on nail",
+            "nail kit", "nail tip", "nail lamp", "manicure", "pedicure",
+            "gel x", "nail art", "lipstick", "mascara", "eyeshadow",
+            "concealer", "makeup brush", "makeup set", "opi ", "modelones",
+            "glamnetic", "essie ", "maybelline", "apr s ",
+            # Press-ons titled by shape alone ("CURVLIFE MEDIUM SQUARE CAT EYE
+            # NAILS"), filed under Bed / Bath; watched 2026-10-12, missed.
+            "cat eye nail", "curvlife", "fake nail", "false nail",
+            "coffin nail", "almond nail", "stiletto nail"]
+    # HiBid drops the è: Après renders "APR S" in every title on disk, so the
+    # old "apres " seed never matched once. Bid 7/27 (won) and twice 9/20.
+
+  - name: "Snacks & confectionery"
+    group: "Food & drink"
+    description: >
+      Snack food and sweets — chocolate and candy, chips and crisps,
+      cookies and biscuits, granola and protein bars, popcorn, nuts, jerky,
+      and variety/snack packs. Branded or generic; a SCAN bucket, so
+      breadth beats selectivity.
+      CONSUMABLE, OUTER-BOX RULE: flag "Brand New - Sealed", "Brand New -
+      Open Box" and "Excellent" alike. On a variety pack those two grades
+      usually mean the outer carton was opened while every bag inside is
+      still sealed, and Bat checks the photos before bidding. Best-before
+      dates are fine to flag too. "Good" and below, or a visibly repacked
+      or loose box, is a pass.
+    # OUTER-BOX RULE — see header. The three "new" gradings plus the two
+    # that usually mean an opened outer box; "Good" and below stay out.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)",
+                   "Brand New - Open Box", "Excellent"]
+    examples: ["Frito-Lay", "Hershey's", "Ghirardelli", "Quest", "Kind"]
+    subtypes: ["chocolate & candy", "chips & savoury", "cookies & biscuits",
+               "bars & granola", "nuts & jerky", "variety packs"]
+    seeds: ["chocolate", "candy", "gummies", "gummy", "chips ", "cookie",
+            "biscuit", "granola", "protein bar", "protein cookie", "popcorn",
+            "beef jerky", "trail mix", "snack pack", "variety pack",
+            "frito", "hershey", "ghirardelli", "quest ", "kind bar",
+            "cadbury", "lindt", "haribo", "pretzel"]
+    seed_exempt: ["Kind"]  # ordinary English word; "kind bar" carries it
+    exclude: ["candy apple", "sugar cookie", "candle", "moisturizer",
+              "candy land", "chocolate lab"]
+
+  - name: "Beverages & drink mixes"
+    group: "Food & drink"
+    description: >
+      Drinks and drink mixes — energy drinks, sparkling water and soft
+      drinks, juice, iced tea, powdered and pitcher drink mixes,
+      electrolyte and hydration packets. Coffee has its own bucket.
+      CONSUMABLE: prefer New. Cans or pouches graded below New usually
+      means a damaged or opened case.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Monster Energy", "Crystal Light", "Celsius", "Gatorade", "Liquid I.V."]
+    subtypes: ["energy drinks", "soft drinks & sparkling", "juice",
+               "iced tea", "drink mixes", "hydration & electrolyte"]
+    seeds: ["energy drink", "monster energy", "red bull", "celsius ",
+            "sparkling water", "soft drink", "iced tea", "drink mix",
+            "crystal light", "electrolyte", "hydration multiplier",
+            "liquid i.v", "gatorade", "powerade", "kool aid", "juice box",
+            "lemonade", "drink pouch", "pitcher pack"]
+    exclude: ["juicer", "drink dispenser", "drink cooler"]
+
+  - name: "Supplements & protein"
+    group: "Food & drink"
+    description: >
+      Nutrition supplements — protein powder and shakes, creatine,
+      pre-workout, vitamins and minerals, collagen, and meal-replacement
+      products. Pairs with the home gym interest.
+      CONSUMABLE: prefer "Brand New - Sealed". A tub graded "Brand New -
+      Open Box", "Excellent" or "Good" has been opened and is a pass.
+    # sealed consumable — see header. All three are HiBid "new" gradings;
+    # "Brand New - Open Box" is deliberately absent, that's an opened pack.
+    condition_in: ["Brand New - Sealed", "New (Adjusted Quantity)", "Best Before (Grocery)"]
+    examples: ["Optimum Nutrition", "Quest", "Vega", "Jamieson", "Orgain"]
+    subtypes: ["protein powder", "protein shakes & bars", "creatine",
+               "pre-workout", "vitamins", "collagen"]
+    seeds: ["protein powder", "whey protein", "protein shake", "creatine",
+            "pre workout", "preworkout", "vitamin", "multivitamin",
+            "collagen", "meal replacement", "bcaa", "optimum nutrition",
+            "jamieson", "orgain", "vega ", "supplement", "quest "]
+
+  - name: "Handheld & cordless vacs"
+    group: "Cleaning & storage"
+    description: >
+      Handheld and cordless stick vacuums — Shark WandVac (PROVEN RESALE:
+      flag every lot, any quantity), Shark Cyclone / Detect / Stratos
+      cordless, Bissell hand vacs (PowerClean Pet, FurFinder), Black+Decker
+      Dustbuster, Dyson V-series, Levoit, Tineco, Eureka. This is the
+      single most-bid bucket in the history (30+ bids), so it gets its own
+      bucket rather than sharing one with carpet machines. Robot vacs go
+      under "Robot vacuums & mops"; everything corded, shop or floor-care
+      under "Vacuums & floor care".
+    examples: ["Shark WandVac", "Bissell PowerClean Pet", "Dustbuster",
+               "Dyson V8 / V11 / V15", "Shark Cyclone", "Tineco"]
+    subtypes: ["handheld vacs", "cordless stick vacs", "car vacs",
+               "filters & accessories"]
+    seeds: ["wandvac", "wand vac", "handheld vac", "hand vacuum", "hand vac",
+            "dustbuster", "cordless vac", "stick vac", "cordless stick",
+            "dyson v", "shark cyclone", "shark detect", "shark stratos",
+            "shark rocket", "shark ion", "furfinder", "powerclean", "tineco",
+            "levoit vac", "eureka", "car vacuum"]
+    exclude: ["vacuum sealer", "vacuum bag storage", "vacuum flask",
+              "vacuum insulated", "robot", "shop vac", "wet/dry", "wet dry"]
+
+  - name: "Robot vacuums & mops"
+    group: "Cleaning & storage"
+    description: >
+      Robot vacuums and robot mops, with or without self-empty docks —
+      iRobot Roomba, Roborock, Dreame, Mova, Narwal, Ecovacs Deebot,
+      Eufy, Shark AI, Dyson 360 — plus their docks, bags, brushes, mops and
+      filters. Kept entirely separate from other vacuums on 2026-09-15:
+      it is a different purchase (watched 9 times, one Roomba bid) and was
+      buried under handhelds.
+    examples: ["Roomba", "Roborock", "Dreame", "Mova", "Narwal", "Ecovacs",
+               "Eufy", "Shark AI"]
+    subtypes: ["robot vacuums", "robot vacuum & mop", "robot mops",
+               "docks & consumables"]
+    seeds: ["robot vac", "robotic vac", "robot mop", "roomba", "roborock",
+            "dreame", "mova ", "narwal", "deebot", "ecovacs", "eufy robovac",
+            "robovac", "shark ai", "braava", "self-empty", "self empty",
+            "auto-empty", "lidar"]
+    seed_exempt: ["Eufy"]  # Eufy sells cameras and doorbells; "robovac" carries it
+    exclude: ["robot toy", "robot kit", "toy robot", "robot building"]
+
+  - name: "Vacuums & floor care"
+    group: "Cleaning & storage"
+    description: >
+      The rest of powered floor care — shop/wet-dry vacs (a second shop vac
+      is actively wanted: Vacmaster, Stanley, Amazon Basics, DeWalt,
+      Ridgid, Craftsman), corded upright and canister vacuums from a real
+      brand (Shark, Dyson, Miele, Bissell, Hoover), steam mops (Shark,
+      Bissell), and carpet/spot cleaners (Bissell Little Green, SpotClean,
+      StainStriker). Also filters, bags and brush rolls for them. Handheld
+      and cordless stick vacs go under "Handheld & cordless vacs"; robots
+      under "Robot vacuums & mops".
+    examples: ["Vacmaster", "Stanley wet/dry", "Shark Navigator", "Dyson Ball",
+               "Miele", "Bissell Little Green", "Shark Steam Mop"]
+    subtypes: ["shop & wet/dry vacs", "upright vacuums", "canister vacuums",
+               "steam mops", "carpet & spot cleaners", "filters & bags"]
+    seeds: ["shop vac", "wet dry vac", "wet/dry vac", "wet & dry vac",
+            "vacmaster", "ridgid vac", "upright vac", "canister vac",
+            "shark navigator", "shark vertex", "dyson ball", "miele ",
+            "hoover ", "steam mop", "little green", "spotclean", "spot clean",
+            "stainstriker", "carpet cleaner", "upholstery cleaner", "spot cleaner",
+            "vacuum filter", "vacuum bag", "brush roll", "vacuum "]
+    seed_exempt: ["Shark", "Dyson", "Bissell", "Stanley wet/dry"]  # type words and
+    # model names above carry them; "wet dry vac" catches the Stanley
+    exclude: ["vacuum sealer", "vacuum bag storage", "vacuum flask",
+              "vacuum insulated", "robot", "handheld", "hand vac", "wandvac",
+              "dustbuster", "cordless stick", "pool vacuum", "pool vac"]
+
+  - name: "Seating & occasional furniture"
+    group: "Home & bedroom"
+    description: >
+      The living-space pieces this household actually looks at — bean bag
+      chairs and bean-bag-style loungers (Big Joe, Yogibo, Moon Pod,
+      giant/kids' bean bags), bar and counter stools, and coffee tables
+      including folding / lift-top / nesting coffee tables. Also hanging
+      and egg chairs, ottomans and kneeling/office chairs when they are a
+      complete, well-made piece. NOT accent chairs, recliners, console or
+      end tables, nightstands (own bucket), or flat-pack no-name
+      "modern side table" filler. Refocused 2026-09-15.
+    examples: ["Big Joe", "Yogibo", "Moon Pod", "VASAGLE coffee table",
+               "Rolanstar", "Winsome"]
+    subtypes: ["bean bag chairs", "bar & counter stools", "coffee tables",
+               "folding & lift-top tables", "hanging & egg chairs",
+               "ottomans", "office & kneeling chairs"]
+    seeds: ["coffee table", "folding coffee", "lift top table", "lift-top",
+            "nesting coffee", "bar stool", "barstool", "counter stool",
+            "bean bag chair", "beanbag chair", "bean bag lounger", "big joe",
+            "yogibo", "moon pod", "kids bean bag", "winsome",
+            "lounger chair", "egg chair", "hanging chair", "ottoman",
+            "desk chair", "office chair", "kneeling chair", "vasagle",
+            "rolanstar"]
+    exclude: ["chair cover", "chair cushion", "chair mat", "high chair",
+              "car seat", "table cloth", "tablecloth", "water table",
+              "picnic table", "table saw", "step stool", "bar stool cover",
+              "stool cover", "shower stool", "toilet stool", "squatty",
+              "footstool for", "folding chair", "bean bag filler",
+              "bean bag filling", "bean bags set", "cornhole", "tray for",
+              "vasagle shelf", "bookshelf", "coat rack", "nightstand"]
+
+  - name: "Car care & detailing"
+    group: "Tools & garage"
+    description: >
+      Car cleaning and detailing — wash soaps and shampoos, waxes and
+      sealants, wheel and tire cleaners, interior cleaners, detailing kits,
+      applicators, drying towels, and wiper blades. Branded detailing
+      chemicals are the core of this; the household buys these repeatedly.
+      This bucket is deliberately NOT Tesla-specific — model-fit parts stay
+      under the Vehicle interest.
+    examples: ["Meguiar's", "Chemical Guys", "Armor All", "Turtle Wax", "Mothers"]
+    subtypes: ["wash & shampoo", "wax & sealant", "wheel & tire",
+               "interior care", "detailing kits", "applicators & towels"]
+    seeds: ["car wash", "car shampoo", "car wax", "carnauba", "detailing kit",
+            "detailing spray", "wheel cleaner", "tire shine", "tyre shine",
+            "interior cleaner", "wash mitt", "drying towel", "clay bar",
+            "wiper blade", "meguiar", "chemical guys", "armor all",
+            "turtle wax", "mothers polish", "car cover", "windshield washer",
+            "foam cannon", "foam gun", "griot"]
+    seed_exempt: ["Mothers"]  # ordinary word; "mothers polish" carries it
+    exclude: ["car seat", "car charger", "car mount", "car vacuum"]
+
+  - name: "Lawn treatment & pest control"
+    group: "Outdoor & garden"
+    description: >
+      Things applied to a lawn or garden rather than tools — fertiliser,
+      weed and feed, herbicide, grass seed, soil and compost, spreaders and
+      sprayers, dethatchers, plus pest and insect control (diatomaceous
+      earth, ant and wasp killer, rodent traps, mosquito control).
+    examples: ["Scotts", "Turf Builder", "Ortho", "Wilson", "Harris"]
+    subtypes: ["fertiliser & feed", "weed control", "grass seed",
+               "soil & compost", "spreaders & sprayers", "insect control",
+               "rodent control"]
+    seeds: ["fertilizer", "fertiliser", "weed and feed", "weed & feed",
+            "weed killer", "weed control", "herbicide", "grass seed",
+            "lawn soil", "compost", "dethatch", "lawn spreader",
+            "turf builder", "diatomaceous", "insecticide", "pesticide",
+            "ant killer", "wasp", "mosquito", "rodent", "mouse trap",
+            "scotts ", "ortho ", "weedclear", "bug spray", "pest control",
+            "harris diatomaceous"]
+    seed_exempt: ["Wilson", "Harris"]  # surnames; too costly as bare seeds
+    exclude: ["weed puller", "weed barrier", "weed eater"]
+
+  - name: "Outdoor play, swim & blasters"
+    group: "Toys & games"
+    aliases: ["Kids' outdoor water play"]
+    description: >
+      Warm-weather outdoor play for kids — Nerf and other dart/gel
+      blasters, water guns and electric water blasters, Super Soakers,
+      water tables, splash pads, kiddie and inflatable pools, pool floats
+      and pool games sized for children (diving games, pool basketball),
+      swim goggles (Speedo is a repeat) and kids' life jackets, water
+      balloons, and sprinkler toys. Blasters moved here from "Sports &
+      recreation gear" on 2026-09-15 — 8 of that bucket's 12 bids were
+      Nerf or water guns. Pool chemicals, filters and covers go under
+      "Pool & hot tub care".
+    examples: ["Nerf", "Super Soaker", "X-Shot", "Speedo", "Step2", "Little Tikes",
+               "Intex", "Bestway", "Funboy"]
+    subtypes: ["nerf & dart blasters", "water guns & blasters", "water tables",
+               "splash pads", "kiddie & inflatable pools", "pool floats",
+               "pool games", "swim goggles & gear"]
+    seeds: ["nerf", "dart blaster", "gel blaster", "gelfire", "water table",
+            "water gun", "water blaster", "super soaker", "x shot", "xshot",
+            "splash pad", "kiddie pool", "paddling pool", "inflatable pool",
+            "water balloon", "pool float", "pool floatie", "swim ring",
+            "water toy", "sand and water", "sand & water", "pool toy",
+            "pool game", "diving game", "dive toy", "pool basketball",
+            "swim goggle", "speedo", "life jacket", "swim vest", "puddle jumper",
+            "step2", "little tikes", "bestway", "funboy", "water sprinkler mat",
+            "splash table", "kidoozie"]
+    seed_exempt: ["Intex"]  # Intex is mostly pool pumps and air mattresses here
+
+  - name: "Kids' craft & activity"
+    group: "Toys & games"
+    description: >
+      Making and doing rather than playing with — craft and art kits,
+      drawing and colouring supplies, markers and paint sets, modelling and
+      air-dry clay, slime and kinetic sand, bead and jewellery kits,
+      sticker and scrapbook sets, easels and tracing pads, and STEM/robotics
+      kits. Branded or generic.
+    examples: ["Crayola", "Play-Doh", "Melissa & Doug", "Klutz", "Faber-Castell"]
+    subtypes: ["art & drawing", "markers & paint", "modelling clay & dough",
+               "slime & sensory", "bead & jewellery kits", "sticker & craft kits",
+               "STEM & robotics"]
+    seeds: ["crayola", "play doh", "playdoh", "play-doh", "craft kit",
+            "art set", "art kit", "paint set", "marker set", "alcohol marker",
+            "acrylic paint", "colouring book", "coloring book", "air dry clay",
+            "modelling clay", "modeling clay", "kinetic sand", "slime kit",
+            "bead kit", "jewellery kit", "jewelry kit", "sticker book",
+            "scrapbook", "tracing pad", "easel", "stem kit", "robot kit",
+            "science kit", "melissa & doug", "klutz", "faber castell"]
+    exclude: ["paint sprayer", "spray paint", "paint roller", "wall paint"]
+
+  - name: "Playroom & active play"
+    group: "Toys & games"
+    description: >
+      Gear for a kid's playroom and active-play build-out — rock climbing
+      holds and climbing wall kits, ninja warrior obstacle course kits and
+      slackline/ninja lines, monkey bars and rings, indoor and outdoor
+      swings (disc, saucer, platform, sensory/pod swings) and swing
+      hangers, trampolines and mini trampolines, gymnastics mats, crash
+      mats and foam pits, balance beams, Pikler triangles and climbing
+      arches, play couches (Nugget-style), indoor slides, stepping stones,
+      and pull-up/hangboard gear sized for kids. Recognizable brands or
+      clearly complete sets. NOT infant/baby swings, NOT porch or patio
+      swings, NOT the Ninja kitchen appliances. New on 2026-09-15.
+    examples: ["Slackers ninja line", "Ninja Warrior kit", "Gorilla Playsets",
+               "Little Tikes", "Skywalker Trampolines", "Nugget", "Pikler"]
+    subtypes: ["climbing holds & walls", "ninja courses", "monkey bars & rings",
+               "swings", "trampolines", "mats & crash pads", "balance & climbing",
+               "play couches", "slides"]
+    seeds: ["climbing hold", "climbing wall", "rock wall", "rock climbing",
+            "ninja line", "ninjaline", "ninja warrior", "ninja course",
+            "ninja obstacle", "obstacle course", "slackline", "slack line",
+            "monkey bar", "gymnastic ring", "gym ring", "swing seat",
+            "saucer swing", "disc swing", "platform swing", "sensory swing",
+            "pod swing", "tree swing", "swing hanger", "swing set",
+            "trampoline", "gymnastics mat", "tumbling mat", "crash mat",
+            "crash pad", "foam pit", "balance beam", "pikler", "climbing triangle",
+            "climbing arch", "play couch", "nugget", "indoor slide", "kids slide",
+            "stepping stone", "hangboard", "hang board", "cargo net for kids",
+            "climbing cargo net", "climbing net", "climbing rope", "ladder swing",
+            "balance stepping", "wobble board kids", "indoor playground"]
+    exclude: ["baby swing", "infant swing", "porch swing", "patio swing",
+              "swing chair", "egg swing", "hammock swing", "swing cushion",
+              "swing bar door", "ninja blast", "ninja crispi", "ninja foodi",
+              "ninja slushi", "ninja creami", "ninja bl", "ninja bn", "ninja pro",
+              "ninja mc", "ninja af", "ninja nj", "ninja dual", "ninja cold",
+              "ninja detect", "ninja master", "ninja immersion", "ninjamas",
+              "ninja 200w", "ninja 12-cup", "nutri ninja", "trampoline pole cover",
+              "pole cover", "golf swing", "swing trainer", "swing speed",
+              "nugget ice", "chicken nugget"]
+    seed_exempt: ["Gorilla Playsets", "Little Tikes"]  # type words carry them;
+    # Little Tikes is mostly ride-ons and water tables
+
+  - name: "Audio & headphones"
+    group: "Electronics & gaming"
+    description: >
+      Personal and home audio — over-ear and on-ear headphones, earbuds,
+      Bluetooth and portable speakers, soundbars, USB and streaming
+      microphones, amps and DACs, and turntables. Split out of "Electronics"
+      2026-08-30: audio was watched consistently across three months of
+      history (Audio-Technica three times, Sony WH-1000XM5 twice, Anker,
+      Ultimate Ears, Blue Yeti) while buried in the largest and
+      worst-converting bucket in the taxonomy. Narrowed to the GOOD
+      pickups on 2026-09-15: this is a brand gate. Sony (WH/WF-1000 series,
+      LinkBuds), Bose, Sennheiser, Audio-Technica, Beyerdynamic, AKG, Shure,
+      Apple AirPods / Beats, Samsung Galaxy Buds, Jabra, JBL, Ultimate Ears,
+      Anker Soundcore, Marshall, Sonos, Bang & Olufsen, Klipsch, SteelSeries
+      Arctis, Logitech G / Astro headsets, HyperX Cloud, Razer BlackShark;
+      Blue Yeti, Shure, Rode, Elgato Wave mics; Focusrite, FiiO, Schiit
+      amps/DACs. A no-name "wireless earbuds 5.3" listing or a generic
+      Bluetooth speaker is NOT a match — 397 of 531 lots last week were
+      exactly that.
+    examples: ["Sony WH-1000XM5", "Bose QuietComfort", "Sennheiser", "Audio-Technica",
+               "AirPods", "Galaxy Buds", "JBL", "Ultimate Ears", "Anker Soundcore",
+               "Marshall", "Sonos", "Blue Yeti", "SteelSeries Arctis", "HyperX Cloud"]
+    subtypes: ["over-ear headphones", "earbuds", "bluetooth speakers",
+               "soundbars", "microphones", "turntables", "amps & DACs"]
+    seeds: ["wh-1000", "wh 1000", "wf-1000", "wf 1000", "wh-ch", "wh-xb",
+            "linkbuds", "sony headphone", "sony earbud", "sony wireless",
+            "bose ", "quietcomfort", "sennheiser", "audio technica",
+            "audio-technica", "ath-", "beyerdynamic", "akg ", "shure ",
+            "airpod", "beats ", "galaxy buds", "jabra", "jbl ", "ultimate ears",
+            "wonderboom", "soundcore", "marshall ", "emberton", "sonos",
+            "bang & olufsen", "klipsch", "arctis", "astro a", "g pro x 2",
+            "wireless gaming headset", "g435", "g535", "g733", "g335",
+            "hyperx cloud", "blackshark", "razer kraken", "razer barracuda",
+            "blue yeti",
+            "yeti mic", "rode ", "elgato wave", "focusrite", "fiio", "schiit",
+            "audioengine", "edifier", "turntable", "audio-technica lp"]
+    seed_exempt: ["Sony"]  # bare "sony" is mostly non-audio; model prefixes above carry it
+    # No `categories:` on purpose — the Home Audio breadcrumb is mostly no-name
+    # speakers, exactly what the brand gate exists to keep out.
+    exclude: ["speaker wire", "speaker stand", "speaker mount",
+              "headphone stand", "speaker cable"]
+
+
+# ===== profile.yaml ================================================
+
+# Bat's taste profile — the "why" behind buckets.yaml.
+#
+# This file and buckets.yaml are BOTH attached to the flagging chat. The
+# profile explains what this household actually wants; buckets.yaml is the
+# navigable taxonomy that interest is expressed through.
+#
+# WRITTEN IMPERSONALLY ON PURPOSE. This repo is public. Interests, brands,
+# age bands and sizes are fine here; names, relations and addresses are not,
+# and they buy nothing in recall. Say "kids' toys, ages 8-11" rather than
+# naming a person.
+#
+# Three fields do mechanical work and are linted by tools/prefilter.py:
+#
+#   buckets:  the buckets in buckets.yaml this interest justifies. Every
+#             bucket must be claimed by at least one interest — an unclaimed
+#             bucket is a question to answer, not a silent orphan. An interest
+#             with `buckets: []` is a pure PSEUDO-BUCKET: it has no place in
+#             the taxonomy but its seeds still shortlist lots, so a genuine
+#             personal pick outside every bucket can still reach the model.
+#   tags:     the controlled vocabulary for `personal_tags`. Anything outside
+#             this set is reported by tools/verify_passes.py.
+#   seeds:    lexical shortlist terms, same matching rules as buckets.yaml.
+#             Add them wherever an interest has edges its buckets don't cover
+#             — NOT only on pseudo-buckets. "Kids' toys" owns Barbies and Lego
+#             but no bucket holds a generic doll; "Garage & workshop" owns
+#             Power tools but no bucket holds a hand chisel. Measured, seeding
+#             those edges took personal-pick reach from 72.7% to 94.0%.
+
+# These gate apparel and footwear matches — the flagging pass is told to
+# reject the right item in the wrong size. Two adults, so each is a map.
+sizes:
+  apparel:
+    womens: "M"
+    # L or XL (user, 2026-10-24): XL hoodies and joggers drew bids on
+    # 2026-10-18 and one was won. 2XL is still out.
+    mens: ["L", "XL"]
+  # Deliberately unset (2026-09-15): shoe sizes are mislabelled in these
+  # listings often enough that gating on them rejects the right pairs. The
+  # Footwear interest is brand-gated instead and flags every size.
+  shoe: null
+
+projects:
+  - "Home gym build-out — rack, bar, plates, flooring, accessories."
+  - "Kids' playroom and active-play build-out — climbing holds, ninja
+     course gear, swings, mats, trampolines (see \"Playroom & active play\")."
+  - "Garage/workshop organisation and tooling."
+  - "3D printing: filament, spare parts, consumables."
+  - "Yard and lawn upkeep on an ongoing basis."
+  - "Pool and hot tub maintenance across the season."
+  - "Small-business product testing — items bought to evaluate and resell."
+
+# SCOPE LOCK (2026-09-15, user decision). Bat's List is a TARGETED list —
+# short enough to actually read — not a scan of the auction; the main viewer
+# does the wide search. On 2026-09-13 the list held 40% of the auction while
+# the household engaged with ~1 in 80 flagged lots, so every broad bucket was
+# narrowed to what the bid/watch history shows is actually wanted, and the
+# zero-engagement catch-alls were retired (see the header of buckets.yaml for
+# the list). DO NOT widen any bucket, soften any brand gate, or re-add a
+# retired bucket without the user's EXPLICIT permission in the conversation
+# where the edit is made. The exception is the short list of SCAN buckets
+# named in buckets.yaml — those stay broad on purpose. If a wanted item is
+# being missed, add the specific product or brand to the matching bucket;
+# never the whole type.
+#
+# HOW THINGS ACTUALLY GET REJECTED. Even inside the narrowed buckets, plenty
+# gets browsed and still not bought — that is condition and price, not
+# disinterest. Fix a miss by adding a product; do not fix a low bid rate by
+# widening a bucket.
+#   - On CONSUMABLES (personal care, food, cleaning) anything below
+#     "Brand New - Sealed" usually means opened. Measured across 54,463
+#     lots, personal-care categories run ~57% "Excellent" and only ~14%
+#     sealed. Note "Brand New - Open Box" is an OPENED pack despite the
+#     name — it is unused merchandise, not an intact seal.
+#   - Even "Brand New - Sealed" does not guarantee sealed. One such lot
+#     reads "2 sealed, 1 opened amount of sheets unknown".
+#   - If the photos cannot show an intact seal on something meant to be
+#     sealed, that is a pass regardless of the stated grade.
+#   - EXCEPTION since 2026-09-23, the OUTER-BOX RULE: in Cosmetics & nail
+#     and Snacks & confectionery, "Brand New - Open Box" and "Excellent"
+#     usually mean an opened outer box around sealed units (a 42-bag
+#     carton, a box of nail tips), and graders apply them inconsistently.
+#     Skincare & body takes Open Box only (a twin-pack sleeve); "Excellent"
+#     there is too common to admit. Those are flagged and Bat judges the
+#     seal from the photos. "Good" and below is still a pass, and every other
+#     consumable keeps the sealed-only bar — widening it everywhere would
+#     flood the list.
+# Buckets whose descriptions say CONSUMABLE encode this bar.
+
+not_wanted:
+  - "Consumables — personal care, food, drink, cleaning — in any condition
+     below New, or where the photos cannot establish that the seal is
+     intact. An opened lotion or a broken-seal food pack is an immediate
+     pass even when the listing says New. Exception: buckets whose
+     description states the OUTER-BOX RULE also accept \"Brand New - Open
+     Box\", and some also \"Excellent\" — accept exactly the grades that
+     bucket's description names."
+  - "Broken, incomplete, or non-functional items, unless the profile
+     explicitly wants that type for parts or repair."
+  - "Generic no-brand single utensils, cables, and accessories with no
+     resale or practical value."
+  - "Apparel and footwear outside the sizes above."
+  - "Consumables already stocked in quantity."
+
+interests:
+  - name: "Home gym"
+    buckets: ["Weights, bars & racks", "Gym accessories"]
+    tags: ["home_gym"]
+    description: >
+      Strength training equipment for a home gym — barbells, plates, racks,
+      benches, dumbbells, kettlebells, cable machines, and gym flooring.
+      The single largest standing interest. Split on 2026-09-15 so the
+      hardware is not buried under yoga mats: "Weights, bars & racks" is
+      the equipment, "Gym accessories" the bands, mats, attachments and
+      small gear. CAP bumper plates and adjustable dumbbells get watched
+      repeatedly.
+    # Fitness gear the bucket's own seeds don't reach.
+    seeds: ["fitness", "workout", "exercise", "training bag", "bag stand",
+            "gym ", "weight lifting", "weightlifting", "strength training"]
+
+  - name: "Sports & outdoor recreation"
+    buckets: ["Backyard games", "Nets, goals & hoops", "Bikes, scooters & skates",
+              "Outdoor furniture & hammocks"]
+    tags: ["family_outdoors", "family_activity"]
+    description: >
+      Family outdoor activity and yard seating — backyard games (cornhole,
+      ladder toss, Spikeball), soccer nets, goals and hoops for practice,
+      bikes, scooters and skates with their pads and helmets, hammocks and
+      patio furniture. The old "Sports & recreation gear" bucket (808 lots
+      a week) was retired on 2026-09-15: balls, sticks, racquets, tents
+      and camping gear are NOT wanted — none drew a bid in four months.
+
+  - name: "Kids' toys & games"
+    buckets: ["Barbies", "Lego", "Surprise toys", "Hatchimals", "Funko Pop!",
+              "Board games", "Dolls, plush & playsets",
+              "Outdoor play, swim & blasters", "Kids' craft & activity",
+              "Playroom & active play"]
+    tags: ["kids_interest", "family_activity", "playroom"]
+    description: >
+      Toys and games for a girl roughly ages 8-11, plus board games the
+      whole household plays (a SCAN bucket — rarely bought, kept on
+      purpose). Collectible and blind-box toys included. Nerf and water
+      blasters are a repeat buy. Action figures and figurines are not
+      wanted, with ONE exception: Funko Pop! of any franchise, adult ones
+      included (Fallout, World of Warcraft, Marvel, Invader Zim) — bid on
+      in four auctions and watched heavily (2026-10-02); every Funko Pop!
+      is a personal match, not only the franchises named here (an Invader
+      Zim GIR was won 2026-10-25 and came back not personal). PLAY-DOH is
+      a repeat buy in every form — mega packs bid three weeks running to
+      2026-10-12, and two Play-Doh flower-bouquet kits bid 2026-10-25 —
+      so any Play-Doh set or kit is a personal match. KPop Demon Hunters is the
+      current favourite franchise across every form it comes in — Huntr/x
+      dolls, Furby Furblets, Funko — and is a personal match in any of
+      them. Disney Tangled / Rapunzel and Sanrio (Hello Kitty, Kuromi)
+      also drew Funko bids on 2026-10-04. BEYBLADE is a standing interest
+      (user, 2026-10-24): Beyblade X Xtreme battle sets bid on 10/04 and
+      10/18 (one won), Drop Attack and unbranded "blade tops" kits watched —
+      any Beyblade battle set, Beystadium, starter pack or launcher, and the
+      unbranded battling-top kits, is a personal match. The playroom build-out (climbing holds, ninja course kits,
+      swings, mats) is a live project — see "Playroom & active play".
+    # "Dolls & plush" now covers dolls/plush/figures. These seeds catch the
+    # remaining edges — craft and activity toys with no bucket of their own.
+    seeds: ["toy ", "toys", "craft kit", "art set", "kids ", "children",
+            "toddler", "frozen ", "ride on", "colouring", "coloring book",
+            "sticker", "science kit", "building set"]
+
+  - name: "Playroom & active play"
+    buckets: ["Playroom & active play"]
+    tags: ["playroom", "kids_interest"]
+    description: >
+      A playroom / active-play build-out for a kid — rock climbing holds
+      and wall kits, ninja-warrior obstacle and slackline kits, monkey
+      bars, swings and swing hangers, trampolines, gymnastics and crash
+      mats, balance beams, Pikler triangles, play couches. Gymnastics is the
+      current theme: three folding / adjustable balance-beam bids on
+      2026-10-18 (Marfula won) and a gymnastics Barbie playset watched
+      twice — none came back personal, so say it plainly: a balance beam
+      or gymnastics mat is a personal match. A live project,
+      so a complete, well-made set is a personal match even from a lesser
+      brand; a single flimsy accessory is not.
+    seeds: ["climbing hold", "ninja line", "ninja warrior", "obstacle course",
+            "monkey bar", "swing set", "gymnastics mat", "crash mat",
+            "balance beam", "pikler", "play couch"]
+
+  - name: "PC & desk setup"
+    buckets: ["Keyboards, keycaps & switches", "PC peripherals",
+              "Monitors & displays", "Networking", "VR headsets & accessories",
+              "Audio & headphones"]
+    tags: ["pc_accessory", "pc_gaming", "secondary_monitor", "networking",
+           "mechanical_keyboard", "vr"]
+    description: >
+      Desktop PC and gaming setup — keyboards, mice, monitors, headsets,
+      capture and streaming gear, networking equipment, and VR. Mechanical
+      keyboards, keycaps and switches are THE specific enthusiasm here (11
+      keyboard bids and a keycap-set bid in four months; Logitech G915 /
+      G515 / Alto Keys, Keychron, GMMK, Razer, SteelSeries Apex, Ajazz,
+      Yunzii all engaged) — an enthusiast board in decent condition is a
+      personal match, not just a bucket entry. Consoles and console games
+      are NOT wanted; VR gear is. Drones, tablets, cameras and wearables
+      are NOT wanted (the "Electronics" catch-all was retired 2026-09-15).
+      Razer gaming mice are a second, steadier thread — Basilisk (bid
+      2026-09-27, won 2026-10-04), DeathAdder, Viper and Naga all watched
+      repeatedly — and count as a personal match too.
+
+  - name: "Smart home"
+    buckets: ["Smart home", "Smart locks"]
+    tags: ["smart_home"]
+    description: >
+      Home automation — smart bulbs and strips, plugs, thermostats, sensors,
+      video doorbells, and keyless entry hardware.
+
+  - name: "Garage & workshop"
+    buckets:
+      ["Power tools", "Hand tools", "Garage & tool organization",
+       "Adhesives & tape", "Extension cords & power strips", "Tie-downs"]
+    tags: ["garage_workshop", "tooling", "garage_organization",
+           "charging_and_power", "yard_and_garage"]
+    description: >
+      An actively used workshop — power and hand tools (heat guns, sanders,
+      nailers, clamps and a soldering station have all been bid on or
+      watched), tool storage and organisation, fasteners and adhesives,
+      cords, and tie-downs for hauling. Household batteries, power banks
+      and chargers are NOT wanted ("Batteries & chargers" retired
+      2026-09-15, zero engagement in four months) — except bulk AA/AAA
+      alkaline packs, see "Household batteries (bulk)". A power-tool
+      battery for a platform already owned still counts under "Power tools".
+    # "Hand tools" now covers the tools and fasteners themselves. These are
+    # the workshop consumables and PPE that still have no bucket.
+    seeds: ["work glove", "safety glass", "safety goggle", "ear protection",
+            "dust mask", "respirator", "shop towel", "wd-40", "lubricant",
+            "sandpaper", "abrasive", "drop sheet"]
+
+  - name: "3D printing"
+    buckets: ["3D printing supplies"]
+    tags: ["3d_printing", "3d_printing_consumable"]
+    description: >
+      An operating 3D printer — filament and resin, nozzles, build plates,
+      and printer spares. Filament is a recurring consumable.
+
+  - name: "Yard & lawn"
+    buckets:
+      ["Lawn equipment", "Garden hose", "Gardening tools",
+       "Garden & lawncare misc", "Lawn treatment & pest control"]
+    tags: ["outdoor_maintenance", "yard_watering"]
+    description: >
+      Ongoing yard upkeep — mowers and trimmers, hoses and watering, hand
+      garden tools, lawn treatments, and tarps. EGO 56V is the cordless
+      platform of interest (hedge trimmer bid twice 2026-07-20; the
+      Multi-Head power head watched four times and a bristle-brush
+      attachment bid on 2026-10-04): any EGO 56V tool, power head or
+      attachment is a personal match. Garden hoses are the
+      standing repeat buy (engaged with in four auctions since May, two won
+      on 2026-09-27): a decent hose — Flexzilla, VEVOR, heavy rubber,
+      kink-free or expandable — or a wall-mount hose reel is a personal
+      match, not just a bucket entry. Lawn levelling is a live project:
+      levelling rakes, lawn rollers and dethatchers have all been watched.
+    seeds: ["mosquito", "bug zapper", "pest control", "wasp", "gazebo",
+            "screen tent", "outdoor umbrella", "wheelbarrow", "garden cart"]
+
+  - name: "BBQ & outdoor cooking"
+    buckets: ["BBQ accessories"]
+    tags: ["outdoor_cooking", "bbq_accessory"]
+    description: >
+      Grilling and outdoor cooking — grill tools and accessories, smoking
+      supplies, thermometers, covers, and fuel.
+
+  - name: "Kitchen"
+    buckets:
+      ["Mixers, blenders & food prep", "Espresso & specialty appliances",
+       "Brand cookware", "Brand chef knives", "Kitchen utensils & gadgets",
+       "Glassware & drinkware", "Dinnerware", "Kitchen storage & organization",
+       "Insulated drinkware"]
+    tags: ["premium_kitchen", "insulated_drinkware"]
+    description: >
+      A well-equipped kitchen that rewards quality — recognisable-brand
+      mixers, blenders and food prep (KitchenAid, Vitamix, Braun, Breville
+      — every kitchen-appliance bid in four months was one of these),
+      espresso/Nespresso machines and the odd specialty machine (Creami,
+      sous vide), and GOOD cookware (All-Clad, Made In, Tramontina tri-ply,
+      Le Creuset, Lodge — never a random single-ply stainless pan). Toasters,
+      kettles, air fryers and drip coffee makers are NOT wanted; the broad
+      "Kitchen appliances" bucket was split and narrowed on 2026-09-15.
+      Utensils & gadgets is a small SCAN bucket kept on purpose. Quality
+      is the whole point here: generic no-brand pieces are explicitly not
+      wanted, and the buckets encode that gate in their own descriptions.
+      Nespresso is the espresso thread: Vertuo Next watched or bid in four
+      auctions since May, and Vertuo Next and Essenza Mini drew a bid and
+      five watches on 2026-10-12 — a Nespresso machine is a personal match.
+      Insulated drinkware is an active, repeat interest on its own — a
+      S'well travel mug, an Ember heated mug and a Hydro Flask mug have all
+      drawn bids, and Stanley Quenchers and Thermos kids' bottles get
+      watched. Treat Stanley / Owala / Hydro Flask / S'well / Yeti
+      tumblers, bottles and travel mugs as a personal match, not just a
+      bucket entry — and Stanley lunch boxes and food jars too (an All Day
+      lunch box drew a bid on 2026-09-27). GLOBAL (Yoshikin) is the knife
+      brand: santoku and cook's knives bid in five auctions since July, a
+      santoku won 10/04 and a vegetable knife 10/18 — any Global knife is a
+      personal match. Food and drink itself now lives in its own interest below.
+
+  - name: "Cleaning"
+    buckets: ["Cleaning supplies & tools", "Handheld & cordless vacs",
+              "Robot vacuums & mops", "Vacuums & floor care"]
+    tags: ["cleaning_consumable", "cleaning_equipment", "second_shop_vac",
+           "proven_resale"]
+    description: >
+      Household cleaning — handheld and cordless vacs are the most-bid
+      thing in the whole history (Shark WandVac is proven resale; Bissell
+      PowerClean, Dustbuster and Shark Cyclone all bid), robot vacuums are
+      watched as a separate purchase, a second shop vac is actively wanted,
+      and the supplies side is sponges and dish wands (always looked for),
+      spin scrubbers, brand mops and brand cleaning solutions. Electric
+      spin scrubbers specifically (YKYI, Leebein, Tuyu, Hoto) drew bids in
+      five auctions since June, one won 2026-10-18 — a personal match. Paper goods
+      and generic cleaning kits are NOT wanted. METHOD is the cleaning brand
+      — 11 lots across 7 auctions since May and 5 bids (granite, tub & tile,
+      all-purpose, dish soap): any sealed Method cleaner or soap is a
+      personal match.
+
+  - name: "Storage & organization"
+    buckets: ["Storage bins & totes", "Laundry baskets"]
+    tags: ["home_organization"]
+    description: >
+      General household storage — plastic bins and lidded totes, stackable
+      containers, organising bins, laundry baskets, and rolling / utility
+      carts (wanted as of 2026-10-31, after a 3-tier cart bid on 10/25).
+
+  - name: "Bed & bath"
+    buckets:
+      ["Bedding & pillows", "Bed linens", "Bath towels", "King bed frames",
+       "Nightstands", "Seating & occasional furniture"]
+    tags: ["bed_and_bath_linens"]
+    description: >
+      Bedroom and bathroom textiles and furniture, plus living-space seating
+      and occasional tables. Bed size is king — check size before flagging
+      fitted sheets or frames. "Bedding & pillows" was shrunk to BRAND
+      throws, premium pillows/toppers and weighted blankets on 2026-09-15
+      (693 lots a week, zero bids); mattresses and generic pillows are NOT
+      wanted. UGG is the brand that does get bid on — Whitecap, Nita and
+      Euphoria throws and a Hedi sheet set, five auctions since August:
+      UGG throws and bedding are a personal match.
+
+  - name: "Footwear"
+    buckets: ["Brand shoes (adult)", "Brand shoes (kids)"]
+    tags: ["footwear", "kids_footwear"]
+    description: >
+      BIG-brand footwear only — Hunter, UGG, Nike, Adidas, Crocs, Sorel,
+      Blundstone, Dr. Martens, Birkenstock, New Balance and the like — for
+      the adults and for a kid. Off-brand shoes are not wanted at all. NOT
+      size-gated: listings mislabel shoe sizes often enough that a size
+      gate was rejecting the right pairs, so flag any branded pair and note
+      the listed size in the reasoning. Split adult/kids 2026-09-15.
+
+  - name: "Personal care & grooming"
+    buckets: ["Hair care products", "Hair styling tools", "Skincare & body",
+              "Oral & dental care", "Shaving & grooming", "Cosmetics & nail"]
+    tags: ["personal_care", "hair_care", "skincare", "nail_care", "dental_care"]
+    description: >
+      Everyday personal care for two adults — hair care and styling, skin and
+      body products, oral and dental, shaving and grooming, and makeup/nail.
+      This is one of the largest categories in the auction (~840 lots a week)
+      and had NO bucket before 2026-08-30 despite eight bids in three months.
+      Almost all of it is consumable, so the condition bar in `not_wanted`
+      does the real filtering: the interest is broad, the acceptance is
+      narrow. Powered tools in these buckets (hair stylers, electric
+      shavers, toothbrushes, water flossers) are appliances judged on value,
+      not on seal — and since 2026-09-15 they are BRAND-gated: Shark
+      FlexStyle and Dyson Airwrap (both bid), Philips OneBlade (bid twice),
+      Sonicare / Oral-B / Waterpik. A no-name styler or "sonic toothbrush"
+      is not wanted.
+      Nail is a distinct and consistent sub-interest — gel systems, press-on
+      tips and manicure kits, not just polish.
+      Baby-formula skincare is a second steady thread — Aquaphor Baby
+      ointment, Aveeno Baby nighttime balm, Cetaphil Baby lotion (three bids
+      on 2026-10-12 alone) — and a sealed one is a personal match. Philips
+      grooming goes beyond OneBlade: Series 9000 / i9000 Prestige shavers
+      and the Head Shaver Pro were bid on 2026-10-12, so treat Philips
+      electric shavers as part of the same brand match.
+      SUNSCREEN is the single most-bought thing in this interest — about
+      eleven bids across six auctions since July and four wins: La
+      Roche-Posay Anthelios, Neutrogena Ultra Sheer, Attitude mineral,
+      Thinksport / Thinkbaby, IT Cosmetics. A branded sunscreen at an
+      accepted grade is a personal match, face or body, kids' or adult.
+      ATTITUDE (the EWG-verified Canadian brand) is a repeat brand: its
+      mineral sunscreen was won on 2026-07-12 and its kids' 2-in-1 shampoo
+      & body wash on 2026-09-27. A sealed Attitude lot is a personal match.
+    seeds: ["grooming", "personal care", "toiletries", "cosmetic",
+            "salon", "spa set", "gift set bath"]
+
+  - name: "Food & drink"
+    buckets: ["Coffee & espresso", "Pantry & cooking staples",
+              "Snacks & confectionery", "Beverages & drink mixes",
+              "Supplements & protein"]
+    tags: ["food_and_drink", "coffee", "snacks", "supplements"]
+    description: >
+      Groceries worth buying at auction. These are SCAN buckets — they get
+      browsed every week even though they convert rarely, so keep them broad
+      and do not narrow them on a low flag rate.
+      Coffee is a standing consumable: beans are ground at home for iced
+      coffee, so whole bean and ground both count, pre-ground included.
+      Snacks and branded drinks earned their buckets from the history —
+      protein cookies, Crystal Light and a Taco Bell kit were all bid on
+      while no bucket existed to hold them. Supplements pair with the home
+      gym interest.
+      Everything here is consumable: prefer New, and treat an unprovable
+      seal as a pass — except Snacks & confectionery, which follows the
+      OUTER-BOX RULE in its bucket description.
+    seeds: ["grocery", "food lot", "snack", "beverage", "drink ", "pantry"]
+
+  - name: "Product testing & resale"
+    buckets: []
+    tags: ["product_testing", "small_business", "proven_resale"]
+    description: >
+      Items bought to evaluate, review, or resell through a small business.
+      Cuts across every category, so it is a lens rather than a bucket: a lot
+      can be a product-testing pick without belonging to any bucket.
+      PROVEN RESALE is the strong form of this and is listed separately below.
+      A product already resold successfully is worth flagging on every
+      reappearance, at any quantity, even in mediocre condition — the resale
+      value is known rather than estimated. Tag those `proven_resale`.
+      Do NOT infer resale intent from a product simply appearing in many lots.
+      These auctions over-list heavily: one week ran 46 identical Shark
+      FlexStyle lots and only 2 were bid on. Lot count measures supply, not
+      appetite.
+    seeds: ["wholesale lot", "case pack", "bulk lot", "pallet", "retail box"]
+
+
+  - name: "Household batteries (bulk)"
+    buckets: []
+    tags: ["household_batteries"]
+    description: >
+      Bulk alkaline AA and AAA packs only — roughly 24 count and up, name
+      brands (Duracell, Energizer, Amazon Basics, Powermax, ACDelco). A
+      100-count Powermax AAA pack was bid on 2026-10-04. Added with the
+      user's say-so on 2026-10-08 as a pseudo-bucket, deliberately NOT a
+      return of the retired "Batteries & chargers" bucket: chargers, power
+      banks, rechargeables, coin cells and small 4-8 packs are still not
+      wanted. ~33 lots a week match the seeds. CR123A lithium cells were
+      bid twice on 2026-10-18 and are now stocked — NOT wanted again
+      (user, 2026-10-24).
+    seeds: ["aa batter", "aaa batter", "aa alkaline", "aaa alkaline",
+            "aa high performance", "aaa high performance"]
+    exclude: ["rechargeable", "charger", "nimh", "eneloop", "lithium ion",
+              "power bank"]
+
+  - name: "Premium pens"
+    buckets: []
+    tags: ["premium_pens"]
+    description: >
+      Genuinely nice pens only — Parker (Jotter, IM, Urban, Sonnet), Lamy,
+      Montblanc, Monteverde, Kaweco, Sheaffer, Rotring, Fisher Space Pen,
+      Cross, Pilot Metropolitan / Vanishing Point, and fountain pens from a
+      recognisable maker. Added 2026-10-24 after a 32-piece mini ballpoint
+      set drew three bids: the user called that SKU a one-off, but a Parker
+      Jotter-class pen is a personal match. Office multipacks (Pentel,
+      uni-ball, Paper Mate, Bic gel 12-packs) and novelty pen sets are NOT
+      wanted. Rare — about a dozen such lots in nineteen weeks.
+    seeds: ["parker jotter", "parker im ", "parker pen", "parker urban",
+            "parker sonnet", "parker vector", "lamy ", "fountain pen",
+            "montblanc", "monteverde", "kaweco", "sheaffer", "rotring",
+            "fisher space pen", "cross pen", "cross classic", "waterman pen",
+            "pilot vanishing", "pilot metropolitan"]
+    exclude: ["refill", "ink bottle"]
+
+  - name: "Pool & hot tub"
+    buckets: ["Pool & hot tub care"]
+    tags: ["pool_maintenance", "pool_recreation", "hot_tub_maintenance"]
+    description: >
+      Seasonal pool and hot tub upkeep — chemicals, test strips, filters,
+      pumps, skimmers, robotic cleaners, covers and hot tub supplies. Got
+      its own refined bucket on 2026-09-15; it is deliberately kept free
+      of floats, noodles and pool toys (those are kids' outdoor play).
+      Hot tub FILTERS are the repeat buy: a spa filter cartridge won
+      2026-07-12, and a filter-cartridge 2-pack bid and EcoOne filter
+      cleaner won 2026-10-18 — spa filter cartridges and filter cleaners
+      are a personal match.
+
+  - name: "Practical lighting"
+    buckets: []
+    tags: ["practical_lighting"]
+    description: >
+      Work and utility lighting rather than decorative — shop lights, work
+      lights, headlamps, flashlights, motion floodlights, and solar path
+      lighting. Smart/colour-changing lighting belongs to Smart home instead.
+    seeds:
+      ["work light", "shop light", "led shop", "flashlight", "headlamp",
+       "floodlight", "flood light", "lantern", "solar light", "light bar",
+       "utility light", "spotlight", "spot light", "led bulb", "light bulb",
+       "string light", "path light", "garden light", "solar lamp",
+       "motion light", "camping light"]
+
+  - name: "Vehicle"
+    buckets: ["Car care & detailing"]
+    tags: ["tesla_model_3", "car_care"]
+    description: >
+      Two distinct things. First, model-fit parts for a Tesla Model 3 — floor
+      mats, chargers, screen protectors, interior parts — where the fit has to
+      be plausible. Second, car cleaning and detailing generally, which is NOT
+      Tesla-specific: branded wash, wax, wheel and interior products get bought
+      repeatedly regardless of vehicle.
+      Corrected 2026-08-30. This interest previously said "generic car
+      accessories are not wanted", which contradicted the history — Chemical
+      Guys and Meguiar's products were bid on three times in three months while
+      Tesla-fit parts appeared once.
+    seeds: ["tesla", "model 3", "ev charger", "nema 14-50", "j1772"]
+
+# Products already resold at a profit, so the margin is known rather than
+# guessed. Flag every reappearance. Keep this list short and user-maintained
+# — it is high precision by construction and worthless if it drifts into a
+# wishlist. Add a line only after an actual completed resale.
+proven_resale:
+  - product: "Shark WandVac handheld vacuum"
+    seeds: ["wandvac", "wand vac"]
+    note: >
+      Resold once already. 21 bids across the history, 16 in the 2026-07-19
+      auction alone — the one same-product run in the data that reflects
+      genuine intent rather than the auction over-listing.

@@ -156,36 +156,53 @@ If it says nothing needs re-judging, there is no recall chat. Send
 
 ---
 
-## Stage 4 — finish
+## Stage 4 — verify, then wait for deploy approval
 
-The shell agent now merges, verifies, builds, checks the bundle, deploys,
-commits and tidies, all on its own. Wait for its final report. It should
-contain:
+The shell agent merges, verifies and checks the bundle, then stops after
+`AGENTS.md` step 7 with `READY FOR DEPLOY APPROVAL`. Its report should include:
 
-- the lot count and the bundle numbers from `AGENTS.md` step 7
-  (`carry personal_match`, `are personal_match=true`, `carry a bat_subtype`,
-  `have 2+ buckets`, `carry a hammer_key`, `scrapes:`)
-- how many recall suspects were confirmed vs refused
-- that the deploy is live at `https://perpalicious.github.io/encore-browser/`
-- that the commit was pushed to `main`
+- the auction ID(s), any delta ID, and the bundle SHA-256
+- the lot count and the bundle numbers from step 7 (`carry personal_match`,
+  `are personal_match=true`, `carry a bat_subtype`, `have 2+ buckets`,
+  `carry a hammer_key`, `scrapes:`)
+- how many recall suspects were confirmed vs refused, or that none needed review
 
-If any of those is missing, ask the shell agent for it before reporting done.
-`0 with resale` is expected: resale is off by default.
+`0 with resale` is expected: resale is off by default. If anything is missing
+or a check fails, do not ask for deploy approval until it is resolved.
+
+Show the user the report for that bundle. Explain that steps 8–10 publish the
+viewer at `https://perpalicious.github.io/encore-browser/`, push its bundle to
+public `main`, and tidy the staged files. Ask them to approve this specific
+bundle by replying `Deploy`. Until then, leave it staged. Dot must not give the
+approval on the user's behalf. A schedule, initial run request, or
+`Continue.` does not count. Do not ask for or relay deploy approval for an
+offline/private pilot.
+
+Only after the user approves, send the shell agent:
+
+```
+Deploy
+```
+
+Associate that message with the exact auction/delta and SHA-256 from the report.
+If the staged bundle changes, relay a fresh report and get fresh approval before
+proceeding. After steps 8–10, verify the live viewer and the bundle commit on
+`main` before reporting completion.
 
 ---
 
 ## Escalate: stop and message the user
 
-You handle exactly two things yourself: re-running a chat that failed
-(Stage 2, up to two re-runs per chunk) and saying `Continue.` at the two
-handoffs. **Everything else goes to the user**, quoted word for word, and you
-wait. Do not answer the shell agent's questions on the user's behalf, and do
-not tell it to "proceed anyway".
+Follow the expected handoffs: retry failed chats within the documented limit,
+send `Continue.` at the flagging and recall stops, and handle the separate
+step 7 approval gate in Stage 4. **Unexpected issues go to the user.** Do not
+answer the shell agent's questions on the user's behalf, approve a deploy for
+them, or tell it to "proceed anyway".
 
 Always escalate when:
 
-- the shell agent stops anywhere other than the two handoffs, or reports an
-  error or a warning
+- the shell agent stops anywhere other than the flagging, recall or deploy
+  approval handoff, or reports an error or a warning
 - a chunk fails a third time
 - `verify_passes.py` fails
 - the merge reports `Merged <n> new items` with `n` other than 0
@@ -213,6 +230,7 @@ run. Open one in the repo and send the line for the stage you were at:
 | flagging responses saved | `Continue the weekly run for auction <ID> from step 5 (tools/expand_flags.py <ID>). All chunk responses are saved.` |
 | recall response saved | `Continue the weekly run for auction <ID> from step 5a (tools/recall_check.py <ID> apply). The recall response is saved.` |
 | no recall chat this week | `Continue the weekly run for auction <ID> from the merge in step 5. Recall had nothing to re-judge.` |
+| bundle verified, deploy approval pending | Restore the step 7 report and staged SHA-256. Wait for the user's approval before any steps 8–10. |
 
 ---
 

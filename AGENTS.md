@@ -27,7 +27,8 @@ sorts and confidence filter stay visible and simply match nothing.
 ## When the user asks to run this week's auction
 
 "Pull for auction <ID>" (or "pull <ID>") means this: run that week's
-auction end to end, steps 0-10, so it gets deployed. It does NOT mean
+auction through the step 7 bundle check and then wait for explicit publish
+approval. Steps 8–10 are not part of the initial request. It does NOT mean
 `tools/hammer.py <ID>` — the hammer pull for the *previous* week is a side
 task inside step 0.
 
@@ -445,7 +446,24 @@ near zero, the pass ignored the field again. If multi-bucket lots are near
 zero, it collapsed back to picking one bucket per lot and the narrow buckets
 are starving again — report both to the user rather than deploying past them.
 
-### 8. Deploy
+**STOP: READY FOR DEPLOY APPROVAL.** After step 7 passes, report the auction ID(s)
+and any delta ID, the bundle SHA-256, the check results and counts above, and
+how many recall suspects were confirmed or refused (or that none needed
+review). State that step 8 updates the public GitHub Pages site and step 9
+pushes the bundle to public `main`; step 10 tidies the staged files. Leave the
+bundle and staging files intact and wait. Do not start steps 8–10, deploy,
+commit/push the staged bundle, or tidy while waiting.
+
+Only resume when the user explicitly replies `Deploy` for that verified
+bundle, either directly or relayed by Dot after the user's approval. A prior
+run request, schedule, generic `Continue.`, or approval for a different bundle
+is not deploy approval. On resume, confirm the auction/delta IDs and SHA-256
+still match the report. If the bundle changed, re-verify it and ask for fresh
+approval. Do not include unrelated working-tree changes in the build or push. On an offline/private pilot, stop after the requested private checks
+and never use the live deploy path. Apply this gate to both weekly runs and
+mid-week deltas.
+
+### 8. Deploy (only after the step 7 approval gate)
 ```bash
 cd viewer && npm run build && npx gh-pages -d dist -b gh-pages && cd ..
 ```
@@ -528,8 +546,10 @@ fully deployed (steps 1-9 done, `auction_<ID>_categorized.json` exists).
    delta valuations into `_resale.json`. Lots pulled from the auction since
    the last scrape are reported as dropped; after that every fold must add
    0 rows — anything else is fatal. Re-running `merge` is safe.
-5. Continue with steps 5 (verify), 6, 7 (expect one more entry under
-   `scrapes:`), 8, 9 and 10. Commit as `Update bundle: auction <ID> (delta dN)`.
+5. Continue with steps 5 (verify), 6 and 7 (expect one more entry under
+   `scrapes:`). Stop at the step 7 deploy approval gate for this delta's
+   bundle. Only after approval run steps 8–10. Commit as
+   `Update bundle: auction <ID> (delta dN)`.
    Step 10 runs under the **parent** `<ID>`; it finds the deltas itself.
 
 Step 0's sweep already removes `_dN` files with the rest of the week.
